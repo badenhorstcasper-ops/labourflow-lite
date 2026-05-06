@@ -22,8 +22,9 @@
     --danger: #ef4444;
     --radius: 12px;
   }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; height: 100%; }
+  * { box-sizing: border-box; min-width: 0; }
+  html, body { margin: 0; padding: 0; height: 100%; width: 100%; overflow-x: hidden; max-width: 100vw; }
+  img { max-width: 100%; height: auto; display: block; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background: linear-gradient(180deg, var(--bg-2), var(--bg));
@@ -34,7 +35,7 @@
     min-height: 100vh;
   }
   header {
-    padding: 14px 18px;
+    padding: 12px 14px;
     border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
@@ -42,25 +43,33 @@
     background: rgba(15,23,42,0.85);
     backdrop-filter: blur(8px);
     position: sticky; top: 0; z-index: 10;
-    gap: 12px;
+    gap: 10px;
+    width: 100%;
+    max-width: 100%;
   }
-  .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .brand { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
   .logo {
     width: 40px; height: 40px; border-radius: 10px;
     background: linear-gradient(135deg, var(--primary), var(--accent));
     display: grid; place-items: center; font-weight: 800; color: #0b1220;
-    flex-shrink: 0; font-size: 18px;
+    flex-shrink: 0; font-size: 18px; overflow: hidden;
   }
-  .brand-text { min-width: 0; }
-  h1 { font-size: 18px; margin: 0; letter-spacing: 0.3px; }
-  .subtitle { color: var(--muted); font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase; }
+  .logo img { width: 100%; height: 100%; object-fit: cover; }
+  .brand-text { min-width: 0; overflow: hidden; }
+  h1 { font-size: 17px; margin: 0; letter-spacing: 0.3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .subtitle { color: var(--muted); font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .trial-badge {
     background: linear-gradient(135deg, var(--warn), #fb923c);
     color: #0b1220; font-size: 11px; font-weight: 700;
     padding: 6px 10px; border-radius: 999px;
     white-space: nowrap; cursor: pointer;
     flex-shrink: 0;
+    max-width: 45%;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
+  .trial-badge .full { display: inline; }
+  .trial-badge .short { display: none; }
   .trial-badge .count { font-weight: 800; }
   .quick-actions {
     display: flex; gap: 8px; padding: 12px 14px;
@@ -90,7 +99,9 @@
     flex: 1; display: flex; flex-direction: column;
     max-width: 860px; width: 100%; margin: 0 auto;
     padding: 0; min-height: 0;
+    min-width: 0;
   }
+  .chat, .input-bar, .quick-actions { max-width: 100%; }
   .chat {
     flex: 1; overflow-y: auto;
     padding: 20px 16px;
@@ -250,12 +261,23 @@
   }
   .modal-close:hover { color: var(--text); }
 
-  @media (max-width: 480px) {
-    header { padding: 12px 14px; }
-    h1 { font-size: 16px; }
-    .subtitle { font-size: 10px; }
-    .logo { width: 36px; height: 36px; font-size: 16px; }
+  @media (max-width: 600px) {
+    header { padding: 10px 12px; gap: 8px; }
+    h1 { font-size: 15px; }
+    .subtitle { font-size: 9px; letter-spacing: 1px; }
+    .logo { width: 36px; height: 36px; font-size: 15px; }
     .trial-badge { font-size: 10px; padding: 5px 8px; }
+    .trial-badge .full { display: none; }
+    .trial-badge .short { display: inline; }
+    .quick-actions { padding: 10px 12px; }
+    .quick-btn { font-size: 12px; padding: 7px 12px; }
+    .chat { padding: 16px 12px; }
+    .input-bar { padding: 10px 12px; }
+    .msg { max-width: 95%; }
+    .bubble { font-size: 14px; }
+    .modal { padding: 18px; }
+    .modal h2 { font-size: 18px; }
+    .plans { grid-template-columns: 1fr; }
   }
 </style>
   <meta property="og:title" content="LabourFlow — AI Labour Compliance Assistant">
@@ -270,14 +292,15 @@
 <body>
 <header>
   <div class="brand">
-    <div class="logo">L</div>
+    <div class="logo"><img src="https://i.imgur.com/placeholder.png" alt="LabourFlow logo" onerror="this.style.display='none';this.parentElement.textContent='L';"></div>
     <div class="brand-text">
       <h1>LabourFlow</h1>
       <div class="subtitle">Powered by iNRECO</div>
     </div>
   </div>
   <div class="trial-badge" id="trialBadge">
-    FREE TRIAL · <span class="count" id="trialCount">5</span> free questions this month
+    <span class="full">FREE TRIAL · <span class="count" id="trialCount">5</span> free questions this month</span>
+    <span class="short">FREE · <span class="count" id="trialCountShort">5</span> left</span>
   </div>
 </header>
 
