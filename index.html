@@ -49,12 +49,12 @@
   }
   .brand { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
   .logo {
-    width: 40px; height: 40px; border-radius: 10px;
-    background: linear-gradient(135deg, var(--primary), var(--accent));
-    display: grid; place-items: center; font-weight: 800; color: #0b1220;
-    flex-shrink: 0; font-size: 18px; overflow: hidden;
+    width: 44px; height: 44px; border-radius: 10px;
+    background: #4a0a14;
+    display: grid; place-items: center;
+    flex-shrink: 0; overflow: hidden;
   }
-  .logo img { width: 100%; height: 100%; object-fit: cover; }
+  .logo img { width: 100%; height: 100%; object-fit: contain; display: block; }
   .brand-text { min-width: 0; overflow: hidden; }
   h1 { font-size: 17px; margin: 0; letter-spacing: 0.3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .subtitle { color: var(--muted); font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
