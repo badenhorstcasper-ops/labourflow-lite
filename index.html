@@ -504,7 +504,8 @@
         throw new Error('Request failed (' + res.status + '): ' + errText);
       }
       const data = await res.json();
-      const reply = data.reply || data.message || data.content || data.text ||
+      const reply = (Array.isArray(data.content) && data.content[0] && data.content[0].text) ||
+                    data.reply || data.message || data.text ||
                     (data.choices && data.choices[0] && (data.choices[0].message?.content || data.choices[0].text)) ||
                     'Sorry, I could not generate a response.';
       state.messages.push({ role: 'assistant', content: reply });
