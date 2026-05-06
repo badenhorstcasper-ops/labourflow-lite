@@ -112,12 +112,12 @@
     margin: auto 0; padding: 32px 16px;
   }
   .empty-state .big-logo {
-    width: 64px; height: 64px; margin: 0 auto 16px;
+    width: 96px; height: 96px; margin: 0 auto 16px;
     border-radius: 16px;
-    background: linear-gradient(135deg, var(--primary), var(--accent));
-    display: grid; place-items: center; font-weight: 800; color: #0b1220;
-    font-size: 28px;
+    background: #4a0a14;
+    display: grid; place-items: center; overflow: hidden;
   }
+  .empty-state .big-logo img { width: 100%; height: 100%; object-fit: contain; display: block; }
   .empty-state h3 { color: var(--text); margin: 0 0 8px; }
 
   .msg { display: flex; gap: 10px; max-width: 90%; }
@@ -292,7 +292,7 @@
 <body>
 <header>
   <div class="brand">
-    <div class="logo"><img src="https://i.imgur.com/placeholder.png" alt="LabourFlow logo" onerror="this.style.display='none';this.parentElement.textContent='L';"></div>
+    <div class="logo"><img src="/logo.png" alt="LabourFlow logo"></div>
     <div class="brand-text">
       <h1>LabourFlow</h1>
       <div class="subtitle">Powered by iNRECO</div>
@@ -309,7 +309,7 @@
 <main>
   <div class="chat" id="chat">
     <div class="empty-state" id="emptyState">
-      <div class="big-logo">L</div>
+      <div class="big-logo"><img src="/logo.png" alt="LabourFlow logo"></div>
       <h3>Hi, I'm CARA</h3>
       <p>Compliance and Relations Adviser. Ask me about SA labour law, disciplinary processes, CCMA, retrenchments, and more.</p>
     </div>
