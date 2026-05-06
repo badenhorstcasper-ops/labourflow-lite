@@ -49,15 +49,13 @@
   }
   .brand { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
   .logo {
-    width: 44px; height: 44px; border-radius: 10px;
-    background: #0a2547;
-    display: grid; place-items: center;
-    flex-shrink: 0; overflow: hidden;
+    height: 44px; border-radius: 8px;
+    display: block; flex-shrink: 1; overflow: hidden; min-width: 0;
   }
-  .logo img { width: 100%; height: 100%; object-fit: contain; display: block; }
-  .brand-text { min-width: 0; overflow: hidden; }
-  h1 { font-size: 17px; margin: 0; letter-spacing: 0.3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .subtitle { color: var(--muted); font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .logo img { height: 100%; width: auto; max-width: 100%; object-fit: contain; display: block; }
+  .brand-text { display: none; }
+  h1 { font-size: 17px; margin: 0; }
+  .subtitle { color: var(--muted); font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; }
   .trial-badge {
     background: linear-gradient(135deg, var(--warn), #fb923c);
     color: #0b1220; font-size: 11px; font-weight: 700;
@@ -112,12 +110,10 @@
     margin: auto 0; padding: 32px 16px;
   }
   .empty-state .big-logo {
-    width: 96px; height: 96px; margin: 0 auto 16px;
-    border-radius: 16px;
-    background: #0a2547;
-    display: grid; place-items: center; overflow: hidden;
+    max-width: 280px; margin: 0 auto 16px;
+    border-radius: 12px; overflow: hidden;
   }
-  .empty-state .big-logo img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .empty-state .big-logo img { width: 100%; height: auto; display: block; }
   .empty-state h3 { color: var(--text); margin: 0 0 8px; }
 
   .msg { display: flex; gap: 10px; max-width: 90%; }
@@ -265,7 +261,7 @@
     header { padding: 10px 12px; gap: 8px; }
     h1 { font-size: 15px; }
     .subtitle { font-size: 9px; letter-spacing: 1px; }
-    .logo { width: 36px; height: 36px; font-size: 15px; }
+    .logo { height: 38px; }
     .trial-badge { font-size: 10px; padding: 5px 8px; }
     .trial-badge .full { display: none; }
     .trial-badge .short { display: inline; }
