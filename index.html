@@ -383,8 +383,11 @@
     "Incapacity": "How do I handle an incapacity due to ill health process?"
   };
 
+  // Clear stored chat on startup so old messages don't persist
+  try { localStorage.removeItem(STORAGE_KEY); } catch {}
+
   // State
-  let state = loadState() || { messages: [], userMsgCount: 0 };
+  let state = { messages: [], userMsgCount: 0 };
   let isSending = false;
 
   function loadState() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch { return null; } }
@@ -494,7 +497,7 @@
     showTyping();
 
     try {
-      const res = await fetch(ENDPOINT, {
+      const doFetch = () => fetch(ENDPOINT, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -506,6 +509,15 @@
           messages: state.messages,
         }),
       });
+      let res = await doFetch();
+      if (res.status === 529) {
+        hideTyping();
+        const notice = addMessageToDOM('assistant', "I'm experiencing high demand right now — trying again in a moment...");
+        await new Promise(r => setTimeout(r, 10000));
+        notice.parentElement.remove();
+        showTyping();
+        res = await doFetch();
+      }
       hideTyping();
       if (!res.ok) {
         const errText = await res.text().catch(() => '');
