@@ -481,6 +481,7 @@
   function updateTrialBadge() {
     const remaining = Math.max(0, FREE_LIMIT - state.userMsgCount);
     $('trialCount').textContent = remaining;
+    const s = $('trialCountShort'); if (s) s.textContent = remaining;
   }
 
   function autoResize() {
