@@ -512,9 +512,20 @@
         throw new Error('Request failed (' + res.status + '): ' + errText);
       }
       const data = await res.json();
-      const reply = data.reply || data.message || data.content || data.text ||
-                    (data.choices && data.choices[0] && (data.choices[0].message?.content || data.choices[0].text)) ||
-                    'Sorry, I could not generate a response.';
+      const extractText = (c) => {
+        if (!c) return '';
+        if (typeof c === 'string') return c;
+        if (Array.isArray(c)) return c.map(p => (typeof p === 'string' ? p : (p?.text || ''))).join('');
+        if (typeof c === 'object') return c.text || '';
+        return '';
+      };
+      const reply =
+        extractText(data.content) ||
+        (data.choices && data.choices[0] && (extractText(data.choices[0].message?.content) || data.choices[0].text)) ||
+        (typeof data.reply === 'string' ? data.reply : extractText(data.reply)) ||
+        (typeof data.message === 'string' ? data.message : extractText(data.message)) ||
+        (typeof data.text === 'string' ? data.text : '') ||
+        'Sorry, I could not generate a response.';
       state.messages.push({ role: 'assistant', content: reply });
       saveState();
       addMessageToDOM('assistant', reply);
