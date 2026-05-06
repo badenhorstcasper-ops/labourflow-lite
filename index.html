@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>LabourFlow — AI Labour Compliance Assistant</title>
-<meta name="description" content="LabourFlow powered by iNRECO: AI-driven SA labour compliance guidance from CARA." />
+<meta name="description" content="LabourFlow powered by iNRECO: AI-driven SA labour compliance guidance from CARA.">
 <style>
   :root {
     --bg: #0f172a;
@@ -258,6 +258,14 @@
     .trial-badge { font-size: 10px; padding: 5px 8px; }
   }
 </style>
+  <meta property="og:title" content="LabourFlow — AI Labour Compliance Assistant">
+  <meta name="twitter:title" content="LabourFlow — AI Labour Compliance Assistant">
+  <meta property="og:description" content="LabourFlow powered by iNRECO: AI-driven SA labour compliance guidance from CARA.">
+  <meta name="twitter:description" content="LabourFlow powered by iNRECO: AI-driven SA labour compliance guidance from CARA.">
+  <meta property="og:image" content="https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/bf5efbde-bf28-4039-883f-0ac379339657/id-preview-fd839fcf--566d6a2d-e8ae-42d8-a310-7a3da62a698c.lovable.app-1778081747092.png">
+  <meta name="twitter:image" content="https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/bf5efbde-bf28-4039-883f-0ac379339657/id-preview-fd839fcf--566d6a2d-e8ae-42d8-a310-7a3da62a698c.lovable.app-1778081747092.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta property="og:type" content="website">
 </head>
 <body>
 <header>
@@ -504,8 +512,7 @@
         throw new Error('Request failed (' + res.status + '): ' + errText);
       }
       const data = await res.json();
-      const reply = (Array.isArray(data.content) && data.content[0] && data.content[0].text) ||
-                    data.reply || data.message || data.text ||
+      const reply = data.reply || data.message || data.content || data.text ||
                     (data.choices && data.choices[0] && (data.choices[0].message?.content || data.choices[0].text)) ||
                     'Sorry, I could not generate a response.';
       state.messages.push({ role: 'assistant', content: reply });
