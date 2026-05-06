@@ -497,7 +497,7 @@
     showTyping();
 
     try {
-      const res = await fetch(ENDPOINT, {
+      const doFetch = () => fetch(ENDPOINT, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -509,6 +509,15 @@
           messages: state.messages,
         }),
       });
+      let res = await doFetch();
+      if (res.status === 529) {
+        hideTyping();
+        const notice = addMessageToDOM('assistant', "I'm experiencing high demand right now — trying again in a moment...");
+        await new Promise(r => setTimeout(r, 10000));
+        notice.parentElement.remove();
+        showTyping();
+        res = await doFetch();
+      }
       hideTyping();
       if (!res.ok) {
         const errText = await res.text().catch(() => '');
