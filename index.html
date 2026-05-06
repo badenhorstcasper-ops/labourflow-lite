@@ -49,7 +49,7 @@
   }
   .brand { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
   .logo {
-    height: 44px; border-radius: 8px;
+    height: 36px; border-radius: 6px;
     display: block; flex-shrink: 1; overflow: hidden; min-width: 0;
   }
   .logo img { height: 100%; width: auto; max-width: 100%; object-fit: contain; display: block; }
@@ -74,10 +74,10 @@
     overflow-x: auto; -webkit-overflow-scrolling: touch;
     border-bottom: 1px solid var(--border);
     background: rgba(30,41,59,0.4);
-    scrollbar-width: thin;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
   }
-  .quick-actions::-webkit-scrollbar { height: 6px; }
-  .quick-actions::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  .quick-actions::-webkit-scrollbar { display: none; width: 0; height: 0; }
   .quick-btn {
     background: var(--surface);
     color: var(--text);
@@ -261,7 +261,8 @@
     header { padding: 10px 12px; gap: 8px; }
     h1 { font-size: 15px; }
     .subtitle { font-size: 9px; letter-spacing: 1px; }
-    .logo { height: 38px; }
+    .logo { height: 28px; }
+    header { padding: 6px 10px; }
     .trial-badge { font-size: 10px; padding: 5px 8px; }
     .trial-badge .full { display: none; }
     .trial-badge .short { display: inline; }
@@ -295,7 +296,7 @@
     </div>
   </div>
   <div class="trial-badge" id="trialBadge">
-    <span class="full">FREE TRIAL · <span class="count" id="trialCount">5</span> free questions this month</span>
+    <span class="full">FREE TRIAL · <span class="count" id="trialCount">5</span> left this month</span>
     <span class="short">FREE · <span class="count" id="trialCountShort">5</span> left</span>
   </div>
 </header>
