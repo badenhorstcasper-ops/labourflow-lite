@@ -1,26 +1,322 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- TODO: Set the document title to the name of your application -->
-    <title>Lovable App</title>
-    <meta name="description" content="Lovable Generated Project" />
-    <meta name="author" content="Lovable" />
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LabourFlow — Simple Workforce Tracking</title>
+<meta name="description" content="LabourFlow: track workers, shifts and hours in a single lightweight web app." />
+<style>
+  :root {
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --surface-2: #273449;
+    --border: #334155;
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+    --primary: #38bdf8;
+    --primary-hover: #0ea5e9;
+    --success: #22c55e;
+    --danger: #ef4444;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(180deg, #0b1220, var(--bg));
+    color: var(--text);
+    line-height: 1.5;
+  }
+  header {
+    padding: 24px 32px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(8px);
+    position: sticky; top: 0; z-index: 10;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .logo {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--primary), #6366f1);
+    display: grid; place-items: center; font-weight: 700; color: #0b1220;
+  }
+  h1 { font-size: 20px; margin: 0; letter-spacing: 0.3px; }
+  .tagline { color: var(--muted); font-size: 13px; }
+  main { max-width: 1100px; margin: 0 auto; padding: 28px 24px 64px; }
+  .stats {
+    display: grid; gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    margin-bottom: 28px;
+  }
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+  }
+  .stat .label { color: var(--muted); font-size: 13px; }
+  .stat .value { font-size: 26px; font-weight: 700; margin-top: 6px; }
+  .grid {
+    display: grid; gap: 24px;
+    grid-template-columns: 1fr 1.4fr;
+  }
+  @media (max-width: 880px) { .grid { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+  .card h2 { margin: 0 0 14px; font-size: 16px; letter-spacing: 0.3px; }
+  label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  input, select {
+    width: 100%; padding: 10px 12px;
+    background: var(--surface-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px; font-size: 14px;
+    outline: none; transition: border-color .15s;
+  }
+  input:focus, select:focus { border-color: var(--primary); }
+  .row { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; }
+  .form-actions { margin-top: 14px; display: flex; gap: 10px; }
+  button {
+    cursor: pointer; border: none; border-radius: 8px;
+    padding: 10px 14px; font-size: 14px; font-weight: 600;
+    transition: background .15s, transform .05s;
+  }
+  button:active { transform: translateY(1px); }
+  .btn-primary { background: var(--primary); color: #0b1220; }
+  .btn-primary:hover { background: var(--primary-hover); }
+  .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+  .btn-ghost:hover { color: var(--text); }
+  .btn-danger { background: transparent; color: var(--danger); padding: 6px 10px; font-size: 12px; border: 1px solid transparent; }
+  .btn-danger:hover { border-color: var(--danger); }
+  .toolbar { display: flex; gap: 10px; margin-bottom: 12px; }
+  .toolbar input { flex: 1; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 500; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+  tr:last-child td { border-bottom: none; }
+  .empty { color: var(--muted); text-align: center; padding: 24px 0; font-size: 14px; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .badge.role { background: rgba(56, 189, 248, 0.15); color: var(--primary); }
+  footer { text-align: center; color: var(--muted); font-size: 12px; padding: 20px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="logo">L</div>
+    <div>
+      <h1>LabourFlow</h1>
+      <div class="tagline">Simple workforce & shift tracking</div>
+    </div>
+  </div>
+  <button class="btn-ghost" id="exportBtn">Export JSON</button>
+</header>
 
-    <!-- TODO: Update og:title to match your application name -->
-    <meta property="og:title" content="Lovable App" />
-    <meta property="og:description" content="Lovable Generated Project" />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+<main>
+  <section class="stats">
+    <div class="stat"><div class="label">Workers</div><div class="value" id="statWorkers">0</div></div>
+    <div class="stat"><div class="label">Shifts logged</div><div class="value" id="statShifts">0</div></div>
+    <div class="stat"><div class="label">Total hours</div><div class="value" id="statHours">0</div></div>
+    <div class="stat"><div class="label">Total payroll</div><div class="value" id="statPay">$0</div></div>
+  </section>
 
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@Lovable" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-  </head>
+  <div class="grid">
+    <div>
+      <div class="card" style="margin-bottom:24px;">
+        <h2>Add worker</h2>
+        <form id="workerForm">
+          <label for="wName">Name</label>
+          <input id="wName" required placeholder="e.g. Alex Morgan" />
+          <div class="row" style="margin-top:10px;">
+            <div>
+              <label for="wRole">Role</label>
+              <input id="wRole" required placeholder="Carpenter" />
+            </div>
+            <div>
+              <label for="wRate">Hourly rate ($)</label>
+              <input id="wRate" type="number" min="0" step="0.01" required placeholder="25" />
+            </div>
+          </div>
+          <div class="form-actions"><button class="btn-primary" type="submit">Add worker</button></div>
+        </form>
+      </div>
 
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+      <div class="card">
+        <h2>Log a shift</h2>
+        <form id="shiftForm">
+          <label for="sWorker">Worker</label>
+          <select id="sWorker" required></select>
+          <div class="row" style="margin-top:10px;">
+            <div>
+              <label for="sDate">Date</label>
+              <input id="sDate" type="date" required />
+            </div>
+            <div>
+              <label for="sHours">Hours</label>
+              <input id="sHours" type="number" min="0" step="0.25" required placeholder="8" />
+            </div>
+          </div>
+          <div class="form-actions"><button class="btn-primary" type="submit">Log shift</button></div>
+        </form>
+      </div>
+    </div>
+
+    <div>
+      <div class="card" style="margin-bottom:24px;">
+        <h2>Workers</h2>
+        <div class="toolbar">
+          <input id="searchWorkers" placeholder="Search workers…" />
+        </div>
+        <table>
+          <thead><tr><th>Name</th><th>Role</th><th>Rate</th><th></th></tr></thead>
+          <tbody id="workerRows"></tbody>
+        </table>
+        <div class="empty" id="workersEmpty">No workers yet. Add one to get started.</div>
+      </div>
+
+      <div class="card">
+        <h2>Recent shifts</h2>
+        <table>
+          <thead><tr><th>Date</th><th>Worker</th><th>Hours</th><th>Pay</th><th></th></tr></thead>
+          <tbody id="shiftRows"></tbody>
+        </table>
+        <div class="empty" id="shiftsEmpty">No shifts logged yet.</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>LabourFlow — data is saved locally in your browser.</footer>
+
+<script>
+  const STORAGE_KEY = 'labourflow:v1';
+  const state = load() || { workers: [], shifts: [] };
+
+  function load() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch { return null; } }
+  function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  function uid() { return Math.random().toString(36).slice(2, 10); }
+  function fmtMoney(n) { return '$' + (Math.round(n * 100) / 100).toFixed(2); }
+
+  const $ = (id) => document.getElementById(id);
+  $('sDate').valueAsDate = new Date();
+
+  $('workerForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    state.workers.push({
+      id: uid(),
+      name: $('wName').value.trim(),
+      role: $('wRole').value.trim(),
+      rate: parseFloat($('wRate').value) || 0,
+    });
+    save(); render(); e.target.reset();
+  });
+
+  $('shiftForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!state.workers.length) return;
+    state.shifts.push({
+      id: uid(),
+      workerId: $('sWorker').value,
+      date: $('sDate').value,
+      hours: parseFloat($('sHours').value) || 0,
+    });
+    save(); render(); $('sHours').value = '';
+  });
+
+  $('searchWorkers').addEventListener('input', renderWorkers);
+
+  $('exportBtn').addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'labourflow-data.json'; a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  function deleteWorker(id) {
+    state.workers = state.workers.filter(w => w.id !== id);
+    state.shifts = state.shifts.filter(s => s.workerId !== id);
+    save(); render();
+  }
+  function deleteShift(id) {
+    state.shifts = state.shifts.filter(s => s.id !== id);
+    save(); render();
+  }
+
+  function renderWorkers() {
+    const q = $('searchWorkers').value.toLowerCase();
+    const list = state.workers.filter(w =>
+      !q || w.name.toLowerCase().includes(q) || w.role.toLowerCase().includes(q)
+    );
+    const tbody = $('workerRows');
+    tbody.innerHTML = list.map(w => `
+      <tr>
+        <td>${escapeHtml(w.name)}</td>
+        <td><span class="badge role">${escapeHtml(w.role)}</span></td>
+        <td>${fmtMoney(w.rate)}/h</td>
+        <td style="text-align:right;"><button class="btn-danger" data-del-worker="${w.id}">Remove</button></td>
+      </tr>
+    `).join('');
+    $('workersEmpty').style.display = list.length ? 'none' : 'block';
+    tbody.querySelectorAll('[data-del-worker]').forEach(b =>
+      b.addEventListener('click', () => deleteWorker(b.dataset.delWorker))
+    );
+
+    const sel = $('sWorker');
+    sel.innerHTML = state.workers.length
+      ? state.workers.map(w => `<option value="${w.id}">${escapeHtml(w.name)} — ${escapeHtml(w.role)}</option>`).join('')
+      : '<option value="">Add a worker first</option>';
+  }
+
+  function renderShifts() {
+    const sorted = [...state.shifts].sort((a, b) => b.date.localeCompare(a.date));
+    const tbody = $('shiftRows');
+    tbody.innerHTML = sorted.map(s => {
+      const w = state.workers.find(x => x.id === s.workerId);
+      const pay = w ? w.rate * s.hours : 0;
+      return `
+        <tr>
+          <td>${s.date}</td>
+          <td>${w ? escapeHtml(w.name) : '<em>Removed</em>'}</td>
+          <td>${s.hours}</td>
+          <td>${fmtMoney(pay)}</td>
+          <td style="text-align:right;"><button class="btn-danger" data-del-shift="${s.id}">Remove</button></td>
+        </tr>
+      `;
+    }).join('');
+    $('shiftsEmpty').style.display = sorted.length ? 'none' : 'block';
+    tbody.querySelectorAll('[data-del-shift]').forEach(b =>
+      b.addEventListener('click', () => deleteShift(b.dataset.delShift))
+    );
+  }
+
+  function renderStats() {
+    const totalHours = state.shifts.reduce((sum, s) => sum + s.hours, 0);
+    const totalPay = state.shifts.reduce((sum, s) => {
+      const w = state.workers.find(x => x.id === s.workerId);
+      return sum + (w ? w.rate * s.hours : 0);
+    }, 0);
+    $('statWorkers').textContent = state.workers.length;
+    $('statShifts').textContent = state.shifts.length;
+    $('statHours').textContent = totalHours;
+    $('statPay').textContent = fmtMoney(totalPay);
+  }
+
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, c => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+  }
+
+  function render() { renderWorkers(); renderShifts(); renderStats(); }
+  render();
+</script>
+</body>
 </html>
