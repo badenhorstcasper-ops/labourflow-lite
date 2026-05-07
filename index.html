@@ -162,6 +162,25 @@
   .send-btn:hover:not(:disabled) { background: var(--primary-hover); }
   .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
+  /* Answer chips */
+  .chip-group {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    padding: 4px 0 6px 42px; max-width: 90%;
+    animation: chipFade .25s ease;
+  }
+  @keyframes chipFade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  .chip {
+    background: var(--primary); color: #fff;
+    border: 1px solid var(--primary); padding: 8px 14px;
+    border-radius: 999px; font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: background .15s, transform .1s;
+    white-space: nowrap;
+  }
+  .chip:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+  .chip:active { transform: scale(0.96); }
+  .chip.other { background: transparent; color: var(--primary-soft); border-color: var(--primary-soft); }
+  .chip.other:hover { background: rgba(59,130,246,0.12); }
+
   /* Modal */
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 100; padding: 16px; backdrop-filter: blur(4px); }
   .modal-overlay.show { display: flex; }
