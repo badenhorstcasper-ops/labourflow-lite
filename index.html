@@ -879,8 +879,90 @@ function showDocumentModal(title, content) {
   document.body.appendChild(overlay);
 }
 
-async function generateDocument(docName) {
+// Risk check: returns null or { level:'high'|'caution', message, recommended }
+function checkRisk(docName) {
+  if (!currentMatter) return null;
+  const facts = currentMatter.facts || {};
+  const factText = Object.entries(facts).map(([k,v]) => `${k}: ${v}`).join(' | ').toLowerCase();
+  const doc = (docName || '').toLowerCase();
+
+  const isDismissal = /dismiss|termination|outcome letter/.test(doc);
+  const isHearing = /disciplinary hearing|charge sheet/.test(doc);
+  const isSuspensionNoPay = /suspension/.test(doc) && /without pay|unpaid/.test(doc);
+  const isFinalWritten = /final written warning/.test(doc);
+  const isSuspension = /suspension/.test(doc);
+
+  const onlyVerbal = /verbal warning/.test(factText) && !/written warning|final written/.test(factText);
+  const noWarnings = /no (previous |prior )?warning|none|no warnings on file/.test(factText) || (!/warning/.test(factText));
+  const shortAbsence = /1 day|2-3 days|2 days|one day/.test(factText);
+  const minorOffence = /minor|first offen|late|tardiness|small/.test(factText);
+
+  if (isSuspensionNoPay) {
+    return { level:'high', message:'Suspension without pay before a hearing is generally unfair under SA labour law and a frequent CCMA loss. Precautionary suspension must be on FULL PAY.', recommended:'Precautionary Suspension Letter' };
+  }
+  if (isDismissal && shortAbsence) {
+    return { level:'high', message:'Dismissing an employee for only 1–2 days of absence is highly likely to be ruled substantively unfair at the CCMA. Progressive discipline is required.', recommended:'Show-Cause Letter' };
+  }
+  if (isDismissal && onlyVerbal) {
+    return { level:'caution', message:'Only a verbal warning is on file. Jumping to dismissal skips progressive discipline and is risky at the CCMA.', recommended:'Written Warning' };
+  }
+  if (isFinalWritten && noWarnings) {
+    return { level:'caution', message:'No previous warnings on file. Issuing a final written warning as the first step is disproportionate and may be set aside.', recommended:'Written Warning' };
+  }
+  if (isHearing && noWarnings && minorOffence) {
+    return { level:'caution', message:'A formal disciplinary hearing for a minor first offence with no prior warnings is excessive. Counselling or a written warning is usually more appropriate.', recommended:'Written Warning' };
+  }
+  if (isSuspension && !isSuspensionNoPay) {
+    // ensure caller knows it must be full pay — soft caution
+    return { level:'caution', message:'Suspension must be precautionary and on FULL PAY pending the hearing. Confirm this before proceeding.', recommended:null };
+  }
+  return null;
+}
+
+function showRiskWarning(docName, risk, onProceed) {
+  const overlay = document.createElement('div');
+  overlay.className = 'wizard-overlay show';
+  overlay.style.zIndex = 400;
+  const high = risk.level === 'high';
+  const accent = high ? '#dc2626' : '#f59e0b';
+  const icon = high ? '🔴' : '🟡';
+  const title = high ? 'HIGH RISK' : 'CAUTION';
+  const box = document.createElement('div');
+  box.className = 'wizard';
+  box.style.maxWidth = '520px';
+  box.style.borderTop = `6px solid ${accent}`;
+  box.innerHTML = `
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+      <div style="font-size:28px;">${icon}</div>
+      <h2 style="margin:0; color:${accent};">${title}</h2>
+    </div>
+    <p style="font-size:14px; line-height:1.55; color:var(--text); margin:6px 0 14px;"></p>
+    <div style="background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:10px 12px; font-size:13px; margin-bottom:14px;">
+      <strong>Requested:</strong> <span data-req></span><br>
+      ${risk.recommended ? `<strong>Recommended instead:</strong> <span data-rec></span>` : ''}
+    </div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <button class="wiz-submit" data-act="proceed" style="flex:1; min-width:140px; background:${accent};">Proceed anyway</button>
+      ${risk.recommended ? `<button class="wiz-submit" data-act="rec" style="flex:1; min-width:140px; background:var(--primary);">Take recommended approach</button>` : `<button class="wiz-submit" data-act="cancel" style="flex:1; min-width:140px; background:var(--surface);">Cancel</button>`}
+    </div>`;
+  box.querySelector('p').textContent = risk.message;
+  box.querySelector('[data-req]').textContent = docName;
+  if (risk.recommended) box.querySelector('[data-rec]').textContent = risk.recommended;
+  box.querySelector('[data-act="proceed"]').onclick = () => { overlay.remove(); onProceed(docName); };
+  const recBtn = box.querySelector('[data-act="rec"]');
+  if (recBtn) recBtn.onclick = () => { overlay.remove(); onProceed(risk.recommended); };
+  const cancelBtn = box.querySelector('[data-act="cancel"]');
+  if (cancelBtn) cancelBtn.onclick = () => overlay.remove();
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+}
+
+async function generateDocument(docName, opts = {}) {
   if (!currentMatter) return;
+  if (!opts.skipRiskCheck) {
+    const risk = checkRisk(docName);
+    if (risk) { showRiskWarning(docName, risk, (chosen) => generateDocument(chosen, { skipRiskCheck: true })); return; }
+  }
   if (usageCount >= FREE_LIMIT) { openUpgrade(); return; }
   showTyping();
   const { data: newCount } = await supabase.rpc('increment_question_usage');
