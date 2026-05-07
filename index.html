@@ -958,7 +958,10 @@ if (SR) {
   recognition = new SR();
   recognition.lang = 'en-ZA'; recognition.interimResults = false; recognition.continuous = false;
   recognition.onresult = e => { const t = Array.from(e.results).map(r => r[0].transcript).join(' '); input.value = (input.value?input.value+' ':'')+t; autoResize(); };
-  recognition.onend = () => { isRecording=false; micBtn.classList.remove('recording'); };
+  recognition.onend = () => {
+    isRecording=false; micBtn.classList.remove('recording');
+    if (input.value.trim()) handleUserSubmit();
+  };
   recognition.onerror = () => { isRecording=false; micBtn.classList.remove('recording'); };
 } else { micBtn.style.display='none'; }
 micBtn.addEventListener('click', () => {
