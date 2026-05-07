@@ -572,8 +572,12 @@ async function sendMessage() {
     const employeeRange = profile?.employee_range || '';
     const contextLine = `The employer's company name is ${companyName} and they operate in the ${sector} sector. Do not ask for their company name or sector — you already have this information.`;
     const sys = SYSTEM_PROMPT_BASE + ' ' + contextLine + (employeeRange ? ` They have ${employeeRange} employees.` : '');
-    // Prepend the company context as a system-style message at the start of the conversation
-    const outgoingMessages = [...state.messages];
+    // Inject a priming user/assistant exchange so CARA always has company context (not shown in UI)
+    const primingMessages = [
+      { role: 'user', content: `My company is ${companyName} and we operate in the ${sector} sector.` },
+      { role: 'assistant', content: `Thank you. I have noted that you are from ${companyName} in the ${sector} sector. How can I help you today?` }
+    ];
+    const outgoingMessages = [...primingMessages, ...state.messages];
     const { data: { session } } = await supabase.auth.getSession();
     const token = session?.access_token || ANON_KEY;
     const res = await fetch(ENDPOINT, {
