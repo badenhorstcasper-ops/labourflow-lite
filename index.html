@@ -841,6 +841,121 @@ function submitWizard(topic, w, form, allFields, prefillUserText) {
   input.value = lines.join('\n');
   sendMessage({ countAsQuestion: true });
 }
+
+// Document modal: render generated document with copy/share/download
+function showDocumentModal(title, content) {
+  const overlay = document.createElement('div');
+  overlay.className = 'wizard-overlay show';
+  overlay.style.zIndex = 300;
+  const box = document.createElement('div');
+  box.className = 'wizard';
+  box.style.maxWidth = '720px';
+  box.innerHTML = `
+    <div class="wizard-header">
+      <div><h2></h2><p>Review, then copy, share or download.</p></div>
+      <button class="wizard-close" type="button">×</button>
+    </div>
+    <div class="doc-body" style="background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:14px; max-height:50vh; overflow-y:auto; font-size:13px; line-height:1.55;"></div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <button class="wiz-submit" data-act="copy" style="flex:1; min-width:120px;">Copy</button>
+      <button class="wiz-submit" data-act="wa" style="flex:1; min-width:120px; background:#22c55e;">Share via WhatsApp</button>
+      <button class="wiz-submit" data-act="dl" style="flex:1; min-width:120px; background:var(--surface);">Download</button>
+    </div>`;
+  box.querySelector('h2').textContent = title;
+  box.querySelector('.doc-body').innerHTML = renderMarkdown(content);
+  box.querySelector('.wizard-close').onclick = () => overlay.remove();
+  box.querySelector('[data-act="copy"]').onclick = () => { navigator.clipboard.writeText(content); };
+  box.querySelector('[data-act="wa"]').onclick = () => {
+    window.open('https://wa.me/?text=' + encodeURIComponent(content), '_blank');
+  };
+  box.querySelector('[data-act="dl"]').onclick = () => {
+    const blob = new Blob([content], { type: 'text/plain' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = title.replace(/[^a-z0-9]+/gi,'_') + '.txt';
+    a.click();
+  };
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+}
+
+async function generateDocument(docName) {
+  if (!currentMatter) return;
+  if (usageCount >= FREE_LIMIT) { openUpgrade(); return; }
+  showTyping();
+  const { data: newCount } = await supabase.rpc('increment_question_usage');
+  if (typeof newCount === 'number') { usageCount = newCount; updateTrialBadge(); }
+
+  const factsText = Object.entries(currentMatter.facts).map(([k,v]) => `- ${k}: ${v}`).join('\n');
+  const prompt = `Generate the following document for an SA employer. Output ONLY the final document text — no preamble, no commentary, ready to copy/paste/print.\n\nDocument: ${docName}\nMatter type: ${currentMatter.topic}\n\nFacts already collected (use these — do not ask for anything else):\n${factsText}\n\nInclude proper SA labour-law structure: header, addressee (employee name from facts), date (today's date from facts), subject line, body, signature block. Keep it professional and concise.`;
+
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token || ANON_KEY;
+    const res = await fetch(ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+token, 'apikey':ANON_KEY },
+      body: JSON.stringify({
+        system: 'You are CARA. Output only the requested document text exactly as it should appear on company letterhead. No commentary, no questions.',
+        messages: [{ role:'user', content: prompt }],
+        profile: currentProfile || {}
+      })
+    });
+    hideTyping();
+    if (!res.ok) throw new Error('Request failed (' + res.status + ')');
+    const data = await res.json();
+    const extract = c => !c ? '' : typeof c==='string' ? c : Array.isArray(c) ? c.map(p => typeof p==='string'?p:(p?.text||'')).join('') : (c.text||'');
+    const reply = extract(data.content) || (data.choices?.[0] && (extract(data.choices[0].message?.content) || data.choices[0].text)) || extract(data.reply) || extract(data.message) || data.text || '';
+    showDocumentModal(docName, reply);
+  } catch (err) {
+    hideTyping();
+    addMessageToDOM('assistant', '⚠️ ' + (err.message || 'Document generation failed.'));
+  }
+}
+
+function renderFollowups() {
+  removeFollowups();
+  const div = document.createElement('div');
+  div.className = 'followups'; div.id = 'followups';
+
+  if (currentMatter && currentMatter.docs && currentMatter.docs.length) {
+    currentMatter.docs.forEach(docName => {
+      const b = document.createElement('button');
+      b.className = 'followup-btn';
+      b.style.background = 'var(--primary)';
+      b.style.borderColor = 'var(--primary)';
+      b.style.color = '#fff';
+      b.textContent = '📄 ' + docName;
+      b.onclick = () => generateDocument(docName);
+      div.appendChild(b);
+    });
+  }
+
+  const next = [
+    { label: "What if they still don\u2019t respond?", text: 'What if they still do not respond?' },
+    { label: 'What happens next?', text: 'What happens next in this process?' },
+    { label: 'Start a new matter', text: '__new__' },
+  ];
+  next.forEach(f => {
+    const b = document.createElement('button');
+    b.className = 'followup-btn'; b.textContent = f.label;
+    b.onclick = () => {
+      removeFollowups();
+      if (f.text === '__new__') {
+        state.messages = [];
+        currentMatter = null;
+        chatEl.querySelectorAll('.msg').forEach(n => n.remove());
+        emptyState.style.display = '';
+        return;
+      }
+      input.value = f.text; sendMessage();
+    };
+    div.appendChild(b);
+  });
+
+  chatEl.appendChild(div);
+  chatEl.scrollTop = chatEl.scrollHeight;
+}
 function removeFollowups() { const f = $('followups'); if (f) f.remove(); }
 
 const qaWrap = $('quickActions');
