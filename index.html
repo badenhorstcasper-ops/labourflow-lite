@@ -1254,11 +1254,23 @@ function closeUpgrade(){ $('upgradeModal').classList.remove('show'); }
 function selectPlan(p){ alert('Selected plan: '+p+'\n\nCheckout flow coming soon.'); closeUpgrade(); }
 window.openUpgrade = openUpgrade; window.closeUpgrade = closeUpgrade; window.selectPlan = selectPlan;
 
+// Home button + browser back guard
+const homeBtn = document.getElementById('homeBtn');
+if (homeBtn) homeBtn.addEventListener('click', showNavConfirm);
+
+window.addEventListener('popstate', () => {
+  if (document.getElementById('screen-app')?.classList.contains('active')) {
+    showNavConfirm();
+  }
+});
+
 // --- Boot ---
 (async () => {
   const { data: { session } } = await supabase.auth.getSession();
   if (session) await afterLogin();
   else showScreen('welcome');
+  // Seed history so first back press triggers popstate instead of leaving
+  history.pushState({ navGuard: true }, '');
 })();
 
 supabase.auth.onAuthStateChange((_event, session) => {
