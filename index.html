@@ -374,6 +374,7 @@
       <div class="trial-badge" id="trialBadge">
         <span>FREE · <span id="trialCount">5</span> left</span>
       </div>
+      <button class="signout-btn" onclick="openShareAppModal()" title="Share LabourFlow">🔗 Share</button>
       <button class="signout-btn" onclick="doSignOut()">Sign out</button>
     </div>
   </header>
@@ -418,6 +419,13 @@
       <div class="plan featured"><h3>Business</h3><div class="price">R499<small>/month</small></div><ul><li>Unlimited AI questions</li><li>Priority support</li><li>Up to 5 users</li><li>Document templates</li></ul><button onclick="selectPlan('Business')">Choose Business</button></div>
       <div class="plan"><h3>Enterprise</h3><div class="price">R1200<small>/month</small></div><ul><li>Everything in Business</li><li>Dedicated adviser</li><li>Unlimited users</li></ul><button onclick="selectPlan('Enterprise')">Choose Enterprise</button></div>
       <div class="plan"><h3>Pay-as-you-go</h3><div class="price">R29<small>/question</small></div><ul><li>No subscription</li><li>Buy bundles</li></ul><button onclick="selectPlan('PAYG')">Buy credits</button></div>
+    </div>
+    <div style="margin-top:18px; padding-top:14px; border-top:1px solid var(--border); text-align:center;">
+      <div style="font-size:13px; color:var(--muted); margin-bottom:8px;">Know someone who needs this? Share LabourFlow →</div>
+      <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+        <button class="modal-close" style="background:#22c55e; color:#fff; border-color:#22c55e;" onclick="shareAppWhatsApp()">💬 WhatsApp</button>
+        <button class="modal-close" onclick="copyAppLink()">🔗 Copy link</button>
+      </div>
     </div>
     <button class="modal-close" onclick="closeUpgrade()">Maybe later</button>
   </div>
@@ -859,10 +867,12 @@ function showDocumentModal(title, content) {
       <button class="wizard-close" type="button">×</button>
     </div>
     <div class="doc-body" style="background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:14px; max-height:50vh; overflow-y:auto; font-size:13px; line-height:1.55;"></div>
-    <div style="display:flex; gap:8px; flex-wrap:wrap;">
-      <button class="wiz-submit" data-act="copy" style="flex:1; min-width:120px;">Copy</button>
-      <button class="wiz-submit" data-act="wa" style="flex:1; min-width:120px; background:#22c55e;">Share via WhatsApp</button>
-      <button class="wiz-submit" data-act="dl" style="flex:1; min-width:120px; background:var(--surface);">Download</button>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:8px;">
+      <button class="wiz-submit" data-act="copy">📋 Copy</button>
+      <button class="wiz-submit" data-act="wa" style="background:#22c55e;">💬 Share via WhatsApp</button>
+      <button class="wiz-submit" data-act="email" style="background:var(--accent);">📧 Share via Email</button>
+      <button class="wiz-submit" data-act="dl" style="background:var(--surface);">⬇️ Download</button>
+      <button class="wiz-submit" data-act="shareApp" style="background:var(--surface-2); border:1px solid var(--border); grid-column: 1/-1;">🔗 Share LabourFlow</button>
     </div>
     <div style="border-top:1px solid var(--border); padding-top:12px; display:flex; flex-direction:column; gap:8px;">
       <button class="wiz-submit" data-act="another" style="background:var(--primary);">Generate another document</button>
@@ -874,9 +884,8 @@ function showDocumentModal(title, content) {
   const closeModal = () => overlay.remove();
   box.querySelector('.wizard-close').onclick = closeModal;
   box.querySelector('[data-act="copy"]').onclick = () => { navigator.clipboard.writeText(content); };
-  box.querySelector('[data-act="wa"]').onclick = () => {
-    window.open('https://wa.me/?text=' + encodeURIComponent(content), '_blank');
-  };
+  box.querySelector('[data-act="wa"]').onclick = () => shareWhatsApp(content);
+  box.querySelector('[data-act="email"]').onclick = () => shareEmail(title, content);
   box.querySelector('[data-act="dl"]').onclick = () => {
     const blob = new Blob([content], { type: 'text/plain' });
     const a = document.createElement('a');
@@ -884,6 +893,7 @@ function showDocumentModal(title, content) {
     a.download = title.replace(/[^a-z0-9]+/gi,'_') + '.txt';
     a.click();
   };
+  box.querySelector('[data-act="shareApp"]').onclick = () => openShareAppModal();
   box.querySelector('[data-act="another"]').onclick = () => { closeModal(); renderFollowups(); chatEl.scrollTop = chatEl.scrollHeight; };
   box.querySelector('[data-act="continue"]').onclick = () => { closeModal(); renderFollowups(); };
   box.querySelector('[data-act="new"]').onclick = () => { closeModal(); resetToNewMatter(); };
@@ -1128,7 +1138,17 @@ function addMessageToDOM(role, content) {
   av.textContent = role === 'user' ? 'U' : 'C';
   const bub = document.createElement('div');
   bub.className = 'bubble';
+  bub.style.position = 'relative';
   bub.innerHTML = role === 'assistant' ? renderMarkdown(content) : escapeHtml(content);
+  if (role === 'assistant') {
+    const share = document.createElement('button');
+    share.type = 'button';
+    share.title = 'Share this advice';
+    share.style.cssText = 'position:absolute; top:6px; right:6px; background:rgba(255,255,255,0.06); border:1px solid var(--border); color:var(--muted); border-radius:6px; cursor:pointer; padding:2px 6px; font-size:12px;';
+    share.textContent = '🔗';
+    share.onclick = (e) => { e.stopPropagation(); openShareAdviceModal(content); };
+    bub.appendChild(share);
+  }
   msg.appendChild(av); msg.appendChild(bub);
   chatEl.appendChild(msg);
   chatEl.scrollTop = chatEl.scrollHeight;
@@ -1220,6 +1240,7 @@ async function sendMessage(opts) {
     state.messages.push({ role:'assistant', content: reply });
     addMessageToDOM('assistant', reply);
     renderFollowups();
+    maybeShowFirstAdvicePrompt();
     if (usageCount >= FREE_LIMIT) setTimeout(openUpgrade, 600);
   } catch (err) {
     hideTyping();
@@ -1253,6 +1274,100 @@ function openUpgrade(){ $('upgradeModal').classList.add('show'); }
 function closeUpgrade(){ $('upgradeModal').classList.remove('show'); }
 function selectPlan(p){ alert('Selected plan: '+p+'\n\nCheckout flow coming soon.'); closeUpgrade(); }
 window.openUpgrade = openUpgrade; window.closeUpgrade = closeUpgrade; window.selectPlan = selectPlan;
+
+// --- Sharing ---
+const APP_URL = 'https://basic-task-sparkle.lovable.app';
+const APP_SHARE_MSG = 'I use LabourFlow for instant IR guidance — try it free:';
+const APP_SHARE_TAGLINE = 'Get instant IR guidance in your pocket — powered by iNRECO Consulting';
+
+function shareWhatsApp(text) {
+  window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+}
+function shareEmail(subject, body) {
+  window.location.href = 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+}
+function shareAppWhatsApp() { shareWhatsApp(APP_SHARE_MSG + ' ' + APP_URL); }
+function shareAppEmail() { shareEmail('LabourFlow — IR guidance in your pocket', APP_SHARE_TAGLINE + '\n\n' + APP_URL); }
+function copyAppLink() {
+  navigator.clipboard.writeText(APP_URL);
+  const t = document.createElement('div');
+  t.textContent = '✓ Link copied';
+  t.style.cssText = 'position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--success); color:#fff; padding:8px 14px; border-radius:999px; z-index:9999; font-size:13px;';
+  document.body.appendChild(t); setTimeout(() => t.remove(), 1600);
+}
+window.shareAppWhatsApp = shareAppWhatsApp;
+window.copyAppLink = copyAppLink;
+
+function openShareAdviceModal(adviceText) {
+  const overlay = document.createElement('div');
+  overlay.className = 'wizard-overlay show'; overlay.style.zIndex = 600;
+  const box = document.createElement('div');
+  box.className = 'wizard'; box.style.maxWidth = '420px';
+  box.innerHTML = `
+    <div class="wizard-header">
+      <div><h2>Share this advice</h2><p>Send CARA's guidance to a colleague.</p></div>
+      <button class="wizard-close" type="button">×</button>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <button class="wiz-submit" data-act="wa" style="background:#22c55e;">💬 WhatsApp</button>
+      <button class="wiz-submit" data-act="email" style="background:var(--accent);">📧 Email</button>
+      <button class="wiz-submit" data-act="copy" style="background:var(--surface);">📋 Copy text</button>
+    </div>`;
+  const prefix = 'IR guidance from LabourFlow:\n\n';
+  box.querySelector('.wizard-close').onclick = () => overlay.remove();
+  box.querySelector('[data-act="wa"]').onclick = () => shareWhatsApp(prefix + adviceText + '\n\n' + APP_URL);
+  box.querySelector('[data-act="email"]').onclick = () => shareEmail('IR guidance from LabourFlow', prefix + adviceText + '\n\n' + APP_URL);
+  box.querySelector('[data-act="copy"]').onclick = () => navigator.clipboard.writeText(prefix + adviceText);
+  overlay.appendChild(box); document.body.appendChild(overlay);
+}
+window.openShareAdviceModal = openShareAdviceModal;
+
+function openShareAppModal() {
+  const overlay = document.createElement('div');
+  overlay.className = 'wizard-overlay show'; overlay.style.zIndex = 600;
+  const box = document.createElement('div');
+  box.className = 'wizard'; box.style.maxWidth = '420px';
+  const qrSrc = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(APP_URL);
+  box.innerHTML = `
+    <div class="wizard-header">
+      <div><h2>Share LabourFlow</h2><p>${APP_SHARE_TAGLINE}</p></div>
+      <button class="wizard-close" type="button">×</button>
+    </div>
+    <div style="background:#fff; border-radius:10px; padding:14px; display:flex; justify-content:center;">
+      <img src="${qrSrc}" alt="QR code" width="220" height="220" style="display:block;">
+    </div>
+    <div style="text-align:center; font-size:13px; color:var(--muted); word-break:break-all;">${APP_URL}</div>
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <button class="wiz-submit" data-act="wa" style="background:#22c55e;">💬 Share on WhatsApp</button>
+      <button class="wiz-submit" data-act="email" style="background:var(--accent);">📧 Share via Email</button>
+      <button class="wiz-submit" data-act="copy" style="background:var(--surface);">🔗 Copy link</button>
+    </div>`;
+  box.querySelector('.wizard-close').onclick = () => overlay.remove();
+  box.querySelector('[data-act="wa"]').onclick = shareAppWhatsApp;
+  box.querySelector('[data-act="email"]').onclick = shareAppEmail;
+  box.querySelector('[data-act="copy"]').onclick = copyAppLink;
+  overlay.appendChild(box); document.body.appendChild(overlay);
+}
+window.openShareAppModal = openShareAppModal;
+
+function maybeShowFirstAdvicePrompt() {
+  try {
+    if (localStorage.getItem('lf_first_advice_prompted')) return;
+    localStorage.setItem('lf_first_advice_prompted', '1');
+  } catch(e) {}
+  setTimeout(() => {
+    const div = document.createElement('div');
+    div.style.cssText = 'margin: 8px 16px 8px 42px; padding:12px 14px; background:var(--surface-2); border:1px solid var(--primary-soft); border-radius:12px; display:flex; flex-wrap:wrap; gap:10px; align-items:center; font-size:13px;';
+    div.innerHTML = `
+      <div style="flex:1; min-width:180px;">Was CARA helpful? Share LabourFlow with a colleague.</div>
+      <button class="wiz-submit" style="width:auto; background:#22c55e; padding:8px 14px;" data-act="wa">💬 Share</button>
+      <button class="wiz-submit" style="width:auto; background:transparent; border:1px solid var(--border); padding:8px 14px;" data-act="x">Dismiss</button>`;
+    div.querySelector('[data-act="wa"]').onclick = () => { shareAppWhatsApp(); div.remove(); };
+    div.querySelector('[data-act="x"]').onclick = () => div.remove();
+    chatEl.appendChild(div);
+    chatEl.scrollTop = chatEl.scrollHeight;
+  }, 400);
+}
 
 // Home button + browser back guard
 const homeBtn = document.getElementById('homeBtn');
