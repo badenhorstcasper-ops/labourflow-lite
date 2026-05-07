@@ -429,7 +429,7 @@ const SUPABASE_URL = 'https://ckjevliuwlijfvdjxmmp.supabase.co';
 const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNramV2bGl1d2xpamZ2ZGp4bW1wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwNjgzMzMsImV4cCI6MjA5MzY0NDMzM30.ipCCqFvjr_m2LNwqnRu0kRarrSPrfVZ_BZ1QN3bwyYw';
 const ENDPOINT = SUPABASE_URL + '/functions/v1/super-endpoint';
 const FREE_LIMIT = 5;
-const SYSTEM_PROMPT_BASE = "You are CARA, Compliance and Relations Adviser at LabourFlow powered by iNRECO. Help SA employers with IR guidance. Always greet with 'Hello' — never use time-based greetings like 'Good morning', 'Good afternoon', 'Good evening', or 'Good day'. Never include any disclaimer about legal advice in your responses (a global app footer already shows the disclaimer). When the user sends you a 'Topic:' message with a list of facts, those facts come from a structured wizard the user just completed — do NOT ask further questions and do NOT repeat or summarise the facts back. Go straight into giving complete, professional, actionable advice with clear steps the employer should take.";
+const SYSTEM_PROMPT_BASE = "You are CARA, Compliance and Relations Adviser at LabourFlow powered by iNRECO. Help SA employers with IR guidance. Always greet with 'Hello' — never use time-based greetings. Never include legal-advice disclaimers (the app footer already shows one). When you receive a 'Topic:' message with structured facts from a wizard, NEVER ask follow-up questions and NEVER repeat/summarise the facts. Go straight into advice. RESPONSE LENGTH RULES: For SIMPLE matters (warnings, AWOL notices, suspensions, grievances, poor performance, union letters, incapacity, disciplinary hearings) keep it brief and practical — a one-line risk flag, then numbered practical steps, no case law, no legal theory, no padding. For COMPLEX matters (CCMA referrals, retrenchments, automatically unfair dismissal) include relevant SA case law (e.g. Sidumo, NUM v De Beers, Fidelity Cash) and detailed legal context. The wizard message will say 'Complexity: simple' or 'Complexity: complex' — obey it. Address the employee by the name given in the wizard. Never ask for information already given in the wizard.";
 
 const supabase = createClient(SUPABASE_URL, ANON_KEY);
 window.supabase = supabase;
@@ -699,6 +699,27 @@ const WIZARDS = {
   },
 };
 
+// Common fields appended to every wizard
+const COMMON_FIELDS = [
+  { id: "_employee_name", label: "Employee's full name", type: "text", required: true },
+  { id: "_today", label: "Today's date", type: "date", autoToday: true },
+  { id: "_hearing_date", label: "Hearing date (if applicable — minimum 48 hours from today)", type: "date", optional: true },
+];
+
+// Complexity + documents per topic
+const TOPIC_META = {
+  "No-show/AWOL":        { complexity: "simple",  docs: ["AWOL Notice to Return to Work","Show-Cause Letter","Notice of Disciplinary Hearing"] },
+  "Issue warning":       { complexity: "simple",  docs: ["Written Warning","Final Written Warning"] },
+  "Disciplinary hearing":{ complexity: "simple",  docs: ["Notice of Disciplinary Hearing","Charge Sheet","Outcome Letter"] },
+  "CCMA referral":       { complexity: "complex", docs: ["LRA 7.12 Response","Pre-arbitration Bundle Index","Witness Statement Template"] },
+  "Grievance":           { complexity: "simple",  docs: ["Grievance Acknowledgement","Grievance Outcome Letter"] },
+  "Suspension":          { complexity: "simple",  docs: ["Precautionary Suspension Letter","Notice to Attend Hearing"] },
+  "Retrenchment":        { complexity: "complex", docs: ["Section 189(3) Notice","Consultation Minutes Template","Retrenchment Outcome Letter"] },
+  "Poor performance":    { complexity: "simple",  docs: ["Performance Counselling Letter","Performance Improvement Plan (PIP)","Notice of Incapacity Hearing"] },
+  "Union/attorney":      { complexity: "complex", docs: ["Response to Attorney Letter","Without-Prejudice Settlement Offer"] },
+  "Incapacity":          { complexity: "simple",  docs: ["Notice of Incapacity Enquiry","Outcome Letter — Incapacity"] },
+};
+
 const TOPIC_KEYWORDS = {
   "No-show/AWOL": ["no-show","no show","awol","absconded","abscond","didn't show","didn't come","not at work","absent","absconding"],
   "Issue warning": ["warning","warn","verbal warning","written warning"],
@@ -742,9 +763,10 @@ function openWizard(topic, prefillUserText) {
   body.appendChild(header);
 
   const form = document.createElement('form');
-  form.onsubmit = e => { e.preventDefault(); submitWizard(topic, w, form, prefillUserText); };
+  const allFields = [...w.fields, ...COMMON_FIELDS];
+  form.onsubmit = e => { e.preventDefault(); submitWizard(topic, w, form, allFields, prefillUserText); };
 
-  w.fields.forEach(f => {
+  allFields.forEach(f => {
     const wrap = document.createElement('div');
     wrap.className = 'wiz-field';
     const lbl = document.createElement('label');
@@ -754,6 +776,8 @@ function openWizard(topic, prefillUserText) {
     if (f.type === 'text' || f.type === 'date') {
       const i = document.createElement('input');
       i.className = 'wiz-input'; i.type = f.type === 'date' ? 'date' : 'text'; i.name = f.id;
+      if (f.autoToday) i.value = new Date().toISOString().slice(0,10);
+      if (f.required) i.required = true;
       wrap.appendChild(i);
     } else if (f.type === 'textarea') {
       const i = document.createElement('textarea');
@@ -789,50 +813,146 @@ function openWizard(topic, prefillUserText) {
 function closeWizard() { $('wizardOverlay').classList.remove('show'); }
 window.closeWizard = closeWizard;
 
-function submitWizard(topic, w, form, prefillUserText) {
+// Track the most recent matter (topic + collected facts) so document buttons can reuse it
+let currentMatter = null;
+
+function submitWizard(topic, w, form, allFields, prefillUserText) {
   const data = new FormData(form);
-  const lines = [`Topic: ${w.title}`];
+  const meta = TOPIC_META[topic] || { complexity: 'simple', docs: [] };
+  const facts = {};
+  const lines = [`Topic: ${w.title}`, `Complexity: ${meta.complexity}`];
   if (prefillUserText) lines.push(`Original message: ${prefillUserText}`);
-  w.fields.forEach(f => {
+  allFields.forEach(f => {
     if (f.type === 'check') {
       const vals = data.getAll(f.id);
-      if (vals.length) lines.push(`- ${f.label} ${vals.join(', ')}`);
+      if (vals.length) { facts[f.label] = vals.join(', '); lines.push(`- ${f.label}: ${vals.join(', ')}`); }
     } else {
       const v = (data.get(f.id) || '').toString().trim();
-      if (v) lines.push(`- ${f.label} ${v}`);
+      if (v) { facts[f.label] = v; lines.push(`- ${f.label}: ${v}`); }
     }
   });
-  lines.push('', 'Please give me your full, professional advice based on these facts. Do not ask further questions unless absolutely critical.');
+  if (meta.complexity === 'simple') {
+    lines.push('', 'Give brief practical advice only: one-line risk flag, then numbered steps. No case law, no legal theory, no padding.');
+  } else {
+    lines.push('', 'Give detailed advice including relevant SA case law and legal context, then numbered practical steps.');
+  }
+  currentMatter = { topic, facts, complexity: meta.complexity, docs: meta.docs };
   closeWizard();
   input.value = lines.join('\n');
   sendMessage({ countAsQuestion: true });
+}
+
+// Document modal: render generated document with copy/share/download
+function showDocumentModal(title, content) {
+  const overlay = document.createElement('div');
+  overlay.className = 'wizard-overlay show';
+  overlay.style.zIndex = 300;
+  const box = document.createElement('div');
+  box.className = 'wizard';
+  box.style.maxWidth = '720px';
+  box.innerHTML = `
+    <div class="wizard-header">
+      <div><h2></h2><p>Review, then copy, share or download.</p></div>
+      <button class="wizard-close" type="button">×</button>
+    </div>
+    <div class="doc-body" style="background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:14px; max-height:50vh; overflow-y:auto; font-size:13px; line-height:1.55;"></div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <button class="wiz-submit" data-act="copy" style="flex:1; min-width:120px;">Copy</button>
+      <button class="wiz-submit" data-act="wa" style="flex:1; min-width:120px; background:#22c55e;">Share via WhatsApp</button>
+      <button class="wiz-submit" data-act="dl" style="flex:1; min-width:120px; background:var(--surface);">Download</button>
+    </div>`;
+  box.querySelector('h2').textContent = title;
+  box.querySelector('.doc-body').innerHTML = renderMarkdown(content);
+  box.querySelector('.wizard-close').onclick = () => overlay.remove();
+  box.querySelector('[data-act="copy"]').onclick = () => { navigator.clipboard.writeText(content); };
+  box.querySelector('[data-act="wa"]').onclick = () => {
+    window.open('https://wa.me/?text=' + encodeURIComponent(content), '_blank');
+  };
+  box.querySelector('[data-act="dl"]').onclick = () => {
+    const blob = new Blob([content], { type: 'text/plain' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = title.replace(/[^a-z0-9]+/gi,'_') + '.txt';
+    a.click();
+  };
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+}
+
+async function generateDocument(docName) {
+  if (!currentMatter) return;
+  if (usageCount >= FREE_LIMIT) { openUpgrade(); return; }
+  showTyping();
+  const { data: newCount } = await supabase.rpc('increment_question_usage');
+  if (typeof newCount === 'number') { usageCount = newCount; updateTrialBadge(); }
+
+  const factsText = Object.entries(currentMatter.facts).map(([k,v]) => `- ${k}: ${v}`).join('\n');
+  const prompt = `Generate the following document for an SA employer. Output ONLY the final document text — no preamble, no commentary, ready to copy/paste/print.\n\nDocument: ${docName}\nMatter type: ${currentMatter.topic}\n\nFacts already collected (use these — do not ask for anything else):\n${factsText}\n\nInclude proper SA labour-law structure: header, addressee (employee name from facts), date (today's date from facts), subject line, body, signature block. Keep it professional and concise.`;
+
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token || ANON_KEY;
+    const res = await fetch(ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+token, 'apikey':ANON_KEY },
+      body: JSON.stringify({
+        system: 'You are CARA. Output only the requested document text exactly as it should appear on company letterhead. No commentary, no questions.',
+        messages: [{ role:'user', content: prompt }],
+        profile: currentProfile || {}
+      })
+    });
+    hideTyping();
+    if (!res.ok) throw new Error('Request failed (' + res.status + ')');
+    const data = await res.json();
+    const extract = c => !c ? '' : typeof c==='string' ? c : Array.isArray(c) ? c.map(p => typeof p==='string'?p:(p?.text||'')).join('') : (c.text||'');
+    const reply = extract(data.content) || (data.choices?.[0] && (extract(data.choices[0].message?.content) || data.choices[0].text)) || extract(data.reply) || extract(data.message) || data.text || '';
+    showDocumentModal(docName, reply);
+  } catch (err) {
+    hideTyping();
+    addMessageToDOM('assistant', '⚠️ ' + (err.message || 'Document generation failed.'));
+  }
 }
 
 function renderFollowups() {
   removeFollowups();
   const div = document.createElement('div');
   div.className = 'followups'; div.id = 'followups';
-  const items = [
-    { label: 'Draft a document', text: 'Please draft the appropriate document for this matter.' },
-    { label: 'Ask a follow-up question', text: '' },
+
+  if (currentMatter && currentMatter.docs && currentMatter.docs.length) {
+    currentMatter.docs.forEach(docName => {
+      const b = document.createElement('button');
+      b.className = 'followup-btn';
+      b.style.background = 'var(--primary)';
+      b.style.borderColor = 'var(--primary)';
+      b.style.color = '#fff';
+      b.textContent = '📄 ' + docName;
+      b.onclick = () => generateDocument(docName);
+      div.appendChild(b);
+    });
+  }
+
+  const next = [
+    { label: "What if they still don\u2019t respond?", text: 'What if they still do not respond?' },
+    { label: 'What happens next?', text: 'What happens next in this process?' },
     { label: 'Start a new matter', text: '__new__' },
   ];
-  items.forEach(f => {
+  next.forEach(f => {
     const b = document.createElement('button');
     b.className = 'followup-btn'; b.textContent = f.label;
     b.onclick = () => {
       removeFollowups();
       if (f.text === '__new__') {
         state.messages = [];
+        currentMatter = null;
         chatEl.querySelectorAll('.msg').forEach(n => n.remove());
         emptyState.style.display = '';
         return;
       }
-      if (f.text) { input.value = f.text; sendMessage(); }
-      else { input.focus(); }
+      input.value = f.text; sendMessage();
     };
     div.appendChild(b);
   });
+
   chatEl.appendChild(div);
   chatEl.scrollTop = chatEl.scrollHeight;
 }
