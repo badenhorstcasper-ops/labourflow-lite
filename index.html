@@ -162,24 +162,44 @@
   .send-btn:hover:not(:disabled) { background: var(--primary-hover); }
   .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-  /* Answer chips */
-  .chip-group {
-    display: flex; flex-wrap: wrap; gap: 8px;
-    padding: 4px 0 6px 42px; max-width: 90%;
+  /* Answer form (checkboxes/radios) */
+  .answer-form {
+    margin: 4px 0 6px 42px; max-width: 90%;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 14px;
+    display: flex; flex-direction: column; gap: 8px;
     animation: chipFade .25s ease;
   }
   @keyframes chipFade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
-  .chip {
-    background: var(--primary); color: #fff;
-    border: 1px solid var(--primary); padding: 8px 14px;
-    border-radius: 999px; font-size: 13px; font-weight: 500;
-    cursor: pointer; transition: background .15s, transform .1s;
-    white-space: nowrap;
+  .answer-option {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; border-radius: 8px;
+    background: var(--surface-2); cursor: pointer;
+    font-size: 14px; color: var(--text);
+    border: 1px solid transparent;
   }
-  .chip:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
-  .chip:active { transform: scale(0.96); }
-  .chip.other { background: transparent; color: var(--primary-soft); border-color: var(--primary-soft); }
-  .chip.other:hover { background: rgba(59,130,246,0.12); }
+  .answer-option:hover { border-color: var(--primary-soft); }
+  .answer-option input { accent-color: var(--primary-soft); width: 16px; height: 16px; cursor: pointer; }
+  .answer-option.other { color: var(--primary-soft); }
+  .confirm-btn {
+    align-self: flex-start; margin-top: 4px;
+    background: var(--primary); color: #fff; border: none;
+    padding: 9px 18px; border-radius: 8px; font-size: 13px;
+    font-weight: 600; cursor: pointer;
+  }
+  .confirm-btn:hover:not(:disabled) { background: var(--primary-hover); }
+  .confirm-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Global footer */
+  .app-footer {
+    text-align: center; font-size: 11px; color: var(--muted);
+    padding: 8px 12px; border-top: 1px solid var(--border);
+    background: rgba(10,31,68,0.6); line-height: 1.4;
+  }
+
+  /* T&C checkbox row */
+  .terms-row { display: flex; gap: 8px; align-items: flex-start; font-size: 12px; color: var(--muted); line-height: 1.4; }
+  .terms-row input { margin-top: 2px; accent-color: var(--primary-soft); }
 
   /* Modal */
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 100; padding: 16px; backdrop-filter: blur(4px); }
