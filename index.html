@@ -427,6 +427,7 @@ async function doSignup() {
   err.textContent = ''; info.textContent = '';
   if (p1 !== p2) { err.textContent = 'Passwords do not match.'; return; }
   if (p1.length < 6) { err.textContent = 'Password must be at least 6 characters.'; return; }
+  if (!$('su-terms').checked) { err.textContent = 'Please accept the Terms and Conditions.'; return; }
   $('su-btn').disabled = true;
   const { data, error } = await supabase.auth.signUp({
     email, password: p1,
