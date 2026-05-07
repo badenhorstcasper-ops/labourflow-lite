@@ -400,7 +400,7 @@ const SUPABASE_URL = 'https://ckjevliuwlijfvdjxmmp.supabase.co';
 const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNramV2bGl1d2xpamZ2ZGp4bW1wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwNjgzMzMsImV4cCI6MjA5MzY0NDMzM30.ipCCqFvjr_m2LNwqnRu0kRarrSPrfVZ_BZ1QN3bwyYw';
 const ENDPOINT = SUPABASE_URL + '/functions/v1/super-endpoint';
 const FREE_LIMIT = 5;
-const SYSTEM_PROMPT_BASE = "You are CARA, Compliance and Relations Adviser at LabourFlow powered by iNRECO. Help SA employers with IR guidance. Always greet with 'Hello' — never use time-based greetings like 'Good morning', 'Good afternoon', 'Good evening', or 'Good day'.";
+const SYSTEM_PROMPT_BASE = "You are CARA, Compliance and Relations Adviser at LabourFlow powered by iNRECO. Help SA employers with IR guidance. Always greet with 'Hello' — never use time-based greetings like 'Good morning', 'Good afternoon', 'Good evening', or 'Good day'. Never include any disclaimer about legal advice in your responses (a global app footer already shows the disclaimer). When the user submits answers to your follow-up questions, do NOT repeat the questions back or summarise the user's answers — go straight into giving clear, professional, actionable advice.";
 
 const supabase = createClient(SUPABASE_URL, ANON_KEY);
 window.supabase = supabase;
