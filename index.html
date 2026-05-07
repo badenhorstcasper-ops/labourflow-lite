@@ -544,60 +544,75 @@ const QUICK_PROMPTS = {
   "Incapacity":"How do I handle an incapacity due to ill health process?"
 };
 
-const OTHER_CHIP = "Other - I'll type";
+const OTHER_LABEL = "Other - I'll type";
 const CHIP_SETS = {
   "No-show/AWOL": [
     { match: ["how many days","days absent","days has","how long"], chips: ["1 day","2-3 days","4-5 days","More than 5 days"] },
-    { match: ["any contact","tried to contact","heard from","reached out","made contact"], chips: ["No contact at all","Called - no answer","They WhatsApped me","They sent a message"] },
-    { match: ["previous warning","prior warning","disciplinary record","any warnings"], chips: ["No previous warnings","Verbal warning","Written warning","Final written warning"] },
+    { match: ["any contact","tried to contact","heard from","reached out","made contact"], multi: true, chips: ["No contact at all","Called - no answer","They WhatsApped me","They sent a message"] },
+    { match: ["previous warning","prior warning","disciplinary record","any warnings"], multi: true, chips: ["No previous warnings","Verbal warning","Written warning","Final written warning"] },
     { match: ["job title","position","what is their role","what role"], chips: ["General worker","Supervisor","Manager","Driver","Security officer","Cleaner"] },
     { match: ["emergency contact","next of kin"], chips: ["Yes I have one","No I don't"] },
     { match: ["live-in","live in","live-out","live out","accommodation"], chips: ["Live-out","Live-in","Not applicable"] },
+    { match: ["still employed","still on the books"], chips: ["Yes still employed","No - resigned","No - dismissed"] },
+    { match: ["documentation","what documents","records available"], multi: true, chips: ["Employment contract","Attendance register","WhatsApp messages","Witness statements","Disciplinary records"] },
+    { match: ["outcome","what do you want","what would you like"], multi: true, chips: ["Issue warning","Disciplinary hearing","Dismissal","Deem absconded","Just guidance"] },
   ],
   "Issue warning": [
     { match: ["type of misconduct","what did they do","nature of"], chips: ["Late coming","Absenteeism","Insubordination","Poor work quality","Misuse of property"] },
-    { match: ["previous warning","prior warning"], chips: ["No previous warnings","Verbal warning","Written warning","Final written warning"] },
+    { match: ["previous warning","prior warning"], multi: true, chips: ["No previous warnings","Verbal warning","Written warning","Final written warning"] },
     { match: ["job title","position","what role"], chips: ["General worker","Supervisor","Manager","Driver","Security officer","Cleaner"] },
+    { match: ["documentation","records available"], multi: true, chips: ["Employment contract","Attendance register","Witness statements","Photos/evidence"] },
+    { match: ["outcome","what do you want"], multi: true, chips: ["Verbal warning","Written warning","Final written warning","Just guidance"] },
   ],
   "Disciplinary hearing": [
     { match: ["allegation","charge","misconduct"], chips: ["Theft","Dishonesty","Insubordination","Absenteeism","Assault","Negligence"] },
-    { match: ["previous warning","prior warning"], chips: ["No previous warnings","Verbal warning","Written warning","Final written warning"] },
+    { match: ["previous warning","prior warning"], multi: true, chips: ["No previous warnings","Verbal warning","Written warning","Final written warning"] },
     { match: ["job title","position","what role"], chips: ["General worker","Supervisor","Manager","Driver","Security officer","Cleaner"] },
+    { match: ["documentation","records available"], multi: true, chips: ["Charge sheet","Witness statements","CCTV footage","Documentary evidence"] },
+    { match: ["outcome","what do you want"], multi: true, chips: ["Final written warning","Dismissal","Demotion","Just guidance"] },
   ],
   "CCMA referral": [
     { match: ["nature of dispute","type of dispute","what is the dispute"], chips: ["Unfair dismissal","Unfair labour practice","Wages/benefits","Discrimination"] },
     { match: ["received","when did you receive","date of"], chips: ["Today","This week","More than a week ago"] },
     { match: ["job title","position","what role"], chips: ["General worker","Supervisor","Manager","Driver","Security officer","Cleaner"] },
+    { match: ["documentation","records available"], multi: true, chips: ["LRA 7.11 form","Dismissal letter","Hearing minutes","Employment contract"] },
+    { match: ["outcome","what do you want"], multi: true, chips: ["Settle","Conciliate","Proceed to arbitration","Just guidance"] },
   ],
   "Grievance": [
     { match: ["nature of grievance","what is the grievance","what is it about"], chips: ["Harassment","Unfair treatment","Working conditions","Pay dispute","Discrimination"] },
     { match: ["in writing","written","verbal"], chips: ["In writing","Verbally","Both"] },
     { match: ["job title","position","what role"], chips: ["General worker","Supervisor","Manager","Driver","Security officer","Cleaner"] },
+    { match: ["documentation","records available"], multi: true, chips: ["Grievance form","Witness statements","Emails","Policies"] },
+    { match: ["outcome","what do you want"], multi: true, chips: ["Investigate","Mediate","Formal hearing","Just guidance"] },
   ],
   "Suspension": [
-    { match: ["paid or unpaid","precautionary","punitive"], chips: ["Precautionary (paid)","Punitive (unpaid)","Not sure"] },
+    { match: ["paid or unpaid","precautionary","punitive","type of suspension"], chips: ["Precautionary (paid)","Punitive (unpaid)","Not sure"] },
     { match: ["allegation","reason","misconduct"], chips: ["Theft","Dishonesty","Investigation pending","Workplace safety"] },
     { match: ["job title","position","what role"], chips: ["General worker","Supervisor","Manager","Driver","Security officer","Cleaner"] },
+    { match: ["documentation","records available"], multi: true, chips: ["Suspension letter","Investigation notes","Witness statements"] },
   ],
   "Retrenchment": [
     { match: ["how many employees","number of employees","affected"], chips: ["1 employee","2-9 employees","10-49 employees","50+ employees"] },
     { match: ["operational requirement","reason","why"], chips: ["Financial difficulties","Restructuring","Closure","Technology change"] },
     { match: ["consulted","consultation","notice issued"], chips: ["Not yet","Started consultation","Notice issued"] },
+    { match: ["documentation","records available"], multi: true, chips: ["Section 189 notice","Financials","Selection criteria","Alternatives considered"] },
   ],
   "Poor performance": [
     { match: ["how long has","employed","how long have"], chips: ["Less than 6 months","6-12 months","1-3 years","More than 3 years"] },
-    { match: ["counselled","training","assistance","support"], chips: ["Yes - counselled","Yes - training given","No support yet"] },
+    { match: ["counselled","training","assistance","support"], multi: true, chips: ["Counselled","Training given","PIP issued","No support yet"] },
     { match: ["job title","position","what role"], chips: ["General worker","Supervisor","Manager","Driver","Security officer","Cleaner"] },
+    { match: ["outcome","what do you want"], multi: true, chips: ["Performance plan","Final warning","Dismissal","Just guidance"] },
   ],
   "Union/attorney": [
-    { match: ["union or attorney","representative","who is"], chips: ["Union official","Attorney","Fellow employee","Not sure"] },
+    { match: ["union or attorney","representative","who is","union representation"], chips: ["Union official","Attorney","Fellow employee","Not sure"] },
     { match: ["recognised","recognition agreement","majority"], chips: ["Yes - recognised","No","Not sure"] },
     { match: ["stage","what stage","hearing"], chips: ["Disciplinary hearing","CCMA","Grievance","Investigation"] },
   ],
   "Incapacity": [
     { match: ["nature of illness","condition","diagnosis"], chips: ["Physical injury","Chronic illness","Mental health","Substance abuse","Not disclosed"] },
     { match: ["how long","duration","absent"], chips: ["Less than 1 month","1-3 months","3-6 months","More than 6 months"] },
-    { match: ["medical certificate","sick note","doctor"], chips: ["Yes - submitted","Some submitted","None submitted"] },
+    { match: ["medical certificate","sick note","doctor"], multi: true, chips: ["Submitted certificates","Some submitted","None submitted"] },
+    { match: ["still employed"], chips: ["Yes still employed","No - resigned","No - medically boarded"] },
   ],
 };
 
@@ -613,32 +628,65 @@ function pickChipSet(topic, replyText) {
     if (askedKeys.has(key)) continue;
     if (sets[i].match.some(kw => lower.includes(kw))) {
       askedKeys.add(key);
-      return sets[i].chips;
+      return sets[i];
     }
   }
   return null;
 }
 
-function renderChips(chips) {
-  removeChips();
-  const wrap = document.createElement('div');
-  wrap.className = 'chip-group'; wrap.id = 'chipGroup';
-  [...chips, OTHER_CHIP].forEach(label => {
-    const c = document.createElement('button');
-    c.className = 'chip' + (label === OTHER_CHIP ? ' other' : '');
-    c.textContent = label;
-    c.addEventListener('click', () => {
-      removeChips();
-      if (label === OTHER_CHIP) { input.focus(); return; }
-      input.value = label;
-      sendMessage();
-    });
-    wrap.appendChild(c);
+function renderAnswerForm(set) {
+  removeAnswerForm();
+  const multi = !!set.multi;
+  const form = document.createElement('div');
+  form.className = 'answer-form'; form.id = 'answerForm';
+  const groupName = 'ans_' + Date.now();
+  set.chips.forEach((label, idx) => {
+    const row = document.createElement('label');
+    row.className = 'answer-option';
+    const inp = document.createElement('input');
+    inp.type = multi ? 'checkbox' : 'radio';
+    if (!multi) inp.name = groupName;
+    inp.value = label;
+    const span = document.createElement('span');
+    span.textContent = label;
+    row.appendChild(inp); row.appendChild(span);
+    form.appendChild(row);
   });
-  chatEl.appendChild(wrap);
+  // Other option (always available)
+  const otherRow = document.createElement('label');
+  otherRow.className = 'answer-option other';
+  const otherInp = document.createElement('input');
+  otherInp.type = 'checkbox'; otherInp.id = 'ansOther';
+  const otherSpan = document.createElement('span');
+  otherSpan.textContent = OTHER_LABEL;
+  otherRow.appendChild(otherInp); otherRow.appendChild(otherSpan);
+  form.appendChild(otherRow);
+
+  const btn = document.createElement('button');
+  btn.className = 'confirm-btn'; btn.textContent = 'Confirm';
+  btn.addEventListener('click', () => {
+    const selected = Array.from(form.querySelectorAll('input:checked'))
+      .filter(i => i.id !== 'ansOther')
+      .map(i => i.value);
+    const wantsOther = otherInp.checked;
+    removeAnswerForm();
+    if (wantsOther) {
+      if (selected.length) input.value = selected.join(', ') + '. Also: ';
+      input.focus();
+      return;
+    }
+    if (!selected.length) { input.focus(); return; }
+    input.value = selected.join(', ');
+    sendMessage();
+  });
+  form.appendChild(btn);
+
+  chatEl.appendChild(form);
   chatEl.scrollTop = chatEl.scrollHeight;
 }
-function removeChips() { const g = $('chipGroup'); if (g) g.remove(); }
+function removeAnswerForm() { const g = $('answerForm'); if (g) g.remove(); }
+// Backwards-compat aliases used elsewhere
+const removeChips = removeAnswerForm;
 
 const qaWrap = $('quickActions');
 QUICK_ACTIONS.forEach(label => {
