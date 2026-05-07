@@ -847,6 +847,10 @@ const sendBtn = $('sendBtn');
 const micBtn = $('micBtn');
 
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function renderMarkdown(s){
+  try { if (window.marked) { marked.setOptions({ breaks: true, gfm: true }); return marked.parse(String(s||'')); } } catch(e){}
+  return escapeHtml(s).replace(/\n/g,'<br>');
+}
 function addMessageToDOM(role, content) {
   const msg = document.createElement('div');
   msg.className = 'msg ' + (role === 'user' ? 'user' : 'bot');
@@ -854,7 +858,8 @@ function addMessageToDOM(role, content) {
   av.className = 'avatar ' + (role === 'user' ? 'user' : 'bot');
   av.textContent = role === 'user' ? 'U' : 'C';
   const bub = document.createElement('div');
-  bub.className = 'bubble'; bub.innerHTML = escapeHtml(content);
+  bub.className = 'bubble';
+  bub.innerHTML = role === 'assistant' ? renderMarkdown(content) : escapeHtml(content);
   msg.appendChild(av); msg.appendChild(bub);
   chatEl.appendChild(msg);
   chatEl.scrollTop = chatEl.scrollHeight;
