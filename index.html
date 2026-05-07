@@ -365,6 +365,9 @@
 <div class="screen" id="screen-app">
   <header>
     <div class="brand">
+      <button class="icon-btn" id="homeBtn" title="Home" aria-label="Home" style="color:var(--text);">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg>
+      </button>
       <div class="logo"><img src="/logo.png" alt="LabourFlow logo"></div>
     </div>
     <div class="header-right">
@@ -860,10 +863,16 @@ function showDocumentModal(title, content) {
       <button class="wiz-submit" data-act="copy" style="flex:1; min-width:120px;">Copy</button>
       <button class="wiz-submit" data-act="wa" style="flex:1; min-width:120px; background:#22c55e;">Share via WhatsApp</button>
       <button class="wiz-submit" data-act="dl" style="flex:1; min-width:120px; background:var(--surface);">Download</button>
+    </div>
+    <div style="border-top:1px solid var(--border); padding-top:12px; display:flex; flex-direction:column; gap:8px;">
+      <button class="wiz-submit" data-act="another" style="background:var(--primary);">Generate another document</button>
+      <button class="wiz-submit" data-act="continue" style="background:var(--surface);">Continue this matter</button>
+      <button class="wiz-submit" data-act="new" style="background:var(--surface-2); border:1px solid var(--border);">Start a new matter</button>
     </div>`;
   box.querySelector('h2').textContent = title;
   box.querySelector('.doc-body').innerHTML = renderMarkdown(content);
-  box.querySelector('.wizard-close').onclick = () => overlay.remove();
+  const closeModal = () => overlay.remove();
+  box.querySelector('.wizard-close').onclick = closeModal;
   box.querySelector('[data-act="copy"]').onclick = () => { navigator.clipboard.writeText(content); };
   box.querySelector('[data-act="wa"]').onclick = () => {
     window.open('https://wa.me/?text=' + encodeURIComponent(content), '_blank');
@@ -875,6 +884,9 @@ function showDocumentModal(title, content) {
     a.download = title.replace(/[^a-z0-9]+/gi,'_') + '.txt';
     a.click();
   };
+  box.querySelector('[data-act="another"]').onclick = () => { closeModal(); renderFollowups(); chatEl.scrollTop = chatEl.scrollHeight; };
+  box.querySelector('[data-act="continue"]').onclick = () => { closeModal(); renderFollowups(); };
+  box.querySelector('[data-act="new"]').onclick = () => { closeModal(); resetToNewMatter(); };
   overlay.appendChild(box);
   document.body.appendChild(overlay);
 }
@@ -1023,22 +1035,68 @@ function renderFollowups() {
     b.className = 'followup-btn'; b.textContent = f.label;
     b.onclick = () => {
       removeFollowups();
-      if (f.text === '__new__') {
-        state.messages = [];
-        currentMatter = null;
-        chatEl.querySelectorAll('.msg').forEach(n => n.remove());
-        emptyState.style.display = '';
-        return;
-      }
+      if (f.text === '__new__') { resetToNewMatter(); return; }
       input.value = f.text; sendMessage();
     };
     div.appendChild(b);
   });
 
   chatEl.appendChild(div);
+
+  // Small text link below chips: "← Start a new matter"
+  const link = document.createElement('div');
+  link.id = 'newMatterLink';
+  link.style.cssText = 'margin: 4px 0 6px 42px; font-size:12px;';
+  link.innerHTML = '<a class="auth-link" style="cursor:pointer;">← Start a new matter</a>';
+  link.querySelector('a').onclick = resetToNewMatter;
+  chatEl.appendChild(link);
+
   chatEl.scrollTop = chatEl.scrollHeight;
 }
-function removeFollowups() { const f = $('followups'); if (f) f.remove(); }
+function removeFollowups() {
+  const f = $('followups'); if (f) f.remove();
+  const l = $('newMatterLink'); if (l) l.remove();
+}
+
+function resetToNewMatter() {
+  state.messages = [];
+  currentMatter = null;
+  chatEl.querySelectorAll('.msg').forEach(n => n.remove());
+  removeFollowups();
+  emptyState.style.display = '';
+  chatEl.scrollTop = 0;
+}
+window.resetToNewMatter = resetToNewMatter;
+
+// Generic 2-option popup used by home button and browser back
+function showNavConfirm() {
+  if (document.getElementById('navConfirmOverlay')) return;
+  const overlay = document.createElement('div');
+  overlay.className = 'wizard-overlay show';
+  overlay.id = 'navConfirmOverlay';
+  overlay.style.zIndex = 500;
+  const box = document.createElement('div');
+  box.className = 'wizard';
+  box.style.maxWidth = '420px';
+  box.innerHTML = `
+    <div class="wizard-header">
+      <div><h2>What would you like to do?</h2><p>Continue your current matter or start fresh.</p></div>
+      <button class="wizard-close" type="button" data-act="close">×</button>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <button class="wiz-submit" data-act="continue" style="background:var(--surface);">Continue current matter</button>
+      <button class="wiz-submit" data-act="new">Start a new matter</button>
+    </div>`;
+  const close = () => overlay.remove();
+  box.querySelector('[data-act="close"]').onclick = close;
+  box.querySelector('[data-act="continue"]').onclick = close;
+  box.querySelector('[data-act="new"]').onclick = () => { close(); resetToNewMatter(); };
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+  // Push a state so back button can be intercepted again
+  history.pushState({ navGuard: true }, '');
+}
+window.showNavConfirm = showNavConfirm;
 
 const qaWrap = $('quickActions');
 QUICK_ACTIONS.forEach(label => {
@@ -1196,11 +1254,23 @@ function closeUpgrade(){ $('upgradeModal').classList.remove('show'); }
 function selectPlan(p){ alert('Selected plan: '+p+'\n\nCheckout flow coming soon.'); closeUpgrade(); }
 window.openUpgrade = openUpgrade; window.closeUpgrade = closeUpgrade; window.selectPlan = selectPlan;
 
+// Home button + browser back guard
+const homeBtn = document.getElementById('homeBtn');
+if (homeBtn) homeBtn.addEventListener('click', showNavConfirm);
+
+window.addEventListener('popstate', () => {
+  if (document.getElementById('screen-app')?.classList.contains('active')) {
+    showNavConfirm();
+  }
+});
+
 // --- Boot ---
 (async () => {
   const { data: { session } } = await supabase.auth.getSession();
   if (session) await afterLogin();
   else showScreen('welcome');
+  // Seed history so first back press triggers popstate instead of leaving
+  history.pushState({ navGuard: true }, '');
 })();
 
 supabase.auth.onAuthStateChange((_event, session) => {
