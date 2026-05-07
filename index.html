@@ -699,7 +699,26 @@ const WIZARDS = {
   },
 };
 
-const TOPIC_KEYWORDS = {
+// Common fields appended to every wizard
+const COMMON_FIELDS = [
+  { id: "_employee_name", label: "Employee's full name", type: "text", required: true },
+  { id: "_today", label: "Today's date", type: "date", autoToday: true },
+  { id: "_hearing_date", label: "Hearing date (if applicable — minimum 48 hours from today)", type: "date", optional: true },
+];
+
+// Complexity + documents per topic
+const TOPIC_META = {
+  "No-show/AWOL":        { complexity: "simple",  docs: ["AWOL Notice to Return to Work","Show-Cause Letter","Notice of Disciplinary Hearing"] },
+  "Issue warning":       { complexity: "simple",  docs: ["Written Warning","Final Written Warning"] },
+  "Disciplinary hearing":{ complexity: "simple",  docs: ["Notice of Disciplinary Hearing","Charge Sheet","Outcome Letter"] },
+  "CCMA referral":       { complexity: "complex", docs: ["LRA 7.12 Response","Pre-arbitration Bundle Index","Witness Statement Template"] },
+  "Grievance":           { complexity: "simple",  docs: ["Grievance Acknowledgement","Grievance Outcome Letter"] },
+  "Suspension":          { complexity: "simple",  docs: ["Precautionary Suspension Letter","Notice to Attend Hearing"] },
+  "Retrenchment":        { complexity: "complex", docs: ["Section 189(3) Notice","Consultation Minutes Template","Retrenchment Outcome Letter"] },
+  "Poor performance":    { complexity: "simple",  docs: ["Performance Counselling Letter","Performance Improvement Plan (PIP)","Notice of Incapacity Hearing"] },
+  "Union/attorney":      { complexity: "complex", docs: ["Response to Attorney Letter","Without-Prejudice Settlement Offer"] },
+  "Incapacity":          { complexity: "simple",  docs: ["Notice of Incapacity Enquiry","Outcome Letter — Incapacity"] },
+};
   "No-show/AWOL": ["no-show","no show","awol","absconded","abscond","didn't show","didn't come","not at work","absent","absconding"],
   "Issue warning": ["warning","warn","verbal warning","written warning"],
   "Disciplinary hearing": ["hearing","disciplinary hearing","disciplinary"],
