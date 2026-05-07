@@ -557,13 +557,30 @@ async function sendMessage() {
   }
 
   try {
-    const sys = SYSTEM_PROMPT_BASE + ` The user's company is "${currentProfile.company_name}" in the ${currentProfile.sector} sector with ${currentProfile.employee_range} employees.`;
+    // Always fetch the latest profile so CARA has the user's company context
+    let profile = currentProfile;
+    if (currentUser) {
+      const { data: fresh } = await supabase
+        .from('company_profiles')
+        .select('company_name, sector, employee_range')
+        .eq('user_id', currentUser.id)
+        .maybeSingle();
+      if (fresh) { profile = fresh; currentProfile = fresh; }
+    }
+    const companyName = profile?.company_name || 'the employer';
+    const sector = profile?.sector || 'their';
+    const employeeRange = profile?.employee_range || '';
+    const contextLine = `The employer's company name is ${companyName} and they operate in the ${sector} sector. Do not ask for their company name or sector — you already have this information.`;
+    const sys = SYSTEM_PROMPT_BASE + ' ' + contextLine + (employeeRange ? ` They have ${employeeRange} employees.` : '');
+    // Prepend the company context as a system-style message at the start of the conversation
+    const contextMessage = { role: 'system', content: contextLine };
+    const outgoingMessages = [contextMessage, ...state.messages];
     const { data: { session } } = await supabase.auth.getSession();
     const token = session?.access_token || ANON_KEY;
     const res = await fetch(ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+token, 'apikey':ANON_KEY },
-      body: JSON.stringify({ system: sys, messages: state.messages })
+      body: JSON.stringify({ system: sys, messages: outgoingMessages, profile: { company_name: companyName, sector, employee_range: employeeRange } })
     });
     hideTyping();
     if (!res.ok) throw new Error('Request failed (' + res.status + ')');
