@@ -466,7 +466,7 @@ async function afterLogin() {
 async function enterApp() {
   await loadUsage();
   $('welcomeHeading').textContent =
-    `Good day, ${currentProfile.company_name}. I'm CARA, your Compliance and Relations Adviser. Ask me anything about SA labour compliance for your ${currentProfile.sector.toLowerCase()} business.`;
+    `Hello, ${currentProfile.company_name}. I'm CARA, your Compliance and Relations Adviser. Ask me anything about SA labour compliance for your ${currentProfile.sector.toLowerCase()} business.`;
   showScreen('app');
   updateTrialBadge();
 }
