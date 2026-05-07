@@ -253,6 +253,7 @@
     .plans { grid-template-columns: 1fr; }
   }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
 
@@ -795,7 +796,7 @@ function submitWizard(topic, w, form, prefillUserText) {
   lines.push('', 'Please give me your full, professional advice based on these facts. Do not ask further questions unless absolutely critical.');
   closeWizard();
   input.value = lines.join('\n');
-  sendMessage();
+  sendMessage({ countAsQuestion: true });
 }
 
 function renderFollowups() {
@@ -846,6 +847,10 @@ const sendBtn = $('sendBtn');
 const micBtn = $('micBtn');
 
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function renderMarkdown(s){
+  try { if (window.marked) { marked.setOptions({ breaks: true, gfm: true }); return marked.parse(String(s||'')); } } catch(e){}
+  return escapeHtml(s).replace(/\n/g,'<br>');
+}
 function addMessageToDOM(role, content) {
   const msg = document.createElement('div');
   msg.className = 'msg ' + (role === 'user' ? 'user' : 'bot');
@@ -853,7 +858,8 @@ function addMessageToDOM(role, content) {
   av.className = 'avatar ' + (role === 'user' ? 'user' : 'bot');
   av.textContent = role === 'user' ? 'U' : 'C';
   const bub = document.createElement('div');
-  bub.className = 'bubble'; bub.innerHTML = escapeHtml(content);
+  bub.className = 'bubble';
+  bub.innerHTML = role === 'assistant' ? renderMarkdown(content) : escapeHtml(content);
   msg.appendChild(av); msg.appendChild(bub);
   chatEl.appendChild(msg);
   chatEl.scrollTop = chatEl.scrollHeight;
@@ -884,11 +890,12 @@ function handleUserSubmit() {
 }
 $('trialBadge').addEventListener('click', openUpgrade);
 
-async function sendMessage() {
+async function sendMessage(opts) {
   if (isSending) return;
   const text = input.value.trim();
   if (!text) return;
-  if (usageCount >= FREE_LIMIT) { openUpgrade(); return; }
+  const isWizardSubmission = !!(opts && opts.countAsQuestion) || text.startsWith('Topic:');
+  if (isWizardSubmission && usageCount >= FREE_LIMIT) { openUpgrade(); return; }
 
   emptyState.style.display = 'none';
   removeFollowups();
@@ -898,11 +905,13 @@ async function sendMessage() {
   isSending = true; sendBtn.disabled = true;
   showTyping();
 
-  // Increment usage atomically
-  const { data: newCount, error: rpcErr } = await supabase.rpc('increment_question_usage');
-  if (!rpcErr && typeof newCount === 'number') {
-    usageCount = newCount;
-    updateTrialBadge();
+  // Increment usage atomically only for new wizard submissions (one per matter)
+  if (isWizardSubmission) {
+    const { data: newCount, error: rpcErr } = await supabase.rpc('increment_question_usage');
+    if (!rpcErr && typeof newCount === 'number') {
+      usageCount = newCount;
+      updateTrialBadge();
+    }
   }
 
   try {
