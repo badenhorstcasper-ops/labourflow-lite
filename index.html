@@ -1026,22 +1026,68 @@ function renderFollowups() {
     b.className = 'followup-btn'; b.textContent = f.label;
     b.onclick = () => {
       removeFollowups();
-      if (f.text === '__new__') {
-        state.messages = [];
-        currentMatter = null;
-        chatEl.querySelectorAll('.msg').forEach(n => n.remove());
-        emptyState.style.display = '';
-        return;
-      }
+      if (f.text === '__new__') { resetToNewMatter(); return; }
       input.value = f.text; sendMessage();
     };
     div.appendChild(b);
   });
 
   chatEl.appendChild(div);
+
+  // Small text link below chips: "← Start a new matter"
+  const link = document.createElement('div');
+  link.id = 'newMatterLink';
+  link.style.cssText = 'margin: 4px 0 6px 42px; font-size:12px;';
+  link.innerHTML = '<a class="auth-link" style="cursor:pointer;">← Start a new matter</a>';
+  link.querySelector('a').onclick = resetToNewMatter;
+  chatEl.appendChild(link);
+
   chatEl.scrollTop = chatEl.scrollHeight;
 }
-function removeFollowups() { const f = $('followups'); if (f) f.remove(); }
+function removeFollowups() {
+  const f = $('followups'); if (f) f.remove();
+  const l = $('newMatterLink'); if (l) l.remove();
+}
+
+function resetToNewMatter() {
+  state.messages = [];
+  currentMatter = null;
+  chatEl.querySelectorAll('.msg').forEach(n => n.remove());
+  removeFollowups();
+  emptyState.style.display = '';
+  chatEl.scrollTop = 0;
+}
+window.resetToNewMatter = resetToNewMatter;
+
+// Generic 2-option popup used by home button and browser back
+function showNavConfirm() {
+  if (document.getElementById('navConfirmOverlay')) return;
+  const overlay = document.createElement('div');
+  overlay.className = 'wizard-overlay show';
+  overlay.id = 'navConfirmOverlay';
+  overlay.style.zIndex = 500;
+  const box = document.createElement('div');
+  box.className = 'wizard';
+  box.style.maxWidth = '420px';
+  box.innerHTML = `
+    <div class="wizard-header">
+      <div><h2>What would you like to do?</h2><p>Continue your current matter or start fresh.</p></div>
+      <button class="wizard-close" type="button" data-act="close">×</button>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <button class="wiz-submit" data-act="continue" style="background:var(--surface);">Continue current matter</button>
+      <button class="wiz-submit" data-act="new">Start a new matter</button>
+    </div>`;
+  const close = () => overlay.remove();
+  box.querySelector('[data-act="close"]').onclick = close;
+  box.querySelector('[data-act="continue"]').onclick = close;
+  box.querySelector('[data-act="new"]').onclick = () => { close(); resetToNewMatter(); };
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+  // Push a state so back button can be intercepted again
+  history.pushState({ navGuard: true }, '');
+}
+window.showNavConfirm = showNavConfirm;
 
 const qaWrap = $('quickActions');
 QUICK_ACTIONS.forEach(label => {
