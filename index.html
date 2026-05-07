@@ -890,11 +890,12 @@ function handleUserSubmit() {
 }
 $('trialBadge').addEventListener('click', openUpgrade);
 
-async function sendMessage() {
+async function sendMessage(opts) {
   if (isSending) return;
   const text = input.value.trim();
   if (!text) return;
-  if (usageCount >= FREE_LIMIT) { openUpgrade(); return; }
+  const isWizardSubmission = !!(opts && opts.countAsQuestion) || text.startsWith('Topic:');
+  if (isWizardSubmission && usageCount >= FREE_LIMIT) { openUpgrade(); return; }
 
   emptyState.style.display = 'none';
   removeFollowups();
@@ -904,11 +905,13 @@ async function sendMessage() {
   isSending = true; sendBtn.disabled = true;
   showTyping();
 
-  // Increment usage atomically
-  const { data: newCount, error: rpcErr } = await supabase.rpc('increment_question_usage');
-  if (!rpcErr && typeof newCount === 'number') {
-    usageCount = newCount;
-    updateTrialBadge();
+  // Increment usage atomically only for new wizard submissions (one per matter)
+  if (isWizardSubmission) {
+    const { data: newCount, error: rpcErr } = await supabase.rpc('increment_question_usage');
+    if (!rpcErr && typeof newCount === 'number') {
+      usageCount = newCount;
+      updateTrialBadge();
+    }
   }
 
   try {
