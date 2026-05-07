@@ -763,9 +763,10 @@ function openWizard(topic, prefillUserText) {
   body.appendChild(header);
 
   const form = document.createElement('form');
-  form.onsubmit = e => { e.preventDefault(); submitWizard(topic, w, form, prefillUserText); };
+  const allFields = [...w.fields, ...COMMON_FIELDS];
+  form.onsubmit = e => { e.preventDefault(); submitWizard(topic, w, form, allFields, prefillUserText); };
 
-  w.fields.forEach(f => {
+  allFields.forEach(f => {
     const wrap = document.createElement('div');
     wrap.className = 'wiz-field';
     const lbl = document.createElement('label');
@@ -775,6 +776,8 @@ function openWizard(topic, prefillUserText) {
     if (f.type === 'text' || f.type === 'date') {
       const i = document.createElement('input');
       i.className = 'wiz-input'; i.type = f.type === 'date' ? 'date' : 'text'; i.name = f.id;
+      if (f.autoToday) i.value = new Date().toISOString().slice(0,10);
+      if (f.required) i.required = true;
       wrap.appendChild(i);
     } else if (f.type === 'textarea') {
       const i = document.createElement('textarea');
@@ -810,52 +813,33 @@ function openWizard(topic, prefillUserText) {
 function closeWizard() { $('wizardOverlay').classList.remove('show'); }
 window.closeWizard = closeWizard;
 
-function submitWizard(topic, w, form, prefillUserText) {
+// Track the most recent matter (topic + collected facts) so document buttons can reuse it
+let currentMatter = null;
+
+function submitWizard(topic, w, form, allFields, prefillUserText) {
   const data = new FormData(form);
-  const lines = [`Topic: ${w.title}`];
+  const meta = TOPIC_META[topic] || { complexity: 'simple', docs: [] };
+  const facts = {};
+  const lines = [`Topic: ${w.title}`, `Complexity: ${meta.complexity}`];
   if (prefillUserText) lines.push(`Original message: ${prefillUserText}`);
-  w.fields.forEach(f => {
+  allFields.forEach(f => {
     if (f.type === 'check') {
       const vals = data.getAll(f.id);
-      if (vals.length) lines.push(`- ${f.label} ${vals.join(', ')}`);
+      if (vals.length) { facts[f.label] = vals.join(', '); lines.push(`- ${f.label}: ${vals.join(', ')}`); }
     } else {
       const v = (data.get(f.id) || '').toString().trim();
-      if (v) lines.push(`- ${f.label} ${v}`);
+      if (v) { facts[f.label] = v; lines.push(`- ${f.label}: ${v}`); }
     }
   });
-  lines.push('', 'Please give me your full, professional advice based on these facts. Do not ask further questions unless absolutely critical.');
+  if (meta.complexity === 'simple') {
+    lines.push('', 'Give brief practical advice only: one-line risk flag, then numbered steps. No case law, no legal theory, no padding.');
+  } else {
+    lines.push('', 'Give detailed advice including relevant SA case law and legal context, then numbered practical steps.');
+  }
+  currentMatter = { topic, facts, complexity: meta.complexity, docs: meta.docs };
   closeWizard();
   input.value = lines.join('\n');
   sendMessage({ countAsQuestion: true });
-}
-
-function renderFollowups() {
-  removeFollowups();
-  const div = document.createElement('div');
-  div.className = 'followups'; div.id = 'followups';
-  const items = [
-    { label: 'Draft a document', text: 'Please draft the appropriate document for this matter.' },
-    { label: 'Ask a follow-up question', text: '' },
-    { label: 'Start a new matter', text: '__new__' },
-  ];
-  items.forEach(f => {
-    const b = document.createElement('button');
-    b.className = 'followup-btn'; b.textContent = f.label;
-    b.onclick = () => {
-      removeFollowups();
-      if (f.text === '__new__') {
-        state.messages = [];
-        chatEl.querySelectorAll('.msg').forEach(n => n.remove());
-        emptyState.style.display = '';
-        return;
-      }
-      if (f.text) { input.value = f.text; sendMessage(); }
-      else { input.focus(); }
-    };
-    div.appendChild(b);
-  });
-  chatEl.appendChild(div);
-  chatEl.scrollTop = chatEl.scrollHeight;
 }
 function removeFollowups() { const f = $('followups'); if (f) f.remove(); }
 
