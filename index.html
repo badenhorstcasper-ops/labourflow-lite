@@ -863,8 +863,25 @@ function showTyping(){ const m=document.createElement('div'); m.className='msg b
 function hideTyping(){ const t=$('typingMsg'); if(t) t.remove(); }
 function autoResize(){ input.style.height='auto'; input.style.height=Math.min(input.scrollHeight,140)+'px'; }
 input.addEventListener('input', autoResize);
-input.addEventListener('keydown', e => { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
-sendBtn.addEventListener('click', sendMessage);
+input.addEventListener('keydown', e => { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); handleUserSubmit(); } });
+sendBtn.addEventListener('click', handleUserSubmit);
+
+// Wizard-first: intercept freeform input and route through a wizard if a topic is detected
+function handleUserSubmit() {
+  const text = input.value.trim();
+  if (!text) return;
+  // If the text is already a wizard-compiled message, send directly
+  if (text.startsWith('Topic:')) { sendMessage(); return; }
+  const topic = detectTopic(text);
+  if (topic && WIZARDS[topic]) {
+    const original = text;
+    input.value = '';
+    autoResize();
+    openWizard(topic, original);
+    return;
+  }
+  sendMessage();
+}
 $('trialBadge').addEventListener('click', openUpgrade);
 
 async function sendMessage() {
