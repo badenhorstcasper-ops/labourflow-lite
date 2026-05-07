@@ -1275,6 +1275,100 @@ function closeUpgrade(){ $('upgradeModal').classList.remove('show'); }
 function selectPlan(p){ alert('Selected plan: '+p+'\n\nCheckout flow coming soon.'); closeUpgrade(); }
 window.openUpgrade = openUpgrade; window.closeUpgrade = closeUpgrade; window.selectPlan = selectPlan;
 
+// --- Sharing ---
+const APP_URL = 'https://basic-task-sparkle.lovable.app';
+const APP_SHARE_MSG = 'I use LabourFlow for instant IR guidance — try it free:';
+const APP_SHARE_TAGLINE = 'Get instant IR guidance in your pocket — powered by iNRECO Consulting';
+
+function shareWhatsApp(text) {
+  window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+}
+function shareEmail(subject, body) {
+  window.location.href = 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+}
+function shareAppWhatsApp() { shareWhatsApp(APP_SHARE_MSG + ' ' + APP_URL); }
+function shareAppEmail() { shareEmail('LabourFlow — IR guidance in your pocket', APP_SHARE_TAGLINE + '\n\n' + APP_URL); }
+function copyAppLink() {
+  navigator.clipboard.writeText(APP_URL);
+  const t = document.createElement('div');
+  t.textContent = '✓ Link copied';
+  t.style.cssText = 'position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--success); color:#fff; padding:8px 14px; border-radius:999px; z-index:9999; font-size:13px;';
+  document.body.appendChild(t); setTimeout(() => t.remove(), 1600);
+}
+window.shareAppWhatsApp = shareAppWhatsApp;
+window.copyAppLink = copyAppLink;
+
+function openShareAdviceModal(adviceText) {
+  const overlay = document.createElement('div');
+  overlay.className = 'wizard-overlay show'; overlay.style.zIndex = 600;
+  const box = document.createElement('div');
+  box.className = 'wizard'; box.style.maxWidth = '420px';
+  box.innerHTML = `
+    <div class="wizard-header">
+      <div><h2>Share this advice</h2><p>Send CARA's guidance to a colleague.</p></div>
+      <button class="wizard-close" type="button">×</button>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <button class="wiz-submit" data-act="wa" style="background:#22c55e;">💬 WhatsApp</button>
+      <button class="wiz-submit" data-act="email" style="background:var(--accent);">📧 Email</button>
+      <button class="wiz-submit" data-act="copy" style="background:var(--surface);">📋 Copy text</button>
+    </div>`;
+  const prefix = 'IR guidance from LabourFlow:\n\n';
+  box.querySelector('.wizard-close').onclick = () => overlay.remove();
+  box.querySelector('[data-act="wa"]').onclick = () => shareWhatsApp(prefix + adviceText + '\n\n' + APP_URL);
+  box.querySelector('[data-act="email"]').onclick = () => shareEmail('IR guidance from LabourFlow', prefix + adviceText + '\n\n' + APP_URL);
+  box.querySelector('[data-act="copy"]').onclick = () => navigator.clipboard.writeText(prefix + adviceText);
+  overlay.appendChild(box); document.body.appendChild(overlay);
+}
+window.openShareAdviceModal = openShareAdviceModal;
+
+function openShareAppModal() {
+  const overlay = document.createElement('div');
+  overlay.className = 'wizard-overlay show'; overlay.style.zIndex = 600;
+  const box = document.createElement('div');
+  box.className = 'wizard'; box.style.maxWidth = '420px';
+  const qrSrc = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(APP_URL);
+  box.innerHTML = `
+    <div class="wizard-header">
+      <div><h2>Share LabourFlow</h2><p>${APP_SHARE_TAGLINE}</p></div>
+      <button class="wizard-close" type="button">×</button>
+    </div>
+    <div style="background:#fff; border-radius:10px; padding:14px; display:flex; justify-content:center;">
+      <img src="${qrSrc}" alt="QR code" width="220" height="220" style="display:block;">
+    </div>
+    <div style="text-align:center; font-size:13px; color:var(--muted); word-break:break-all;">${APP_URL}</div>
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <button class="wiz-submit" data-act="wa" style="background:#22c55e;">💬 Share on WhatsApp</button>
+      <button class="wiz-submit" data-act="email" style="background:var(--accent);">📧 Share via Email</button>
+      <button class="wiz-submit" data-act="copy" style="background:var(--surface);">🔗 Copy link</button>
+    </div>`;
+  box.querySelector('.wizard-close').onclick = () => overlay.remove();
+  box.querySelector('[data-act="wa"]').onclick = shareAppWhatsApp;
+  box.querySelector('[data-act="email"]').onclick = shareAppEmail;
+  box.querySelector('[data-act="copy"]').onclick = copyAppLink;
+  overlay.appendChild(box); document.body.appendChild(overlay);
+}
+window.openShareAppModal = openShareAppModal;
+
+function maybeShowFirstAdvicePrompt() {
+  try {
+    if (localStorage.getItem('lf_first_advice_prompted')) return;
+    localStorage.setItem('lf_first_advice_prompted', '1');
+  } catch(e) {}
+  setTimeout(() => {
+    const div = document.createElement('div');
+    div.style.cssText = 'margin: 8px 16px 8px 42px; padding:12px 14px; background:var(--surface-2); border:1px solid var(--primary-soft); border-radius:12px; display:flex; flex-wrap:wrap; gap:10px; align-items:center; font-size:13px;';
+    div.innerHTML = `
+      <div style="flex:1; min-width:180px;">Was CARA helpful? Share LabourFlow with a colleague.</div>
+      <button class="wiz-submit" style="width:auto; background:#22c55e; padding:8px 14px;" data-act="wa">💬 Share</button>
+      <button class="wiz-submit" style="width:auto; background:transparent; border:1px solid var(--border); padding:8px 14px;" data-act="x">Dismiss</button>`;
+    div.querySelector('[data-act="wa"]').onclick = () => { shareAppWhatsApp(); div.remove(); };
+    div.querySelector('[data-act="x"]').onclick = () => div.remove();
+    chatEl.appendChild(div);
+    chatEl.scrollTop = chatEl.scrollHeight;
+  }, 400);
+}
+
 // Home button + browser back guard
 const homeBtn = document.getElementById('homeBtn');
 if (homeBtn) homeBtn.addEventListener('click', showNavConfirm);
