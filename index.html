@@ -891,7 +891,7 @@ async function sendMessage() {
   if (usageCount >= FREE_LIMIT) { openUpgrade(); return; }
 
   emptyState.style.display = 'none';
-  removeChips();
+  removeFollowups();
   state.messages.push({ role:'user', content:text });
   addMessageToDOM('user', text);
   input.value = ''; autoResize();
