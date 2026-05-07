@@ -547,10 +547,19 @@ async function enterApp() {
 }
 
 async function loadUsage() {
+  usageCount = 0; // default: no record => zero questions used
+  if (!currentUser) return;
   const period = new Date().toISOString().slice(0,7); // YYYY-MM
-  const { data } = await supabase.from('question_usage')
-    .select('count').eq('user_id', currentUser.id).eq('period', period).maybeSingle();
-  usageCount = data?.count || 0;
+  try {
+    const { data, error } = await supabase.from('question_usage')
+      .select('count').eq('user_id', currentUser.id).eq('period', period).maybeSingle();
+    if (error) { console.warn('loadUsage error, defaulting to 0:', error.message); usageCount = 0; return; }
+    const n = Number(data?.count);
+    usageCount = Number.isFinite(n) ? n : 0;
+  } catch (e) {
+    console.warn('loadUsage exception, defaulting to 0:', e);
+    usageCount = 0;
+  }
 }
 
 function updateTrialBadge() {
