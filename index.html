@@ -573,8 +573,7 @@ async function sendMessage() {
     const contextLine = `The employer's company name is ${companyName} and they operate in the ${sector} sector. Do not ask for their company name or sector — you already have this information.`;
     const sys = SYSTEM_PROMPT_BASE + ' ' + contextLine + (employeeRange ? ` They have ${employeeRange} employees.` : '');
     // Prepend the company context as a system-style message at the start of the conversation
-    const contextMessage = { role: 'system', content: contextLine };
-    const outgoingMessages = [contextMessage, ...state.messages];
+    const outgoingMessages = [...state.messages];
     const { data: { session } } = await supabase.auth.getSession();
     const token = session?.access_token || ANON_KEY;
     const res = await fetch(ENDPOINT, {
