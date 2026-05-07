@@ -859,10 +859,12 @@ function showDocumentModal(title, content) {
       <button class="wizard-close" type="button">×</button>
     </div>
     <div class="doc-body" style="background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:14px; max-height:50vh; overflow-y:auto; font-size:13px; line-height:1.55;"></div>
-    <div style="display:flex; gap:8px; flex-wrap:wrap;">
-      <button class="wiz-submit" data-act="copy" style="flex:1; min-width:120px;">Copy</button>
-      <button class="wiz-submit" data-act="wa" style="flex:1; min-width:120px; background:#22c55e;">Share via WhatsApp</button>
-      <button class="wiz-submit" data-act="dl" style="flex:1; min-width:120px; background:var(--surface);">Download</button>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:8px;">
+      <button class="wiz-submit" data-act="copy">📋 Copy</button>
+      <button class="wiz-submit" data-act="wa" style="background:#22c55e;">💬 Share via WhatsApp</button>
+      <button class="wiz-submit" data-act="email" style="background:var(--accent);">📧 Share via Email</button>
+      <button class="wiz-submit" data-act="dl" style="background:var(--surface);">⬇️ Download</button>
+      <button class="wiz-submit" data-act="shareApp" style="background:var(--surface-2); border:1px solid var(--border); grid-column: 1/-1;">🔗 Share LabourFlow</button>
     </div>
     <div style="border-top:1px solid var(--border); padding-top:12px; display:flex; flex-direction:column; gap:8px;">
       <button class="wiz-submit" data-act="another" style="background:var(--primary);">Generate another document</button>
@@ -874,9 +876,8 @@ function showDocumentModal(title, content) {
   const closeModal = () => overlay.remove();
   box.querySelector('.wizard-close').onclick = closeModal;
   box.querySelector('[data-act="copy"]').onclick = () => { navigator.clipboard.writeText(content); };
-  box.querySelector('[data-act="wa"]').onclick = () => {
-    window.open('https://wa.me/?text=' + encodeURIComponent(content), '_blank');
-  };
+  box.querySelector('[data-act="wa"]').onclick = () => shareWhatsApp(content);
+  box.querySelector('[data-act="email"]').onclick = () => shareEmail(title, content);
   box.querySelector('[data-act="dl"]').onclick = () => {
     const blob = new Blob([content], { type: 'text/plain' });
     const a = document.createElement('a');
@@ -884,6 +885,7 @@ function showDocumentModal(title, content) {
     a.download = title.replace(/[^a-z0-9]+/gi,'_') + '.txt';
     a.click();
   };
+  box.querySelector('[data-act="shareApp"]').onclick = () => openShareAppModal();
   box.querySelector('[data-act="another"]').onclick = () => { closeModal(); renderFollowups(); chatEl.scrollTop = chatEl.scrollHeight; };
   box.querySelector('[data-act="continue"]').onclick = () => { closeModal(); renderFollowups(); };
   box.querySelector('[data-act="new"]').onclick = () => { closeModal(); resetToNewMatter(); };
