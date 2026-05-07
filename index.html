@@ -1240,6 +1240,7 @@ async function sendMessage(opts) {
     state.messages.push({ role:'assistant', content: reply });
     addMessageToDOM('assistant', reply);
     renderFollowups();
+    maybeShowFirstAdvicePrompt();
     if (usageCount >= FREE_LIMIT) setTimeout(openUpgrade, 600);
   } catch (err) {
     hideTyping();
