@@ -796,7 +796,7 @@ function submitWizard(topic, w, form, prefillUserText) {
   lines.push('', 'Please give me your full, professional advice based on these facts. Do not ask further questions unless absolutely critical.');
   closeWizard();
   input.value = lines.join('\n');
-  sendMessage();
+  sendMessage({ countAsQuestion: true });
 }
 
 function renderFollowups() {
