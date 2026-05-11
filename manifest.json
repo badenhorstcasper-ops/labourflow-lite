@@ -1,0 +1,23 @@
+{
+  "name": "iNRECO \u2014 Pocket Labour Consultant",
+  "short_name": "iNRECO",
+  "description": "Your personal pocket labour consultant powered by CARA",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a1f44",
+  "theme_color": "#0a1f44",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
