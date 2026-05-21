@@ -561,13 +561,13 @@ footer{border-top:1px solid var(--border);padding:40px;display:flex;flex-directi
 <!-- Upgrade modal -->
 <div class="modal-overlay" id="upgradeModal">
   <div class="modal">
-    <h2>You've used your 5 free questions</h2>
-    <div class="modal-sub">Upgrade to keep getting expert SA labour compliance guidance from CARA.</div>
+    <h2>Choose your plan</h2>
+    <div class="modal-sub">Upgrade to keep getting expert SA labour compliance guidance from CARA. <span id="currentPlanLine" style="display:block;margin-top:6px;color:var(--primary-soft);font-weight:600;"></span></div>
     <div class="plans">
-      <div class="plan"><h3>Solo</h3><div class="price">R259<small>/month</small></div><ul><li>50 AI questions / month</li><li>Email support</li><li>Single user</li></ul><button onclick="selectPlan('Solo')">Choose Solo</button></div>
-      <div class="plan featured"><h3>Business</h3><div class="price">R499<small>/month</small></div><ul><li>Unlimited AI questions</li><li>Priority support</li><li>Up to 5 users</li><li>Document templates</li></ul><button onclick="selectPlan('Business')">Choose Business</button></div>
-      <div class="plan"><h3>Enterprise</h3><div class="price">R1200<small>/month</small></div><ul><li>Everything in Business</li><li>Dedicated adviser</li><li>Unlimited users</li></ul><button onclick="selectPlan('Enterprise')">Choose Enterprise</button></div>
-      <div class="plan"><h3>Pay-as-you-go</h3><div class="price">R29<small>/question</small></div><ul><li>No subscription</li><li>Buy bundles</li></ul><button onclick="selectPlan('PAYG')">Buy credits</button></div>
+      <div class="plan"><h3>Solo</h3><div class="price">R259<small>/month</small></div><ul><li>1 user</li><li>50 AI questions / month</li><li>Email support</li></ul><button onclick="selectPlan('Solo')">Subscribe</button></div>
+      <div class="plan featured"><h3>Business</h3><div class="price">R499<small>/month</small></div><ul><li>5 users</li><li>Unlimited AI questions</li><li>Priority support</li></ul><button onclick="selectPlan('Business')">Subscribe</button></div>
+      <div class="plan"><h3>Professional</h3><div class="price">R1499<small>/month</small></div><ul><li>10 users</li><li>Unlimited AI questions</li><li>Dedicated CARA adviser</li></ul><button onclick="selectPlan('Professional')">Subscribe</button></div>
+      <div class="plan"><h3>Enterprise</h3><div class="price">R3999<small>/month</small></div><ul><li>15 users</li><li>Everything in Professional</li><li>Custom onboarding</li></ul><button onclick="selectPlan('Enterprise')">Contact sales</button></div>
     </div>
     <div style="margin-top:18px; padding-top:14px; border-top:1px solid var(--border); text-align:center;">
       <div style="font-size:13px; color:var(--muted); margin-bottom:8px;">Know someone who needs this? Share iNRECO →</div>
@@ -577,6 +577,15 @@ footer{border-top:1px solid var(--border);padding:40px;display:flex;flex-directi
       </div>
     </div>
     <button class="modal-close" onclick="closeUpgrade()">Maybe later</button>
+  </div>
+</div>
+
+<!-- Payment status overlay -->
+<div class="modal-overlay" id="paymentStatusModal">
+  <div class="modal" style="max-width:460px;text-align:center;">
+    <h2 id="paymentStatusTitle">Payment</h2>
+    <div class="modal-sub" id="paymentStatusMsg"></div>
+    <button class="btn" style="margin-top:8px;" onclick="closePaymentStatus()" id="paymentStatusBtn">Continue</button>
   </div>
 </div>
 
