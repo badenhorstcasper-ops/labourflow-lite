@@ -714,6 +714,7 @@ async function enterApp() {
     `Hello, ${currentProfile.company_name}. I'm CARA, your Compliance and Relations Adviser. Ask me anything about SA labour compliance for your ${currentProfile.sector.toLowerCase()} business.`;
   showScreen('app');
   updateTrialBadge();
+  loadCurrentPlan();
 }
 
 async function loadUsage() {
