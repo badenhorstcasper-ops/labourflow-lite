@@ -1639,6 +1639,10 @@ window.addEventListener('popstate', () => {
   const { data: { session } } = await supabase.auth.getSession();
   if (session) await afterLogin();
   else showScreen('welcome');
+  // Handle PayFast return routes
+  const path = window.location.pathname;
+  if (path === '/payment-success') showPaymentStatus('success');
+  else if (path === '/payment-cancelled') showPaymentStatus('cancel');
   // Seed history so first back press triggers popstate instead of leaving
   history.pushState({ navGuard: true }, '');
 })();
