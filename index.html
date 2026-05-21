@@ -1428,19 +1428,105 @@ micBtn.addEventListener('click', () => {
 });
 
 // Upgrade modal
-function openUpgrade(){ $('upgradeModal').classList.add('show'); }
+function openUpgrade(){ refreshPlanLine(); $('upgradeModal').classList.add('show'); }
 function closeUpgrade(){ $('upgradeModal').classList.remove('show'); }
+
+// --- PayFast subscription ---
+const PAYFAST = {
+  url: 'https://www.payfast.co.za/eng/process',
+  merchant_id: '12090292',
+  merchant_key: '3xbkln8wrhwq',
+  return_url: 'https://app.inreco.co.za/payment-success',
+  cancel_url: 'https://app.inreco.co.za/payment-cancelled',
+  notify_url: 'https://ckjevliuwlijfvdjxmmp.supabase.co/functions/v1/payfast-webhook'
+};
+const PLAN_AMOUNTS = { Solo: '259.00', Business: '499.00', Professional: '1499.00' };
+
 function selectPlan(p){
-  const urls = {
-    'Solo': 'https://inrecoapp.inreco.co.za/?plan=solo',
-    'Business': 'https://inrecoapp.inreco.co.za/?plan=business',
-    'Enterprise': 'https://inrecoapp.inreco.co.za/?plan=enterprise',
-    'PAYG': 'https://inrecoapp.inreco.co.za/?plan=payg'
+  if (p === 'Enterprise') {
+    window.location.href = 'mailto:info@inreco.co.za?subject=iNRECO Enterprise Plan Enquiry&body=I would like to subscribe to the Enterprise plan (15 users).';
+    return;
+  }
+  const amount = PLAN_AMOUNTS[p];
+  if (!amount) return;
+  if (!currentUser) { alert('Please log in to subscribe.'); return; }
+  const today = new Date().toISOString().slice(0,10);
+  const email = currentUser.email || '';
+  const firstName = (currentProfile?.company_name || email.split('@')[0] || '').split(' ')[0];
+  const fields = {
+    merchant_id: PAYFAST.merchant_id,
+    merchant_key: PAYFAST.merchant_key,
+    return_url: PAYFAST.return_url,
+    cancel_url: PAYFAST.cancel_url,
+    notify_url: PAYFAST.notify_url,
+    name_first: firstName,
+    email_address: email,
+    m_payment_id: currentUser.id + '|' + p + '|' + Date.now(),
+    custom_str1: currentUser.id,
+    custom_str2: p,
+    amount: amount,
+    item_name: 'iNRECO ' + p + ' Plan',
+    subscription_type: '1',
+    billing_date: today,
+    recurring_amount: amount,
+    frequency: '3',
+    cycles: '0'
   };
-  window.location.href = 'mailto:info@inreco.co.za?subject=iNRECO Subscription - ' + p + '&body=I would like to subscribe to the ' + p + ' plan.';
-  closeUpgrade();
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = PAYFAST.url;
+  Object.entries(fields).forEach(([k,v]) => {
+    const inp = document.createElement('input');
+    inp.type = 'hidden'; inp.name = k; inp.value = v;
+    form.appendChild(inp);
+  });
+  document.body.appendChild(form);
+  form.submit();
 }
 window.openUpgrade = openUpgrade; window.closeUpgrade = closeUpgrade; window.selectPlan = selectPlan;
+
+// --- Subscription / current plan ---
+let currentPlan = 'Free';
+async function loadCurrentPlan() {
+  currentPlan = 'Free';
+  if (!currentUser) { updatePlanBadge(); return; }
+  try {
+    const { data } = await supabase.from('subscriptions')
+      .select('plan_name,status').eq('user_id', currentUser.id)
+      .order('updated_at', { ascending: false }).limit(1).maybeSingle();
+    if (data && data.status === 'active' && data.plan_name) currentPlan = data.plan_name;
+  } catch (e) { /* table may not exist yet */ }
+  updatePlanBadge();
+  refreshPlanLine();
+}
+function updatePlanBadge() {
+  const el = $('planBadge');
+  if (el) el.textContent = currentPlan === 'Free' ? 'Free plan' : currentPlan + ' plan';
+}
+function refreshPlanLine() {
+  const el = $('currentPlanLine');
+  if (el) el.textContent = currentUser ? ('Current plan: ' + currentPlan) : '';
+}
+window.loadCurrentPlan = loadCurrentPlan;
+
+// --- Payment status pages (handled as routes inside the SPA) ---
+function showPaymentStatus(kind) {
+  const t = $('paymentStatusTitle'), m = $('paymentStatusMsg'), b = $('paymentStatusBtn');
+  if (kind === 'success') {
+    t.textContent = '✅ Payment successful!';
+    m.textContent = 'Your subscription is now active.';
+    b.textContent = 'Go to dashboard';
+    b.onclick = () => { closePaymentStatus(); history.replaceState({}, '', '/'); if (currentUser) loadCurrentPlan(); };
+  } else {
+    t.textContent = 'Payment cancelled';
+    m.textContent = 'You can subscribe any time from your account settings.';
+    b.textContent = 'Go back';
+    b.onclick = () => { closePaymentStatus(); history.replaceState({}, '', '/'); };
+  }
+  $('paymentStatusModal').classList.add('show');
+}
+function closePaymentStatus(){ $('paymentStatusModal').classList.remove('show'); }
+window.closePaymentStatus = closePaymentStatus;
 
 // --- Sharing ---
 const APP_URL = 'https://inrecoapp.inreco.co.za';
