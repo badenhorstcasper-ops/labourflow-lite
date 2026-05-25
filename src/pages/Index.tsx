@@ -5,12 +5,12 @@ import PaymentSuccess from "./PaymentSuccess";
 import Dashboard from "./Dashboard";
 
 const Index = () => {
-  const pathname = window.location.pathname;
+  const path = window.location.pathname;
 
-  if (pathname === "/pricing") return <Pricing />;
-  if (pathname === "/settings") return <Settings />;
-  if (pathname === "/payment-success") return <PaymentSuccess />;
-  if (pathname === "/payment-cancelled") return <PaymentCancelled />;
+  if (path === "/pricing") return <Pricing />;
+  if (path === "/settings") return <Settings />;
+  if (path === "/payment-success") return <PaymentSuccess />;
+  if (path === "/payment-cancelled") return <PaymentCancelled />;
 
   return <Dashboard />;
 };
