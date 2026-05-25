@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,6 +8,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
 
 const supabase = createClient(
   (import.meta.env.VITE_SUPABASE_URL as string) || "",
@@ -38,9 +40,29 @@ const PLANS: Plan[] = [
   { name: "Enterprise", amount: 3999, seats: 15, description: "For large organisations." },
 ];
 
+const parseEmails = (value: string) =>
+  Array.from(
+    new Set(
+      value
+        .split(/[\n,;]+/)
+        .map((email) => email.trim().toLowerCase())
+        .filter(Boolean),
+    ),
+  );
+
+const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
 const Pricing = () => {
+  const { toast } = useToast();
   const [userId, setUserId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string>("");
+  const [teamEmailsByPlan, setTeamEmailsByPlan] = useState<Record<Plan["name"], string>>({
+    Solo: "",
+    Business: "",
+    Professional: "",
+    Enterprise: "",
+  });
+  const [submittingPlan, setSubmittingPlan] = useState<Plan["name"] | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -48,6 +70,102 @@ const Pricing = () => {
       setUserEmail(data.user?.email ?? "");
     });
   }, []);
+
+  const parsedCounts = useMemo(
+    () =>
+      Object.fromEntries(
+        PLANS.map((plan) => [plan.name, parseEmails(teamEmailsByPlan[plan.name]).length]),
+      ) as Record<Plan["name"], number>,
+    [teamEmailsByPlan],
+  );
+
+  const handlePlanSubmit = async (event: FormEvent<HTMLFormElement>, plan: Plan) => {
+    event.preventDefault();
+
+    if (!userId) return;
+
+    const rawEmails = teamEmailsByPlan[plan.name] ?? "";
+    const emails = parseEmails(rawEmails);
+    const maxTeamMembers = Math.max(0, plan.seats - 1);
+
+    if (emails.some((email) => !isValidEmail(email))) {
+      toast({
+        title: "Check the email addresses",
+        description: "Use valid email addresses separated by commas or new lines.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (userEmail && emails.includes(userEmail.toLowerCase())) {
+      toast({
+        title: "Owner email not allowed",
+        description: "Do not include the account owner's email in the team list.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (emails.length > maxTeamMembers) {
+      toast({
+        title: "Too many team members",
+        description: `The ${plan.name} plan supports up to ${maxTeamMembers} teammate ${maxTeamMembers === 1 ? "email" : "emails"} before checkout.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSubmittingPlan(plan.name);
+
+    try {
+      if (plan.seats > 1) {
+        const { data: existingRows, error: existingError } = await supabase
+          .from("team_members")
+          .select("member_email")
+          .eq("owner_user_id", userId);
+
+        if (existingError) throw existingError;
+
+        const existingEmails = new Set(
+          (existingRows ?? []).map((row) => row.member_email.trim().toLowerCase()),
+        );
+
+        const newEmails = emails.filter((email) => !existingEmails.has(email));
+        const totalTeamMembers = existingEmails.size + newEmails.length;
+
+        if (totalTeamMembers > maxTeamMembers) {
+          toast({
+            title: "Plan limit exceeded",
+            description: `This plan allows ${maxTeamMembers} teammate ${maxTeamMembers === 1 ? "email" : "emails"} in total before payment.`,
+            variant: "destructive",
+          });
+          setSubmittingPlan(null);
+          return;
+        }
+
+        if (newEmails.length > 0) {
+          const { error: insertError } = await supabase.from("team_members").insert(
+            newEmails.map((email) => ({
+              owner_user_id: userId,
+              member_email: email,
+              status: "pending",
+            })),
+          );
+
+          if (insertError) throw insertError;
+        }
+      }
+
+      event.currentTarget.submit();
+    } catch (error) {
+      toast({
+        title: "Could not save team members",
+        description: error instanceof Error ? error.message : "Please try again.",
+        variant: "destructive",
+      });
+      setSubmittingPlan(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -77,7 +195,7 @@ const Pricing = () => {
                       {plan.seats} {plan.seats === 1 ? "seat" : "seats"} included
                     </p>
                   </div>
-                  <form action={PAYFAST_URL} method="post">
+                  <form action={PAYFAST_URL} method="post" onSubmit={(event) => void handlePlanSubmit(event, plan)}>
                     <input type="hidden" name="merchant_id" value={MERCHANT_ID} />
                     <input type="hidden" name="merchant_key" value={MERCHANT_KEY} />
                     <input type="hidden" name="return_url" value={RETURN_URL} />
@@ -99,8 +217,40 @@ const Pricing = () => {
                     {userEmail && (
                       <input type="hidden" name="email_address" value={userEmail} />
                     )}
-                    <Button type="submit" className="w-full" disabled={!userId}>
-                      {userId ? `Subscribe to ${plan.name}` : "Sign in to subscribe"}
+                    {plan.seats > 1 && (
+                      <div className="space-y-3">
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium text-foreground">Team member emails</p>
+                          <p className="text-xs text-muted-foreground">
+                            Add up to {plan.seats - 1} teammate email{plan.seats - 1 === 1 ? "" : "s"} before checkout.
+                          </p>
+                        </div>
+                        <Textarea
+                          value={teamEmailsByPlan[plan.name]}
+                          onChange={(event) =>
+                            setTeamEmailsByPlan((current) => ({
+                              ...current,
+                              [plan.name]: event.target.value,
+                            }))
+                          }
+                          placeholder="alex@example.com&#10;sam@example.com"
+                          className="min-h-[112px]"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          {parsedCounts[plan.name]} of {plan.seats - 1} teammate email{plan.seats - 1 === 1 ? "" : "s"} entered.
+                        </p>
+                      </div>
+                    )}
+                    <Button
+                      type="submit"
+                      className="w-full"
+                      disabled={!userId || submittingPlan === plan.name}
+                    >
+                      {!userId
+                        ? "Sign in to subscribe"
+                        : submittingPlan === plan.name
+                          ? "Saving team and redirecting…"
+                          : `Continue to PayFast`}
                     </Button>
                   </form>
                 </CardContent>
