@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
+import Settings from "./Settings";
+import Pricing from "./Pricing";
+import PaymentCancelled from "./PaymentCancelled";
 
 const supabase = createClient(
   (import.meta.env.VITE_SUPABASE_URL as string) || "",
@@ -21,6 +24,20 @@ const Index = () => {
     });
     return () => sub.subscription.unsubscribe();
   }, []);
+
+  const pathname = window.location.pathname;
+
+  if (pathname === "/pricing") {
+    return <Pricing />;
+  }
+
+  if (pathname === "/settings") {
+    return <Settings />;
+  }
+
+  if (pathname === "/payment-cancelled") {
+    return <PaymentCancelled />;
+  }
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-6" style={{ backgroundColor: '#fcfbf8' }}>
