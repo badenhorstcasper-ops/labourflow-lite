@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import Settings from "./Settings";
 import Pricing from "./Pricing";
 import PaymentCancelled from "./PaymentCancelled";
+import PaymentSuccess from "./PaymentSuccess";
 
 const supabase = createClient(
   (import.meta.env.VITE_SUPABASE_URL as string) || "",
@@ -26,6 +27,10 @@ const Index = () => {
   }, []);
 
   const pathname = window.location.pathname;
+
+  if (pathname === "/payment-success") {
+    return <PaymentSuccess />;
+  }
 
   if (pathname === "/pricing") {
     return <Pricing />;
