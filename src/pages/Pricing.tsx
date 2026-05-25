@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -10,13 +10,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-
-const supabase = createClient(
-  (import.meta.env.VITE_SUPABASE_URL as string) || "",
-  (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string) ||
-    (import.meta.env.VITE_SUPABASE_ANON_KEY as string) ||
-    "",
-);
 
 const PAYFAST_URL = "https://www.payfast.co.za/eng/process";
 const MERCHANT_ID = "12090292";
