@@ -785,6 +785,9 @@ const $ = (id) => document.getElementById(id);
 function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   $('screen-' + name).classList.add('active');
+  if (name === 'signup') {
+    try { localStorage.setItem('inreco.pendingInstallPrompt', '1'); } catch (_) {}
+  }
 }
 window.showScreen = showScreen;
 
