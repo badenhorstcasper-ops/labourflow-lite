@@ -1,5 +1,8 @@
 // PayFast ITN (Instant Transaction Notification) webhook
 // Receives POST notifications from PayFast and activates the user's subscription.
+// Supports both:
+//  - Logged-in checkout (custom_str1 = user_id)
+//  - Guest checkout (custom_str3 = email; user_id linked on signup via trigger)
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -14,7 +17,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // PayFast ITN posts as application/x-www-form-urlencoded
     const raw = await req.text();
     const params = new URLSearchParams(raw);
     const data: Record<string, string> = {};
@@ -24,48 +26,77 @@ Deno.serve(async (req) => {
 
     const paymentStatus = data["payment_status"];
     if (paymentStatus !== "COMPLETE") {
-      // Acknowledge but do not activate
       return new Response("OK", { status: 200, headers: corsHeaders });
     }
 
-    // m_payment_id format: "<user_id>|<plan>|<timestamp>"
-    // Also supports custom_str1 = user_id, custom_str2 = plan
-    const userId = data["custom_str1"] || (data["m_payment_id"] || "").split("|")[0];
-    const planName = data["custom_str2"] || (data["m_payment_id"] || "").split("|")[1];
+    const mParts = (data["m_payment_id"] || "").split("|");
+    const userIdRaw = data["custom_str1"] || mParts[0] || "";
+    const userId = userIdRaw && userIdRaw !== "guest" && userIdRaw !== "anon" ? userIdRaw : null;
+    const planName = data["custom_str2"] || mParts[1] || "";
+    const email = (data["custom_str3"] || data["email_address"] || "").toLowerCase().trim() || null;
 
-    if (!userId || !planName) {
-      console.error("Missing user_id or plan_name in ITN", data);
+    if (!planName) {
+      console.error("Missing plan_name in ITN", data);
+      return new Response("OK", { status: 200, headers: corsHeaders });
+    }
+    if (!userId && !email) {
+      console.error("Missing both user_id and email in ITN", data);
       return new Response("OK", { status: 200, headers: corsHeaders });
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, serviceKey);
-
-    // Upsert: keep a single active subscription row per user
-    const { data: existing } = await supabase
-      .from("subscriptions")
-      .select("id")
-      .eq("user_id", userId)
-      .limit(1)
-      .maybeSingle();
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
 
     const now = new Date().toISOString();
-    if (existing?.id) {
+
+    // Try to find an existing subscription row by user_id first, then by email
+    let existingId: string | null = null;
+    if (userId) {
+      const { data: row } = await supabase
+        .from("subscriptions")
+        .select("id")
+        .eq("user_id", userId)
+        .limit(1)
+        .maybeSingle();
+      existingId = row?.id ?? null;
+    }
+    if (!existingId && email) {
+      const { data: row } = await supabase
+        .from("subscriptions")
+        .select("id")
+        .is("user_id", null)
+        .ilike("email", email)
+        .limit(1)
+        .maybeSingle();
+      existingId = row?.id ?? null;
+    }
+
+    if (existingId) {
       await supabase
         .from("subscriptions")
-        .update({ plan_name: planName, status: "active", updated_at: now })
-        .eq("id", existing.id);
+        .update({
+          plan_name: planName,
+          status: "active",
+          updated_at: now,
+          ...(userId ? { user_id: userId } : {}),
+          ...(email ? { email } : {}),
+        })
+        .eq("id", existingId);
     } else {
-      await supabase
-        .from("subscriptions")
-        .insert({ user_id: userId, plan_name: planName, status: "active", updated_at: now });
+      await supabase.from("subscriptions").insert({
+        user_id: userId,
+        email,
+        plan_name: planName,
+        status: "active",
+        updated_at: now,
+      });
     }
 
     return new Response("OK", { status: 200, headers: corsHeaders });
   } catch (e) {
     console.error("payfast-webhook error", e);
-    // Still return 200 so PayFast doesn't retry indefinitely
     return new Response("OK", { status: 200, headers: corsHeaders });
   }
 });
