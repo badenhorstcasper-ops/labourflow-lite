@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import InstallAppButton from "@/components/InstallAppButton";
 
 const PaymentSuccess = () => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
