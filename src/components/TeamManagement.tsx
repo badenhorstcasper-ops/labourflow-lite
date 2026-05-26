@@ -1,6 +1,16 @@
-// "Invite Team Members" section for the account/settings page.
+// Drop-in "Invite Team Members" section for the account/settings page.
+// Uses VITE_SUPABASE_URL + VITE_SUPABASE_PUBLISHABLE_KEY (or ANON_KEY) so it
+// works in any project without depending on a specific client import path.
+// If you already have "@/integrations/supabase/client", swap the import below.
 import { useEffect, useMemo, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  (import.meta.env.VITE_SUPABASE_URL as string) || "",
+  (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string) ||
+    (import.meta.env.VITE_SUPABASE_ANON_KEY as string) ||
+    "",
+);
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {

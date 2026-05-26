@@ -1,8 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -10,6 +8,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
+const supabase = createClient(
+  (import.meta.env.VITE_SUPABASE_URL as string) || "",
+  (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string) ||
+    (import.meta.env.VITE_SUPABASE_ANON_KEY as string) ||
+    "",
+);
 
 const PAYFAST_URL = "https://www.payfast.co.za/eng/process";
 const MERCHANT_ID = "12090292";
@@ -36,46 +41,13 @@ const PLANS: Plan[] = [
 const Pricing = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string>("");
-  const [currentPlan, setCurrentPlan] = useState<string | null>(null);
-  const [teamMemberCount, setTeamMemberCount] = useState(0);
 
   useEffect(() => {
-    (async () => {
-      const { data: auth } = await supabase.auth.getUser();
-      const uid = auth.user?.id ?? null;
-      setUserId(uid);
-      setUserEmail(auth.user?.email ?? "");
-      if (!uid) return;
-
-      const [{ data: sub }, { count }] = await Promise.all([
-        supabase
-          .from("subscriptions")
-          .select("plan_name, status")
-          .eq("user_id", uid)
-          .order("updated_at", { ascending: false })
-          .limit(1)
-          .maybeSingle(),
-        supabase
-          .from("team_members")
-          .select("id", { count: "exact", head: true })
-          .eq("owner_user_id", uid),
-      ]);
-
-      if (sub?.status === "active") setCurrentPlan(sub.plan_name);
-      setTeamMemberCount(count ?? 0);
-    })();
+    supabase.auth.getUser().then(({ data }) => {
+      setUserId(data.user?.id ?? null);
+      setUserEmail(data.user?.email ?? "");
+    });
   }, []);
-
-  const planRows = useMemo(
-    () =>
-      PLANS.map((plan) => {
-        const maxTeammates = Math.max(0, plan.seats - 1);
-        const wouldExceed = teamMemberCount > maxTeammates;
-        const isCurrent = currentPlan === plan.name;
-        return { plan, maxTeammates, wouldExceed, isCurrent };
-      }),
-    [currentPlan, teamMemberCount],
-  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -83,53 +55,27 @@ const Pricing = () => {
         <header className="mb-10 text-center">
           <h1 className="text-3xl font-bold tracking-tight">Choose your plan</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Secure recurring billing via PayFast. After payment, invite your
-            team from{" "}
-            <Link to="/settings" className="underline">
-              Settings
-            </Link>
-            .
+            Secure recurring billing via PayFast.
           </p>
         </header>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {planRows.map(({ plan, wouldExceed, isCurrent }) => {
+          {PLANS.map((plan) => {
             const mPaymentId = `${userId ?? "anon"}|${plan.name}|${Date.now()}`;
-            const disabled = !userId || isCurrent || wouldExceed;
             return (
               <Card key={plan.name} className="flex flex-col">
                 <CardHeader>
-                  <div className="flex items-start justify-between gap-2">
-                    <CardTitle>{plan.name}</CardTitle>
-                    {isCurrent && <Badge>Current plan</Badge>}
-                  </div>
+                  <CardTitle>{plan.name}</CardTitle>
                   <CardDescription>{plan.description}</CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-1 flex-col justify-between gap-6">
                   <div>
                     <p className="text-3xl font-bold">
                       R{plan.amount}
-                      <span className="text-sm font-normal text-muted-foreground">
-                        /mo
-                      </span>
+                      <span className="text-sm font-normal text-muted-foreground">/mo</span>
                     </p>
                     <p className="mt-2 text-sm text-muted-foreground">
                       {plan.seats} {plan.seats === 1 ? "seat" : "seats"} included
-                      {plan.seats > 1 && (
-                        <>
-                          {" "}
-                          (you + {plan.seats - 1} teammate
-                          {plan.seats - 1 === 1 ? "" : "s"})
-                        </>
-                      )}
                     </p>
-                    {wouldExceed && !isCurrent && (
-                      <p className="mt-3 text-xs text-destructive">
-                        You currently have {teamMemberCount} team member
-                        {teamMemberCount === 1 ? "" : "s"}. Remove{" "}
-                        {teamMemberCount - (plan.seats - 1)} from Settings
-                        before switching to this plan.
-                      </p>
-                    )}
                   </div>
                   <form action={PAYFAST_URL} method="post">
                     <input type="hidden" name="merchant_id" value={MERCHANT_ID} />
@@ -153,14 +99,8 @@ const Pricing = () => {
                     {userEmail && (
                       <input type="hidden" name="email_address" value={userEmail} />
                     )}
-                    <Button type="submit" className="w-full" disabled={disabled}>
-                      {!userId
-                        ? "Sign in to subscribe"
-                        : isCurrent
-                          ? "Current plan"
-                          : wouldExceed
-                            ? "Remove members first"
-                            : "Continue to PayFast"}
+                    <Button type="submit" className="w-full" disabled={!userId}>
+                      {userId ? `Subscribe to ${plan.name}` : "Sign in to subscribe"}
                     </Button>
                   </form>
                 </CardContent>
