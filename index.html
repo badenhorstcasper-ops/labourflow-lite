@@ -771,6 +771,13 @@ footer{border-top:1px solid var(--border);padding:40px;display:flex;flex-directi
 <footer class="app-footer">iNRECO provides IR guidance, not legal advice · iNRECO Consulting · info@inreco.co.za</footer>
 
 <script type="module">
+// React owns these routes — skip the legacy bootstrap entirely.
+{
+  const p = window.location.pathname;
+  if (p.startsWith('/d/') || p.startsWith('/account-app') || p.startsWith('/share/')) {
+    throw new Error('react-route');
+  }
+}
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const SUPABASE_URL = 'https://ckjevliuwlijfvdjxmmp.supabase.co';
@@ -2080,9 +2087,20 @@ supabase.auth.onAuthStateChange((_event, session) => {
     <p style="font-size:12px;color:#94a3b8;margin:0 0 10px;">
       Each account is limited to <strong>2 active devices</strong>. Remove one here to free a slot.
     </p>
-    <div id="acctDevicesList"></div>
+    <div id="acctDevicesList" style="margin-bottom:20px;"></div>
+
+    <h4 style="margin:0 0 6px;font-size:15px;">Company branding & documents</h4>
+    <p style="font-size:12px;color:#94a3b8;margin:0 0 10px;">
+      Set your company name, logo and contact details so every document the app generates
+      carries your branding. Manage and share generated documents from the Documents page.
+    </p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <a class="signout-btn" href="/account-app/profile" style="text-decoration:none;display:inline-block;">Company profile</a>
+      <a class="signout-btn" href="/account-app/documents" style="text-decoration:none;display:inline-block;">Generated documents</a>
+    </div>
   </div>
 </div>
 
+<script type="module" src="/src/main.tsx"></script>
 </body>
 </html>
