@@ -1891,6 +1891,136 @@ window.flagPendingInstallPrompt = function () {
   try { localStorage.setItem('inreco.pendingInstallPrompt', '1'); } catch (_) {}
 };
 
+// --- Account modal (team + devices) ---
+const SEAT_LIMITS = { Starter: 1, Solo: 1, Business: 5, Professional: 10, Enterprise: 15 };
+let currentPlanName = 'Starter';
+
+async function openAccountModal() {
+  if (!currentUser) { alert('Please sign in first.'); return; }
+  document.getElementById('accountModal').style.display = 'flex';
+  await refreshAccountModal();
+}
+function closeAccountModal() {
+  document.getElementById('accountModal').style.display = 'none';
+}
+window.openAccountModal = openAccountModal;
+window.closeAccountModal = closeAccountModal;
+
+async function refreshAccountModal() {
+  const planEl = document.getElementById('acctPlan');
+  const seatsEl = document.getElementById('acctSeats');
+  const membersEl = document.getElementById('acctMembersList');
+  const devicesEl = document.getElementById('acctDevicesList');
+  membersEl.innerHTML = '<div style="color:#94a3b8;font-size:13px;">Loading…</div>';
+  devicesEl.innerHTML = '<div style="color:#94a3b8;font-size:13px;">Loading…</div>';
+
+  // Plan
+  const { data: sub } = await supabase.from('subscriptions')
+    .select('plan_name').eq('user_id', currentUser.id)
+    .order('updated_at', { ascending: false }).limit(1).maybeSingle();
+  currentPlanName = (sub && sub.plan_name) || 'Starter';
+  const cap = SEAT_LIMITS[currentPlanName] || 1;
+  planEl.textContent = currentPlanName;
+
+  // Team
+  const { data: tm } = await supabase.from('team_members')
+    .select('id, member_email, status, invited_at, invite_token')
+    .eq('owner_user_id', currentUser.id)
+    .order('invited_at', { ascending: false });
+  const members = tm || [];
+  const used = members.length + 1; // owner counts
+  seatsEl.textContent = used + ' of ' + cap + ' seats used';
+  document.getElementById('acctInviteBtn').disabled = (used >= cap) || cap <= 1;
+
+  if (members.length === 0) {
+    membersEl.innerHTML = cap > 1
+      ? '<div style="color:#94a3b8;font-size:13px;">No team members yet.</div>'
+      : '<div style="color:#94a3b8;font-size:13px;">Upgrade to Business or higher to invite teammates.</div>';
+  } else {
+    membersEl.innerHTML = members.map(m => {
+      const link = location.origin + '/?join=' + encodeURIComponent(m.invite_token);
+      return '<div style="display:flex;flex-direction:column;gap:6px;padding:10px;border:1px solid rgba(255,255,255,0.08);border-radius:10px;margin-bottom:8px;">'
+        + '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">'
+        + '<div><div style="font-weight:600;">' + escapeHtml(m.member_email) + '</div>'
+        + '<div style="font-size:12px;color:#94a3b8;">' + m.status + '</div></div>'
+        + '<button class="signout-btn" onclick="removeMember(\'' + m.id + '\')">Remove</button>'
+        + '</div>'
+        + (m.status !== 'active' ? ('<div style="display:flex;gap:6px;align-items:center;">'
+            + '<input readonly value="' + link + '" style="flex:1;background:#0a1628;color:#cbd5e1;border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:6px 8px;font-size:12px;" onclick="this.select()" />'
+            + '<button class="signout-btn" onclick="copyText(\'' + link + '\')">Copy</button>'
+            + '</div>') : '')
+        + '</div>';
+    }).join('');
+  }
+
+  // Devices
+  const { data: devs } = await supabase.from('user_devices')
+    .select('id, device_id, label, user_agent, last_seen_at')
+    .eq('user_id', currentUser.id)
+    .order('last_seen_at', { ascending: false });
+  const myDev = getDeviceId();
+  const list = devs || [];
+  if (list.length === 0) {
+    devicesEl.innerHTML = '<div style="color:#94a3b8;font-size:13px;">No devices registered.</div>';
+  } else {
+    devicesEl.innerHTML = list.map(d => {
+      const isThis = d.device_id === myDev;
+      return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px;border:1px solid rgba(255,255,255,0.08);border-radius:10px;margin-bottom:8px;">'
+        + '<div><div style="font-weight:600;">' + escapeHtml(d.label || 'Device') + (isThis ? ' <span style="font-size:11px;color:#3b82f6;">(this device)</span>' : '') + '</div>'
+        + '<div style="font-size:12px;color:#94a3b8;">Last active ' + new Date(d.last_seen_at).toLocaleString() + '</div></div>'
+        + '<button class="signout-btn" onclick="removeDevice(\'' + d.id + '\',' + isThis + ')">Remove</button>'
+        + '</div>';
+    }).join('');
+  }
+}
+window.refreshAccountModal = refreshAccountModal;
+
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function copyText(t) { navigator.clipboard?.writeText(t).then(() => alert('Link copied')).catch(() => prompt('Copy this link:', t)); }
+window.copyText = copyText;
+
+async function addInvite() {
+  const email = (prompt('Teammate email:') || '').trim().toLowerCase();
+  if (!email) return;
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { alert('Please enter a valid email.'); return; }
+  const { error } = await supabase.from('team_members').insert({
+    owner_user_id: currentUser.id, member_email: email, status: 'pending'
+  });
+  if (error) { alert('Could not add invite: ' + error.message); return; }
+  await refreshAccountModal();
+}
+window.addInvite = addInvite;
+
+async function removeMember(id) {
+  if (!confirm('Remove this team member?')) return;
+  const { error } = await supabase.from('team_members').delete().eq('id', id);
+  if (error) { alert(error.message); return; }
+  await refreshAccountModal();
+}
+window.removeMember = removeMember;
+
+async function removeDevice(id, isThis) {
+  if (!confirm(isThis ? 'Remove THIS device? You will be signed out.' : 'Remove this device?')) return;
+  const { error } = await supabase.from('user_devices').delete().eq('id', id);
+  if (error) { alert(error.message); return; }
+  if (isThis) { await doSignOut(); return; }
+  await refreshAccountModal();
+}
+window.removeDevice = removeDevice;
+
+// Capture ?join=<token> from URL on boot
+(function captureJoinToken() {
+  try {
+    const url = new URL(location.href);
+    const token = url.searchParams.get('join');
+    if (token) {
+      localStorage.setItem('inreco.pendingInviteToken', token);
+      url.searchParams.delete('join');
+      history.replaceState({}, '', url.toString());
+    }
+  } catch (_) {}
+})();
+
 // --- Boot ---
 (async () => {
   const { data: { session } } = await supabase.auth.getSession();
