@@ -883,11 +883,68 @@ async function afterLogin() {
   const { data: { user } } = await supabase.auth.getUser();
   currentUser = user;
   if (!user) { showScreen('welcome'); return; }
+
+  // Register this device (2-device cap per account).
+  try {
+    const ok = await registerThisDevice();
+    if (!ok) { return; } // device limit modal shown + signed out
+  } catch (_) {}
+
+  // If returning from a /join?token=… link, accept the invite.
+  try {
+    const token = localStorage.getItem('inreco.pendingInviteToken');
+    if (token) {
+      const { error } = await supabase.rpc('accept_team_invite', { _token: token });
+      localStorage.removeItem('inreco.pendingInviteToken');
+      if (error) {
+        alert('Could not join team: ' + (error.message || 'invalid invite'));
+      } else {
+        alert('You have joined the team.');
+      }
+    }
+  } catch (_) {}
+
   const { data: profile } = await supabase
     .from('company_profiles').select('*').eq('user_id', user.id).maybeSingle();
   if (!profile) { showScreen('onboarding'); return; }
   currentProfile = profile;
   enterApp();
+}
+
+// --- Device cap (2 devices per account) ---
+function getDeviceId() {
+  let id = localStorage.getItem('inreco.deviceId');
+  if (!id) {
+    id = (crypto && crypto.randomUUID) ? crypto.randomUUID() : (Math.random().toString(36).slice(2) + Date.now().toString(36));
+    localStorage.setItem('inreco.deviceId', id);
+  }
+  return id;
+}
+function getDeviceLabel() {
+  const ua = navigator.userAgent;
+  if (/iPhone/i.test(ua)) return 'iPhone';
+  if (/iPad/i.test(ua)) return 'iPad';
+  if (/Android/i.test(ua)) return 'Android';
+  if (/Macintosh/i.test(ua)) return 'Mac';
+  if (/Windows/i.test(ua)) return 'Windows PC';
+  if (/Linux/i.test(ua)) return 'Linux PC';
+  return 'Browser';
+}
+async function registerThisDevice() {
+  const { error } = await supabase.rpc('register_device', {
+    _device_id: getDeviceId(), _label: getDeviceLabel(), _ua: navigator.userAgent
+  });
+  if (error) {
+    if ((error.message || '').includes('device_limit_reached')) {
+      alert('This account already has 2 active devices.\n\nSign out of another device first, or remove one from Account → Devices on a device that is still signed in.');
+      await supabase.auth.signOut();
+      currentUser = null; currentProfile = null;
+      showScreen('welcome');
+      return false;
+    }
+    console.warn('register_device error:', error.message);
+  }
+  return true;
 }
 
 async function enterApp() {
