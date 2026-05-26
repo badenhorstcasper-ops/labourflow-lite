@@ -14,6 +14,123 @@ export type Database = {
   }
   public: {
     Tables: {
+      company_profiles: {
+        Row: {
+          accent_color: string
+          address_line1: string | null
+          address_line2: string | null
+          city: string | null
+          company_name: string
+          contact_email: string | null
+          contact_phone: string | null
+          country: string | null
+          created_at: string
+          doc_counter: number
+          id: string
+          logo_url: string | null
+          owner_user_id: string
+          postal_code: string | null
+          registration_number: string | null
+          signatory_name: string | null
+          signatory_title: string | null
+          trading_name: string | null
+          updated_at: string
+          vat_number: string | null
+          website: string | null
+        }
+        Insert: {
+          accent_color?: string
+          address_line1?: string | null
+          address_line2?: string | null
+          city?: string | null
+          company_name?: string
+          contact_email?: string | null
+          contact_phone?: string | null
+          country?: string | null
+          created_at?: string
+          doc_counter?: number
+          id?: string
+          logo_url?: string | null
+          owner_user_id: string
+          postal_code?: string | null
+          registration_number?: string | null
+          signatory_name?: string | null
+          signatory_title?: string | null
+          trading_name?: string | null
+          updated_at?: string
+          vat_number?: string | null
+          website?: string | null
+        }
+        Update: {
+          accent_color?: string
+          address_line1?: string | null
+          address_line2?: string | null
+          city?: string | null
+          company_name?: string
+          contact_email?: string | null
+          contact_phone?: string | null
+          country?: string | null
+          created_at?: string
+          doc_counter?: number
+          id?: string
+          logo_url?: string | null
+          owner_user_id?: string
+          postal_code?: string | null
+          registration_number?: string | null
+          signatory_name?: string | null
+          signatory_title?: string | null
+          trading_name?: string | null
+          updated_at?: string
+          vat_number?: string | null
+          website?: string | null
+        }
+        Relationships: []
+      }
+      generated_documents: {
+        Row: {
+          created_at: string
+          created_by_user_id: string
+          doc_number: string
+          doc_type: string
+          docx_path: string | null
+          id: string
+          owner_user_id: string
+          pdf_path: string | null
+          revoked_at: string | null
+          share_expires_at: string
+          share_token: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          created_by_user_id: string
+          doc_number: string
+          doc_type: string
+          docx_path?: string | null
+          id?: string
+          owner_user_id: string
+          pdf_path?: string | null
+          revoked_at?: string | null
+          share_expires_at?: string
+          share_token?: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          created_by_user_id?: string
+          doc_number?: string
+          doc_type?: string
+          docx_path?: string | null
+          id?: string
+          owner_user_id?: string
+          pdf_path?: string | null
+          revoked_at?: string | null
+          share_expires_at?: string
+          share_token?: string
+          title?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           created_at: string
@@ -117,6 +234,7 @@ export type Database = {
     Functions: {
       accept_team_invite: { Args: { _token: string }; Returns: Json }
       current_account_owner: { Args: never; Returns: string }
+      next_document_number: { Args: { _owner: string }; Returns: string }
       register_device: {
         Args: { _device_id: string; _label?: string; _ua?: string }
         Returns: {
