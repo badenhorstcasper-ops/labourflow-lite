@@ -2,3 +2,6 @@ project_id = "ckjevliuwlijfvdjxmmp"
 
 [functions.payfast-webhook]
 verify_jwt = false
+
+[functions.get-shared-document]
+verify_jwt = false
