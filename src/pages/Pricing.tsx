@@ -209,7 +209,16 @@ const Pricing = () => {
                   </div>
 
                   {plan.kind === "free" && (
-                    <Button asChild className="w-full" variant={plan.highlight ? "default" : "outline"}>
+                    <Button
+                      asChild
+                      className="w-full"
+                      variant={plan.highlight ? "default" : "outline"}
+                      onClick={() => {
+                        try {
+                          localStorage.setItem("inreco.pendingInstallPrompt", "1");
+                        } catch (_) {}
+                      }}
+                    >
                       <Link to="/auth">{plan.cta}</Link>
                     </Button>
                   )}
@@ -227,6 +236,9 @@ const Pricing = () => {
                       action={PAYFAST_URL}
                       method="post"
                       onSubmit={() => {
+                        try {
+                          localStorage.setItem("inreco.pendingInstallPrompt", "1");
+                        } catch (_) {}
                         if (!userId && guestEmail) {
                           localStorage.setItem(
                             "inreco.pendingEmail",
@@ -236,6 +248,7 @@ const Pricing = () => {
                         }
                       }}
                     >
+
                       <input type="hidden" name="merchant_id" value={MERCHANT_ID} />
                       <input type="hidden" name="merchant_key" value={MERCHANT_KEY} />
                       <input type="hidden" name="return_url" value={RETURN_URL} />
