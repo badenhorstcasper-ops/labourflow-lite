@@ -46,7 +46,9 @@ export type Database = {
       }
       team_members: {
         Row: {
+          accepted_at: string | null
           id: string
+          invite_token: string
           invited_at: string
           joined_at: string | null
           member_email: string
@@ -55,7 +57,9 @@ export type Database = {
           status: string
         }
         Insert: {
+          accepted_at?: string | null
           id?: string
+          invite_token?: string
           invited_at?: string
           joined_at?: string | null
           member_email: string
@@ -64,7 +68,9 @@ export type Database = {
           status?: string
         }
         Update: {
+          accepted_at?: string | null
           id?: string
+          invite_token?: string
           invited_at?: string
           joined_at?: string | null
           member_email?: string
@@ -74,12 +80,61 @@ export type Database = {
         }
         Relationships: []
       }
+      user_devices: {
+        Row: {
+          created_at: string
+          device_id: string
+          id: string
+          label: string | null
+          last_seen_at: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_id: string
+          id?: string
+          label?: string | null
+          last_seen_at?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_id?: string
+          id?: string
+          label?: string | null
+          last_seen_at?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      accept_team_invite: { Args: { _token: string }; Returns: Json }
       current_account_owner: { Args: never; Returns: string }
+      register_device: {
+        Args: { _device_id: string; _label?: string; _ua?: string }
+        Returns: {
+          created_at: string
+          device_id: string
+          id: string
+          label: string | null
+          last_seen_at: string
+          user_agent: string | null
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "user_devices"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       [_ in never]: never
