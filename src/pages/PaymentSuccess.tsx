@@ -42,8 +42,9 @@ const PaymentSuccess = () => {
         </>
       )}
 
+      <InstallAppButton />
       <p className="text-xs text-muted-foreground">
-        Tip: on your phone, use your browser's "Add to Home Screen" to install iNRECO like an app.
+        Tip: on iPhone, use Safari's Share menu → "Add to Home Screen" to install iNRECO.
       </p>
     </div>
   );
