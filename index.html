@@ -1569,7 +1569,7 @@ async function sendMessage(opts) {
     const sector = profile?.sector || 'their';
     const employeeRange = profile?.employee_range || '';
     const contextLine = `The employer's company name is ${companyName} and they operate in the ${sector} sector. Do not ask for their company name or sector — you already have this information.`;
-    const sys = SYSTEM_PROMPT_BASE + ' ' + contextLine + (employeeRange ? ` They have ${employeeRange} employees.` : '');
+    const sys = currentTopicSystem ? (currentTopicSystem + ' ' + contextLine + (employeeRange ? ` They have ${employeeRange} employees.` : '')) : (SYSTEM_PROMPT_BASE + ' ' + contextLine + (employeeRange ? ` They have ${employeeRange} employees.` : ''));
     // Inject a priming user/assistant exchange so CARA always has company context (not shown in UI)
     const primingMessages = [
       { role: 'user', content: `My company is ${companyName} and we operate in the ${sector} sector.` },
