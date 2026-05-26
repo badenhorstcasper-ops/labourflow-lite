@@ -7,6 +7,7 @@ import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import Settings from "./pages/Settings.tsx";
 import Pricing from "./pages/Pricing.tsx";
+import Auth from "./pages/Auth.tsx";
 import PaymentSuccess from "./pages/PaymentSuccess.tsx";
 import PaymentCancelled from "./pages/PaymentCancelled.tsx";
 
@@ -20,6 +21,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/auth" element={<Auth />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/payment-success" element={<PaymentSuccess />} />
