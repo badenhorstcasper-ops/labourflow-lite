@@ -892,6 +892,13 @@ async function enterApp() {
     `Hello, ${currentProfile.company_name}. I'm CARA, your Compliance and Relations Adviser. Ask me anything about SA labour compliance for your ${currentProfile.sector.toLowerCase()} business.`;
   showScreen('app');
   updateTrialBadge();
+  try {
+    if (localStorage.getItem('inreco.pendingInstallPrompt') === '1' &&
+        localStorage.getItem('inreco.pwaInstalled') !== '1' &&
+        !isStandalone()) {
+      setTimeout(() => window.maybeShowInstallPrompt && window.maybeShowInstallPrompt(), 600);
+    }
+  } catch (_) {}
 }
 
 async function loadUsage() {
