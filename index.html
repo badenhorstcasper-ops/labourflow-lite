@@ -811,6 +811,7 @@ async function doSignup() {
   });
   $('su-btn').disabled = false;
   if (error) { err.textContent = error.message; return; }
+  try { localStorage.setItem('inreco.pendingInstallPrompt', '1'); } catch (_) {}
   if (data.session) {
     // Auto-confirmed
     await afterLogin();
