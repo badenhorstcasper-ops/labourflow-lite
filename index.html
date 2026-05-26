@@ -711,6 +711,7 @@ footer{border-top:1px solid var(--border);padding:40px;display:flex;flex-directi
         <span>FREE · <span id="trialCount">5</span> left</span>
       </div>
       <button class="signout-btn" onclick="openShareAppModal()" title="Share iNRECO">🔗 Share</button>
+      <button class="signout-btn" onclick="openAccountModal()" title="Account, team & devices">👤 Account</button>
       <button class="signout-btn" onclick="doSignOut()">Sign out</button>
     </div>
   </header>
@@ -882,11 +883,68 @@ async function afterLogin() {
   const { data: { user } } = await supabase.auth.getUser();
   currentUser = user;
   if (!user) { showScreen('welcome'); return; }
+
+  // Register this device (2-device cap per account).
+  try {
+    const ok = await registerThisDevice();
+    if (!ok) { return; } // device limit modal shown + signed out
+  } catch (_) {}
+
+  // If returning from a /join?token=… link, accept the invite.
+  try {
+    const token = localStorage.getItem('inreco.pendingInviteToken');
+    if (token) {
+      const { error } = await supabase.rpc('accept_team_invite', { _token: token });
+      localStorage.removeItem('inreco.pendingInviteToken');
+      if (error) {
+        alert('Could not join team: ' + (error.message || 'invalid invite'));
+      } else {
+        alert('You have joined the team.');
+      }
+    }
+  } catch (_) {}
+
   const { data: profile } = await supabase
     .from('company_profiles').select('*').eq('user_id', user.id).maybeSingle();
   if (!profile) { showScreen('onboarding'); return; }
   currentProfile = profile;
   enterApp();
+}
+
+// --- Device cap (2 devices per account) ---
+function getDeviceId() {
+  let id = localStorage.getItem('inreco.deviceId');
+  if (!id) {
+    id = (crypto && crypto.randomUUID) ? crypto.randomUUID() : (Math.random().toString(36).slice(2) + Date.now().toString(36));
+    localStorage.setItem('inreco.deviceId', id);
+  }
+  return id;
+}
+function getDeviceLabel() {
+  const ua = navigator.userAgent;
+  if (/iPhone/i.test(ua)) return 'iPhone';
+  if (/iPad/i.test(ua)) return 'iPad';
+  if (/Android/i.test(ua)) return 'Android';
+  if (/Macintosh/i.test(ua)) return 'Mac';
+  if (/Windows/i.test(ua)) return 'Windows PC';
+  if (/Linux/i.test(ua)) return 'Linux PC';
+  return 'Browser';
+}
+async function registerThisDevice() {
+  const { error } = await supabase.rpc('register_device', {
+    _device_id: getDeviceId(), _label: getDeviceLabel(), _ua: navigator.userAgent
+  });
+  if (error) {
+    if ((error.message || '').includes('device_limit_reached')) {
+      alert('This account already has 2 active devices.\n\nSign out of another device first, or remove one from Account → Devices on a device that is still signed in.');
+      await supabase.auth.signOut();
+      currentUser = null; currentProfile = null;
+      showScreen('welcome');
+      return false;
+    }
+    console.warn('register_device error:', error.message);
+  }
+  return true;
 }
 
 async function enterApp() {
@@ -1833,6 +1891,136 @@ window.flagPendingInstallPrompt = function () {
   try { localStorage.setItem('inreco.pendingInstallPrompt', '1'); } catch (_) {}
 };
 
+// --- Account modal (team + devices) ---
+const SEAT_LIMITS = { Starter: 1, Solo: 1, Business: 5, Professional: 10, Enterprise: 15 };
+let currentPlanName = 'Starter';
+
+async function openAccountModal() {
+  if (!currentUser) { alert('Please sign in first.'); return; }
+  document.getElementById('accountModal').style.display = 'flex';
+  await refreshAccountModal();
+}
+function closeAccountModal() {
+  document.getElementById('accountModal').style.display = 'none';
+}
+window.openAccountModal = openAccountModal;
+window.closeAccountModal = closeAccountModal;
+
+async function refreshAccountModal() {
+  const planEl = document.getElementById('acctPlan');
+  const seatsEl = document.getElementById('acctSeats');
+  const membersEl = document.getElementById('acctMembersList');
+  const devicesEl = document.getElementById('acctDevicesList');
+  membersEl.innerHTML = '<div style="color:#94a3b8;font-size:13px;">Loading…</div>';
+  devicesEl.innerHTML = '<div style="color:#94a3b8;font-size:13px;">Loading…</div>';
+
+  // Plan
+  const { data: sub } = await supabase.from('subscriptions')
+    .select('plan_name').eq('user_id', currentUser.id)
+    .order('updated_at', { ascending: false }).limit(1).maybeSingle();
+  currentPlanName = (sub && sub.plan_name) || 'Starter';
+  const cap = SEAT_LIMITS[currentPlanName] || 1;
+  planEl.textContent = currentPlanName;
+
+  // Team
+  const { data: tm } = await supabase.from('team_members')
+    .select('id, member_email, status, invited_at, invite_token')
+    .eq('owner_user_id', currentUser.id)
+    .order('invited_at', { ascending: false });
+  const members = tm || [];
+  const used = members.length + 1; // owner counts
+  seatsEl.textContent = used + ' of ' + cap + ' seats used';
+  document.getElementById('acctInviteBtn').disabled = (used >= cap) || cap <= 1;
+
+  if (members.length === 0) {
+    membersEl.innerHTML = cap > 1
+      ? '<div style="color:#94a3b8;font-size:13px;">No team members yet.</div>'
+      : '<div style="color:#94a3b8;font-size:13px;">Upgrade to Business or higher to invite teammates.</div>';
+  } else {
+    membersEl.innerHTML = members.map(m => {
+      const link = location.origin + '/?join=' + encodeURIComponent(m.invite_token);
+      return '<div style="display:flex;flex-direction:column;gap:6px;padding:10px;border:1px solid rgba(255,255,255,0.08);border-radius:10px;margin-bottom:8px;">'
+        + '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">'
+        + '<div><div style="font-weight:600;">' + escapeHtml(m.member_email) + '</div>'
+        + '<div style="font-size:12px;color:#94a3b8;">' + m.status + '</div></div>'
+        + '<button class="signout-btn" onclick="removeMember(\'' + m.id + '\')">Remove</button>'
+        + '</div>'
+        + (m.status !== 'active' ? ('<div style="display:flex;gap:6px;align-items:center;">'
+            + '<input readonly value="' + link + '" style="flex:1;background:#0a1628;color:#cbd5e1;border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:6px 8px;font-size:12px;" onclick="this.select()" />'
+            + '<button class="signout-btn" onclick="copyText(\'' + link + '\')">Copy</button>'
+            + '</div>') : '')
+        + '</div>';
+    }).join('');
+  }
+
+  // Devices
+  const { data: devs } = await supabase.from('user_devices')
+    .select('id, device_id, label, user_agent, last_seen_at')
+    .eq('user_id', currentUser.id)
+    .order('last_seen_at', { ascending: false });
+  const myDev = getDeviceId();
+  const list = devs || [];
+  if (list.length === 0) {
+    devicesEl.innerHTML = '<div style="color:#94a3b8;font-size:13px;">No devices registered.</div>';
+  } else {
+    devicesEl.innerHTML = list.map(d => {
+      const isThis = d.device_id === myDev;
+      return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px;border:1px solid rgba(255,255,255,0.08);border-radius:10px;margin-bottom:8px;">'
+        + '<div><div style="font-weight:600;">' + escapeHtml(d.label || 'Device') + (isThis ? ' <span style="font-size:11px;color:#3b82f6;">(this device)</span>' : '') + '</div>'
+        + '<div style="font-size:12px;color:#94a3b8;">Last active ' + new Date(d.last_seen_at).toLocaleString() + '</div></div>'
+        + '<button class="signout-btn" onclick="removeDevice(\'' + d.id + '\',' + isThis + ')">Remove</button>'
+        + '</div>';
+    }).join('');
+  }
+}
+window.refreshAccountModal = refreshAccountModal;
+
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function copyText(t) { navigator.clipboard?.writeText(t).then(() => alert('Link copied')).catch(() => prompt('Copy this link:', t)); }
+window.copyText = copyText;
+
+async function addInvite() {
+  const email = (prompt('Teammate email:') || '').trim().toLowerCase();
+  if (!email) return;
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { alert('Please enter a valid email.'); return; }
+  const { error } = await supabase.from('team_members').insert({
+    owner_user_id: currentUser.id, member_email: email, status: 'pending'
+  });
+  if (error) { alert('Could not add invite: ' + error.message); return; }
+  await refreshAccountModal();
+}
+window.addInvite = addInvite;
+
+async function removeMember(id) {
+  if (!confirm('Remove this team member?')) return;
+  const { error } = await supabase.from('team_members').delete().eq('id', id);
+  if (error) { alert(error.message); return; }
+  await refreshAccountModal();
+}
+window.removeMember = removeMember;
+
+async function removeDevice(id, isThis) {
+  if (!confirm(isThis ? 'Remove THIS device? You will be signed out.' : 'Remove this device?')) return;
+  const { error } = await supabase.from('user_devices').delete().eq('id', id);
+  if (error) { alert(error.message); return; }
+  if (isThis) { await doSignOut(); return; }
+  await refreshAccountModal();
+}
+window.removeDevice = removeDevice;
+
+// Capture ?join=<token> from URL on boot
+(function captureJoinToken() {
+  try {
+    const url = new URL(location.href);
+    const token = url.searchParams.get('join');
+    if (token) {
+      localStorage.setItem('inreco.pendingInviteToken', token);
+      url.searchParams.delete('join');
+      history.replaceState({}, '', url.toString());
+    }
+  } catch (_) {}
+})();
+
 // --- Boot ---
 (async () => {
   const { data: { session } } = await supabase.auth.getSession();
@@ -1865,6 +2053,34 @@ supabase.auth.onAuthStateChange((_event, session) => {
         Not now
       </button>
     </div>
+  </div>
+</div>
+
+<div id="accountModal" role="dialog" aria-modal="true"
+     style="display:none;position:fixed;inset:0;background:rgba(8,14,28,0.78);z-index:9998;align-items:flex-start;justify-content:center;padding:24px;overflow:auto;">
+  <div style="background:#0f1d36;color:#fff;border:1px solid rgba(255,255,255,0.08);border-radius:16px;max-width:560px;width:100%;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <h3 style="margin:0;font-size:18px;font-weight:700;">Account</h3>
+      <button class="signout-btn" onclick="closeAccountModal()">Close</button>
+    </div>
+    <div style="font-size:13px;color:#cbd5e1;margin-bottom:18px;">
+      Plan: <strong id="acctPlan">—</strong> · <span id="acctSeats">—</span>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <h4 style="margin:0;font-size:15px;">Team members</h4>
+      <button id="acctInviteBtn" class="signout-btn" onclick="addInvite()">+ Add invite</button>
+    </div>
+    <p style="font-size:12px;color:#94a3b8;margin:0 0 10px;">
+      Share the invite link with your teammate. Each teammate signs in on their own account — no shared logins.
+    </p>
+    <div id="acctMembersList" style="margin-bottom:20px;"></div>
+
+    <h4 style="margin:0 0 6px;font-size:15px;">Devices</h4>
+    <p style="font-size:12px;color:#94a3b8;margin:0 0 10px;">
+      Each account is limited to <strong>2 active devices</strong>. Remove one here to free a slot.
+    </p>
+    <div id="acctDevicesList"></div>
   </div>
 </div>
 

@@ -1,47 +1,57 @@
 ## Goal
 
-After a user signs up or selects any pricing tier, prompt them to install the iNRECO PWA shortcut on their device. Use the existing `public/favicon.png` (the new app icon) as the install icon.
+Implement the hybrid access model for paid plans:
 
-The project already ships PWA basics — `public/manifest.json`, a minimal `public/sw.js`, and `<link rel="manifest">` in `index.html` — but nothing registers the service worker or surfaces an install button to the user.
+- **Seats** — Business 5, Professional 10, Enterprise 15 (already in `SEAT_LIMITS`). Owner shares a **manual sign-up link**, no email delivery.
+- **Device cap** — every account (owner *and* invited member) may have at most **2 active devices**. A 3rd device login is **blocked** with a clear error and a link to manage devices.
+- Over-limit invites or devices are **rejected**, not auto-bumped.
 
-## Changes
+Solo (1 user) gets the same 2-device cap. Starter (free) also gets 2 devices.
 
-### 1. `public/manifest.json`
-Switch the icon entries from `/logo.png` to `/favicon.png` (per your "same picture as the favicon" instruction). Keep both 192×192 and 512×512 entries pointing to the same file with `purpose: "any maskable"`. No other manifest fields change.
+## Database (one migration)
 
-### 2. `index.html` — service worker registration + install prompt
-The legacy single-page app lives in `index.html`. Add a small `<script>` block (near the bottom, alongside the existing auth code) that:
+1. **`team_members.invite_token`** — add `text unique not null default encode(gen_random_bytes(16),'hex')`. Backfill existing rows with a unique value.
+2. **`team_members.accepted_at`** — `timestamptz`. Set by `accept_team_invite`.
+3. **`user_devices`** table:
+   - `id uuid pk`, `user_id uuid not null` (= `auth.uid()`), `device_id text not null`, `label text`, `user_agent text`, `last_seen_at timestamptz default now()`, `created_at timestamptz default now()`.
+   - `unique (user_id, device_id)`.
+   - RLS: owners (`auth.uid() = user_id`) can `SELECT`, `UPDATE` (label only), `DELETE`. No client `INSERT` — only the `register_device` function inserts.
+4. **`public.register_device(_device_id text, _label text, _ua text)`** — `SECURITY DEFINER`, validates `auth.uid()` is set, upserts on `(user_id, device_id)` updating `last_seen_at`. If row is new and existing device count for the user is already ≥ 2, **raises** `EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'device_limit_reached'`. Returns the device row.
+5. **`public.accept_team_invite(_token text)`** — `SECURITY DEFINER`. Looks up `team_members` by token. Refuses if accepted or revoked. Checks owner's plan via latest `subscriptions.plan_name` against `SEAT_LIMITS` (encoded inside the function). If under cap, sets `member_user_id = auth.uid()`, `member_email = auth.email()`, `status = 'active'`, `joined_at = now()`, `accepted_at = now()`. Raises `seat_limit_reached` or `invite_invalid` on errors. Returns `owner_user_id` + `plan_name`.
+6. Keep the existing `link_team_member_on_signup` trigger — still useful when an invited person signs up later.
 
-a. **Registers `/sw.js`** on production hosts only — skip when running inside an iframe or on Lovable preview hosts (`id-preview--`, `lovableproject.com`). This is required so Chrome/Edge will fire `beforeinstallprompt`.
+## App changes
 
-b. **Captures `beforeinstallprompt`**, calls `e.preventDefault()`, and stashes the event in a module-level variable `deferredPrompt`. Listens for `appinstalled` to clear it and set `localStorage["inreco.pwaInstalled"] = "1"`.
+### A. Device registration (both apps)
+- Generate a stable per-browser id once: `localStorage["inreco.deviceId"] = crypto.randomUUID()`.
+- After every successful sign-in (legacy `index.html` `afterLogin` and React `Auth.tsx` post-login), call `supabase.rpc('register_device', { _device_id, _label: <short device guess>, _ua: navigator.userAgent })`.
+- On `device_limit_reached` error: `supabase.auth.signOut()`, show modal "This account already has 2 active devices. Remove one from Settings → Devices on another device, then try again." with a "Sign in on another device first" hint.
 
-c. **Exposes `window.promptInstall()`** which:
-   - If `deferredPrompt` exists → calls `.prompt()`, awaits the choice, clears the variable.
-   - Else if the device is iOS Safari → shows a small modal with "Tap Share, then Add to Home Screen" plus the favicon image.
-   - Else if already installed (`display-mode: standalone` or `localStorage` flag) → no-op.
-   - Else → shows a generic "Open your browser menu → Install app / Add to Home Screen" modal.
+### B. Manual-link invites (replace email flow)
+- `TeamManagement.tsx`:
+  - Drop the `invite-team-member` edge function call. Instead, insert directly into `team_members` (owner-only RLS already allows this) with `member_email`, `status='pending'`.
+  - After insert, build link `https://app.inreco.co.za/join?token=<invite_token>` and show it inline with a **Copy link** button and a hint: "Send this link to your teammate via WhatsApp/email. The link expires when the seat is filled."
+  - Each pending row keeps its Copy-link / Remove actions.
+  - Disable Invite button when `members.length + 1 >= seatLimit`.
+- New React route `/join`:
+  - Reads `?token=` from URL. Stores it in `localStorage["inreco.pendingInviteToken"]` and routes to `/auth` if not signed in.
+  - After sign-in, calls `accept_team_invite(token)`. On success → toast "You've joined <Owner>'s team" → route to `/`. On `seat_limit_reached` → toast and explanation. On `invite_invalid` → toast.
+  - `src/pages/Auth.tsx` already handles `pendingPlan` / `pendingEmail`; extend the same post-login hook to consume `pendingInviteToken` if present.
 
-d. **Adds a lightweight modal** (`<div id="installModal">`) with the favicon, a short message ("Install iNRECO on your device for one-tap access"), an "Install" button bound to `promptInstall()`, and a "Not now" button. Styled to match the existing screen styles (semantic classes already in the file).
+### C. Settings → Devices panel
+- New `DevicesManagement.tsx` (rendered on Settings page next to `TeamManagement`).
+- Lists rows from `user_devices` for the current user, shows label, UA, last seen. Current device is badged "This device".
+- "Remove" button deletes the row (RLS allows it). Removing the current device also signs the user out.
+- Header copy: "This account allows up to 2 active devices."
 
-e. **Triggers the modal**:
-   - In `doSignup` immediately after `await afterLogin()` when `data.session` exists, and after `setTimeout(..., 1800)` for the email-confirm path → set a `localStorage` flag so the modal appears on next `afterLogin`.
-   - In `afterLogin()` after `enterApp()` if the `pendingInstallPrompt` flag is set.
-   - On the pricing screen — wrap each "Get <Tier>" submit handler so that just before navigating to PayFast, we set `localStorage["inreco.pendingInstallPrompt"] = "1"`. The modal then surfaces when the user returns to the app after payment.
-   - Suppress if `localStorage["inreco.pwaInstalled"]` is `"1"` or `display-mode: standalone` already matches.
+### D. Pricing / landing copy
+- No price changes. Update the seat lines in `Pricing.tsx` and the marketing markup in `index.html` to say e.g. "Up to 5 registered users · max 2 devices each" so the rule is visible at sale time.
 
-### 3. `src/pages/PaymentSuccess.tsx` (React payment-success route)
-Replace the static "Tip: on your phone, use your browser's Add to Home Screen" paragraph with an actual **Install iNRECO** button:
-- New small component `InstallAppButton` (placed inline in the file or in `src/components/InstallAppButton.tsx`).
-- Uses the same `beforeinstallprompt` capture pattern, the same iOS/Safari fallback modal (built with existing shadcn `Dialog`), and the favicon (`/favicon.png`) as the visual.
-- Hidden when already installed.
+## Out of scope
+- No email delivery, no edge-function changes (the existing `invite-team-member` function becomes unused; I'll leave it deployed but unreferenced — say the word if you'd like me to delete it).
+- No changes to `subscriptions` schema or PayFast webhook.
+- No "kick the oldest device" auto-bump — strictly blocked, per your choice.
 
-### 4. `src/pages/Pricing.tsx`
-In the existing PayFast `onSubmit` handler (and on the Free-tier `Get Started Free` link click), set `localStorage["inreco.pendingInstallPrompt"] = "1"` so the legacy app surfaces the modal after they return / sign in.
+## Open question
 
-No backend, schema, auth-config, or PayFast-field changes. No new dependencies — uses the existing manifest + `sw.js` infrastructure and shadcn `Dialog`.
-
-## Notes for you
-
-- The install prompt only appears on browsers that support PWA install (Chrome, Edge, Samsung Internet, Android Firefox, desktop Chrome/Edge). On iOS Safari there is no programmatic prompt — the modal will instead show the standard "Share → Add to Home Screen" instructions with the favicon visual. This is the platform limit, not something we can bypass.
-- The install prompt and SW registration are suppressed inside the Lovable editor preview iframe, so you'll only see it working on the published `app.inreco.co.za` site or on a phone.
+Should the device cap be **per individual account** (owner: 2, each invited member: 2 — so a Business plan effectively allows 5 × 2 = 10 devices total), or **shared across the whole subscription** (5 devices max for the entire Business team, regardless of who logs in)? Per-account is much simpler and what I planned above; shared-pool needs the device check to look up the owner via `team_members` and aggregate. Let me know if you want the shared-pool variant.
