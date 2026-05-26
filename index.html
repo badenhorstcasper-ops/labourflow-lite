@@ -1740,6 +1740,88 @@ window.addEventListener('popstate', () => {
   }
 });
 
+// --- PWA install prompt ---
+let deferredInstallPrompt = null;
+const isStandalone = () =>
+  (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+  window.navigator.standalone === true;
+const isPreviewHost = /id-preview--|lovableproject\.com/.test(location.hostname);
+const isInIframe = (() => { try { return window.self !== window.top; } catch (_) { return true; } })();
+
+if ('serviceWorker' in navigator && !isPreviewHost && !isInIframe) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+});
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  try { localStorage.setItem('inreco.pwaInstalled', '1'); } catch (_) {}
+  hideInstallModal();
+});
+
+function showInstallModal() {
+  const modal = document.getElementById('installModal');
+  if (!modal) return;
+  const ua = navigator.userAgent || '';
+  const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+  const isAndroid = /Android/.test(ua);
+  const instr = document.getElementById('installInstructions');
+  const installBtn = document.getElementById('installNowBtn');
+  if (deferredInstallPrompt) {
+    instr.textContent = 'Install iNRECO on your device for one-tap access.';
+    installBtn.style.display = '';
+  } else if (isIOS) {
+    instr.innerHTML = 'On iPhone/iPad: tap the <strong>Share</strong> icon, then <strong>Add to Home Screen</strong>.';
+    installBtn.style.display = 'none';
+  } else if (isAndroid) {
+    instr.innerHTML = 'Open your browser menu (⋮) and tap <strong>Install app</strong> or <strong>Add to Home screen</strong>.';
+    installBtn.style.display = 'none';
+  } else {
+    instr.innerHTML = 'In your browser menu, choose <strong>Install app</strong> to add iNRECO to your device.';
+    installBtn.style.display = 'none';
+  }
+  modal.style.display = 'flex';
+}
+function hideInstallModal() {
+  const modal = document.getElementById('installModal');
+  if (modal) modal.style.display = 'none';
+  try { localStorage.removeItem('inreco.pendingInstallPrompt'); } catch (_) {}
+}
+window.hideInstallModal = hideInstallModal;
+
+window.promptInstall = async function () {
+  if (deferredInstallPrompt) {
+    try {
+      deferredInstallPrompt.prompt();
+      const { outcome } = await deferredInstallPrompt.userChoice;
+      if (outcome === 'accepted') {
+        try { localStorage.setItem('inreco.pwaInstalled', '1'); } catch (_) {}
+      }
+    } catch (_) {}
+    deferredInstallPrompt = null;
+    hideInstallModal();
+  } else {
+    showInstallModal();
+  }
+};
+
+window.maybeShowInstallPrompt = function () {
+  try {
+    if (localStorage.getItem('inreco.pwaInstalled') === '1') return;
+    if (isStandalone()) return;
+    showInstallModal();
+  } catch (_) {}
+};
+
+window.flagPendingInstallPrompt = function () {
+  try { localStorage.setItem('inreco.pendingInstallPrompt', '1'); } catch (_) {}
+};
+
 // --- Boot ---
 (async () => {
   const { data: { session } } = await supabase.auth.getSession();
