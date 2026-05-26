@@ -2056,5 +2056,33 @@ supabase.auth.onAuthStateChange((_event, session) => {
   </div>
 </div>
 
+<div id="accountModal" role="dialog" aria-modal="true"
+     style="display:none;position:fixed;inset:0;background:rgba(8,14,28,0.78);z-index:9998;align-items:flex-start;justify-content:center;padding:24px;overflow:auto;">
+  <div style="background:#0f1d36;color:#fff;border:1px solid rgba(255,255,255,0.08);border-radius:16px;max-width:560px;width:100%;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <h3 style="margin:0;font-size:18px;font-weight:700;">Account</h3>
+      <button class="signout-btn" onclick="closeAccountModal()">Close</button>
+    </div>
+    <div style="font-size:13px;color:#cbd5e1;margin-bottom:18px;">
+      Plan: <strong id="acctPlan">—</strong> · <span id="acctSeats">—</span>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <h4 style="margin:0;font-size:15px;">Team members</h4>
+      <button id="acctInviteBtn" class="signout-btn" onclick="addInvite()">+ Add invite</button>
+    </div>
+    <p style="font-size:12px;color:#94a3b8;margin:0 0 10px;">
+      Share the invite link with your teammate. Each teammate signs in on their own account — no shared logins.
+    </p>
+    <div id="acctMembersList" style="margin-bottom:20px;"></div>
+
+    <h4 style="margin:0 0 6px;font-size:15px;">Devices</h4>
+    <p style="font-size:12px;color:#94a3b8;margin:0 0 10px;">
+      Each account is limited to <strong>2 active devices</strong>. Remove one here to free a slot.
+    </p>
+    <div id="acctDevicesList"></div>
+  </div>
+</div>
+
 </body>
 </html>
