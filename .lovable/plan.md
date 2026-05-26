@@ -1,26 +1,19 @@
-## Fix blank page — single import change
+## Problem
 
-**File:** `src/components/TeamManagement.tsx`
+`app.inreco.co.za` serves the landing page from `index.html`. The three "Get Started Free" / "Open iNRECO Free" buttons on that landing page link out to `https://inrecoapp.inreco.co.za`, which just resolves back to the same landing page — so clicking them appears to do nothing.
 
-**Change:** Replace lines 1–11 (the `createClient` block) with the shared client import.
+The signup/login/onboarding/app screens already exist inside the same `index.html` and are shown via `showScreen('signup' | 'login' | 'app')`. The external links should instead trigger that in-app flow.
 
-Remove:
-```ts
-import { createClient } from "@supabase/supabase-js";
+## Fix
 
-const supabase = createClient(
-  (import.meta.env.VITE_SUPABASE_URL as string) || "",
-  (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string) ||
-    (import.meta.env.VITE_SUPABASE_ANON_KEY as string) ||
-    "",
-);
-```
+In `index.html`, replace the three external anchors with buttons that call `showScreen('signup')` — same approach already used at line 602.
 
-Add:
-```ts
-import { supabase } from "@/integrations/supabase/client";
-```
+- Line 405 — hero "Get Started Free"
+- Line 511 — pricing card "Get Started Free"
+- Line 587 — CTA section "Open iNRECO Free"
 
-Keep the existing `useEffect/useMemo/useState` import from React and all other code untouched.
+Keep label text, arrow icon, and existing CSS classes (`btn-primary`, `btn-price`) unchanged so visuals match exactly. Change `<a href="https://inrecoapp.inreco.co.za" class="...">…</a>` to `<button type="button" class="..." onclick="showScreen('signup')">…</button>`.
 
-No other files modified. No design, layout, or feature changes.
+Result: clicking Get Started anywhere on the landing page opens the in-app Sign Up screen → Onboarding → CARA chat, all on `app.inreco.co.za`.
+
+No other files touched. No styling, layout, copy, or other behavior changes.
