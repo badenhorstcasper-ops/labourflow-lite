@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -64,13 +65,20 @@ const Auth = () => {
 
   async function handleGoogle() {
     setBusy(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}/` },
+    const result = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: `${window.location.origin}/`,
     });
-    if (error) {
+    if (result?.error) {
       setBusy(false);
-      toast({ title: "Google sign-in failed", description: error.message, variant: "destructive" });
+      const msg = result.error instanceof Error ? result.error.message : String(result.error);
+      toast({ title: "Google sign-in failed", description: msg, variant: "destructive" });
+      return;
+    }
+    if (!result?.redirected) {
+      // Got tokens directly; go to dashboard
+      localStorage.removeItem("inreco.pendingEmail");
+      localStorage.removeItem("inreco.pendingPlan");
+      navigate("/", { replace: true });
     }
   }
 
