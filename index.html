@@ -1462,7 +1462,10 @@ QUICK_ACTIONS.forEach(label => {
   b.className = 'quick-btn'; b.textContent = label;
   b.addEventListener('click', () => {
     removeFollowups();
-    openWizard(label);
+    currentTopicSystem = TOPIC_SYSTEM_PROMPTS[label] || null;
+    input.value = label;
+    autoResize();
+    sendMessage({ countAsQuestion: true });
   });
   qaWrap.appendChild(b);
 });
