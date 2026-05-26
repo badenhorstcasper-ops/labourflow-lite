@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import InstallAppButton from "@/components/InstallAppButton";
 
 const PaymentSuccess = () => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
@@ -41,8 +42,9 @@ const PaymentSuccess = () => {
         </>
       )}
 
+      <InstallAppButton />
       <p className="text-xs text-muted-foreground">
-        Tip: on your phone, use your browser's "Add to Home Screen" to install iNRECO like an app.
+        Tip: on iPhone, use Safari's Share menu → "Add to Home Screen" to install iNRECO.
       </p>
     </div>
   );

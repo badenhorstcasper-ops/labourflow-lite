@@ -785,6 +785,9 @@ const $ = (id) => document.getElementById(id);
 function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   $('screen-' + name).classList.add('active');
+  if (name === 'signup') {
+    try { localStorage.setItem('inreco.pendingInstallPrompt', '1'); } catch (_) {}
+  }
 }
 window.showScreen = showScreen;
 
@@ -811,6 +814,7 @@ async function doSignup() {
   });
   $('su-btn').disabled = false;
   if (error) { err.textContent = error.message; return; }
+  try { localStorage.setItem('inreco.pendingInstallPrompt', '1'); } catch (_) {}
   if (data.session) {
     // Auto-confirmed
     await afterLogin();
@@ -891,6 +895,13 @@ async function enterApp() {
     `Hello, ${currentProfile.company_name}. I'm CARA, your Compliance and Relations Adviser. Ask me anything about SA labour compliance for your ${currentProfile.sector.toLowerCase()} business.`;
   showScreen('app');
   updateTrialBadge();
+  try {
+    if (localStorage.getItem('inreco.pendingInstallPrompt') === '1' &&
+        localStorage.getItem('inreco.pwaInstalled') !== '1' &&
+        !isStandalone()) {
+      setTimeout(() => window.maybeShowInstallPrompt && window.maybeShowInstallPrompt(), 600);
+    }
+  } catch (_) {}
 }
 
 async function loadUsage() {
@@ -1740,6 +1751,88 @@ window.addEventListener('popstate', () => {
   }
 });
 
+// --- PWA install prompt ---
+let deferredInstallPrompt = null;
+const isStandalone = () =>
+  (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+  window.navigator.standalone === true;
+const isPreviewHost = /id-preview--|lovableproject\.com/.test(location.hostname);
+const isInIframe = (() => { try { return window.self !== window.top; } catch (_) { return true; } })();
+
+if ('serviceWorker' in navigator && !isPreviewHost && !isInIframe) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+});
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  try { localStorage.setItem('inreco.pwaInstalled', '1'); } catch (_) {}
+  hideInstallModal();
+});
+
+function showInstallModal() {
+  const modal = document.getElementById('installModal');
+  if (!modal) return;
+  const ua = navigator.userAgent || '';
+  const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+  const isAndroid = /Android/.test(ua);
+  const instr = document.getElementById('installInstructions');
+  const installBtn = document.getElementById('installNowBtn');
+  if (deferredInstallPrompt) {
+    instr.textContent = 'Install iNRECO on your device for one-tap access.';
+    installBtn.style.display = '';
+  } else if (isIOS) {
+    instr.innerHTML = 'On iPhone/iPad: tap the <strong>Share</strong> icon, then <strong>Add to Home Screen</strong>.';
+    installBtn.style.display = 'none';
+  } else if (isAndroid) {
+    instr.innerHTML = 'Open your browser menu (⋮) and tap <strong>Install app</strong> or <strong>Add to Home screen</strong>.';
+    installBtn.style.display = 'none';
+  } else {
+    instr.innerHTML = 'In your browser menu, choose <strong>Install app</strong> to add iNRECO to your device.';
+    installBtn.style.display = 'none';
+  }
+  modal.style.display = 'flex';
+}
+function hideInstallModal() {
+  const modal = document.getElementById('installModal');
+  if (modal) modal.style.display = 'none';
+  try { localStorage.removeItem('inreco.pendingInstallPrompt'); } catch (_) {}
+}
+window.hideInstallModal = hideInstallModal;
+
+window.promptInstall = async function () {
+  if (deferredInstallPrompt) {
+    try {
+      deferredInstallPrompt.prompt();
+      const { outcome } = await deferredInstallPrompt.userChoice;
+      if (outcome === 'accepted') {
+        try { localStorage.setItem('inreco.pwaInstalled', '1'); } catch (_) {}
+      }
+    } catch (_) {}
+    deferredInstallPrompt = null;
+    hideInstallModal();
+  } else {
+    showInstallModal();
+  }
+};
+
+window.maybeShowInstallPrompt = function () {
+  try {
+    if (localStorage.getItem('inreco.pwaInstalled') === '1') return;
+    if (isStandalone()) return;
+    showInstallModal();
+  } catch (_) {}
+};
+
+window.flagPendingInstallPrompt = function () {
+  try { localStorage.setItem('inreco.pendingInstallPrompt', '1'); } catch (_) {}
+};
+
 // --- Boot ---
 (async () => {
   const { data: { session } } = await supabase.auth.getSession();
@@ -1753,5 +1846,27 @@ supabase.auth.onAuthStateChange((_event, session) => {
   if (!session) { currentUser=null; currentProfile=null; }
 });
 </script>
+
+<div id="installModal" role="dialog" aria-modal="true" aria-labelledby="installTitle"
+     style="display:none;position:fixed;inset:0;background:rgba(8,14,28,0.75);z-index:9999;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#0f1d36;color:#fff;border:1px solid rgba(255,255,255,0.08);border-radius:16px;max-width:380px;width:100%;padding:24px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+    <img src="/favicon.png" alt="iNRECO" width="72" height="72" style="border-radius:16px;margin:0 auto 14px;display:block;" />
+    <h3 id="installTitle" style="margin:0 0 8px;font-size:18px;font-weight:700;">Install iNRECO</h3>
+    <p id="installInstructions" style="margin:0 0 18px;font-size:14px;line-height:1.5;color:#cbd5e1;">
+      Install iNRECO on your device for one-tap access.
+    </p>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+      <button id="installNowBtn" type="button" onclick="promptInstall()"
+              style="background:#3b82f6;color:#fff;border:0;border-radius:10px;padding:10px 18px;font-weight:600;cursor:pointer;">
+        Install
+      </button>
+      <button type="button" onclick="hideInstallModal()"
+              style="background:transparent;color:#cbd5e1;border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:10px 18px;font-weight:600;cursor:pointer;">
+        Not now
+      </button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
