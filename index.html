@@ -2086,9 +2086,24 @@ window.removeDevice = removeDevice;
 
 // --- Boot ---
 (async () => {
+  const urlParams = new URLSearchParams(location.search);
+  const launchedAsApp = urlParams.get('app') === '1' || isStandalone();
   const { data: { session } } = await supabase.auth.getSession();
-  if (session) await afterLogin();
-  else showScreen('welcome');
+  if (session) {
+    await afterLogin();
+    // If a paid plan was selected before sign-in, resume the PayFast checkout.
+    try {
+      const pending = localStorage.getItem('inreco.pendingPlan');
+      if (pending) {
+        localStorage.removeItem('inreco.pendingPlan');
+        setTimeout(() => window.payWithPayfast && window.payWithPayfast(pending), 400);
+      }
+    } catch (_) {}
+  } else {
+    // When launched from the installed PWA / home-screen shortcut, skip the
+    // marketing landing and go straight into the app's login screen.
+    showScreen(launchedAsApp ? 'login' : 'welcome');
+  }
   // Seed history so first back press triggers popstate instead of leaving
   history.pushState({ navGuard: true }, '');
 })();
