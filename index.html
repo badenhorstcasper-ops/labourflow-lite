@@ -521,7 +521,7 @@ footer{border-top:1px solid var(--border);padding:40px;display:flex;flex-directi
           <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>CCMA deadline tracker</li>
           <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>CARA AI adviser</li>
         </ul>
-        <a href="https://inrecoapp.inreco.co.za" class="btn-price">Get Solo</a>
+        <button type="button" class="btn-price" onclick="payWithPayfast('Solo')">Get Solo</button>
       </div>
 
       <div class="price-card featured">
@@ -535,7 +535,7 @@ footer{border-top:1px solid var(--border);padding:40px;display:flex;flex-directi
           <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>CARA AI adviser</li>
           <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>CCMA tracker</li>
         </ul>
-        <a href="https://inrecoapp.inreco.co.za" class="btn-price">Get Business</a>
+        <button type="button" class="btn-price" onclick="payWithPayfast('Business')">Get Business</button>
       </div>
 
       <div class="price-card">
@@ -547,7 +547,7 @@ footer{border-top:1px solid var(--border);padding:40px;display:flex;flex-directi
           <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>CARA as your dedicated AI adviser</li>
           <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>WhatsApp support</li>
         </ul>
-        <a href="https://inrecoapp.inreco.co.za" class="btn-price">Get Professional</a>
+        <button type="button" class="btn-price" onclick="payWithPayfast('Professional')">Get Professional</button>
       </div>
 
       <div class="price-card">
@@ -560,7 +560,7 @@ footer{border-top:1px solid var(--border);padding:40px;display:flex;flex-directi
           <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Annual option — pay 10 get 12</li>
           <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>WhatsApp support</li>
         </ul>
-        <a href="mailto:info@inreco.co.za?subject=iNRECO Enterprise" class="btn-price">Contact Us</a>
+        <button type="button" class="btn-price" onclick="payWithPayfast('Enterprise')">Get Enterprise</button>
       </div>
 
     </div>
@@ -1700,17 +1700,73 @@ micBtn.addEventListener('click', () => {
 // Upgrade modal
 function openUpgrade(){ $('upgradeModal').classList.add('show'); }
 function closeUpgrade(){ $('upgradeModal').classList.remove('show'); }
-function selectPlan(p){
-  const urls = {
-    'Solo': 'https://inrecoapp.inreco.co.za/?plan=solo',
-    'Business': 'https://inrecoapp.inreco.co.za/?plan=business',
-    'Enterprise': 'https://inrecoapp.inreco.co.za/?plan=enterprise',
-    'PAYG': 'https://inrecoapp.inreco.co.za/?plan=payg'
+
+// --- PayFast checkout (in-app, no email handoff) ---
+const PAYFAST_CFG = {
+  url: 'https://sandbox.payfast.co.za/eng/process',
+  merchant_id: '10000100',
+  merchant_key: '46f0cd694581a',
+  return_url: 'https://app.inreco.co.za/payment-success',
+  cancel_url: 'https://app.inreco.co.za/payment-cancelled',
+  notify_url: 'https://riqswihuzclbyjemynyd.supabase.co/functions/v1/payfast-webhook'
+};
+const PLAN_AMOUNTS = { Solo: 259, Business: 499, Professional: 1499, Enterprise: 3999 };
+
+function submitPayfastForm(plan, amount, userId, email) {
+  const fields = {
+    merchant_id: PAYFAST_CFG.merchant_id,
+    merchant_key: PAYFAST_CFG.merchant_key,
+    return_url: PAYFAST_CFG.return_url,
+    cancel_url: PAYFAST_CFG.cancel_url,
+    notify_url: PAYFAST_CFG.notify_url,
+    m_payment_id: (userId || 'guest') + '|' + plan + '|' + Date.now(),
+    amount: amount.toFixed(2),
+    item_name: 'iNRECO ' + plan + ' Plan',
+    subscription_type: '1',
+    frequency: '3',
+    cycles: '0',
+    recurring_amount: amount.toFixed(2),
+    custom_str2: plan
   };
-  window.location.href = 'mailto:info@inreco.co.za?subject=iNRECO Subscription - ' + p + '&body=I would like to subscribe to the ' + p + ' plan.';
-  closeUpgrade();
+  if (userId) fields.custom_str1 = userId;
+  if (email) { fields.email_address = email; fields.custom_str3 = email; }
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = PAYFAST_CFG.url;
+  Object.entries(fields).forEach(([k, v]) => {
+    const input = document.createElement('input');
+    input.type = 'hidden'; input.name = k; input.value = String(v);
+    form.appendChild(input);
+  });
+  document.body.appendChild(form);
+  try { localStorage.setItem('inreco.pendingInstallPrompt', '1'); } catch (_) {}
+  form.submit();
 }
-window.openUpgrade = openUpgrade; window.closeUpgrade = closeUpgrade; window.selectPlan = selectPlan;
+
+async function payWithPayfast(plan) {
+  const amount = PLAN_AMOUNTS[plan];
+  if (!amount) { alert('Unknown plan: ' + plan); return; }
+  let userId = null, email = null;
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) { userId = user.id; email = user.email || null; }
+  } catch (_) {}
+  if (!userId) {
+    // Stash the plan so we can resume checkout right after signup/login.
+    try { localStorage.setItem('inreco.pendingPlan', plan); } catch (_) {}
+    showScreen('signup');
+    return;
+  }
+  submitPayfastForm(plan, amount, userId, email);
+}
+
+function selectPlan(p) {
+  closeUpgrade();
+  if (p === 'PAYG') { payWithPayfast('Solo'); return; } // map legacy PAYG → Solo
+  payWithPayfast(p);
+}
+window.openUpgrade = openUpgrade; window.closeUpgrade = closeUpgrade;
+window.selectPlan = selectPlan; window.payWithPayfast = payWithPayfast;
 
 // --- Sharing ---
 const APP_URL = 'https://inrecoapp.inreco.co.za';
@@ -2030,9 +2086,24 @@ window.removeDevice = removeDevice;
 
 // --- Boot ---
 (async () => {
+  const urlParams = new URLSearchParams(location.search);
+  const launchedAsApp = urlParams.get('app') === '1' || isStandalone();
   const { data: { session } } = await supabase.auth.getSession();
-  if (session) await afterLogin();
-  else showScreen('welcome');
+  if (session) {
+    await afterLogin();
+    // If a paid plan was selected before sign-in, resume the PayFast checkout.
+    try {
+      const pending = localStorage.getItem('inreco.pendingPlan');
+      if (pending) {
+        localStorage.removeItem('inreco.pendingPlan');
+        setTimeout(() => window.payWithPayfast && window.payWithPayfast(pending), 400);
+      }
+    } catch (_) {}
+  } else {
+    // When launched from the installed PWA / home-screen shortcut, skip the
+    // marketing landing and go straight into the app's login screen.
+    showScreen(launchedAsApp ? 'login' : 'welcome');
+  }
   // Seed history so first back press triggers popstate instead of leaving
   history.pushState({ navGuard: true }, '');
 })();
