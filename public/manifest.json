@@ -2,7 +2,7 @@
   "name": "iNRECO",
   "short_name": "iNRECO",
   "description": "Your Personal Pocket Labour Consultant",
-  "start_url": "/",
+  "start_url": "/?app=1",
   "display": "standalone",
   "background_color": "#0a1628",
   "theme_color": "#0a1628",
