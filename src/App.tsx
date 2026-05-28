@@ -5,6 +5,7 @@ import CompanyProfilePage from "@/pages/CompanyProfile";
 import DocumentsPage from "@/pages/Documents";
 import SharePage from "@/pages/Share";
 import ContactPage from "@/pages/Contact";
+import ContrastAudit from "@/components/dev/ContrastAudit";
 
 const queryClient = new QueryClient();
 
