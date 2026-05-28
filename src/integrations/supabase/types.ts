@@ -86,6 +86,42 @@ export type Database = {
         }
         Relationships: []
       }
+      contact_messages: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          ip_hash: string | null
+          message: string
+          name: string
+          plan_interest: string | null
+          subject: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          ip_hash?: string | null
+          message: string
+          name: string
+          plan_interest?: string | null
+          subject?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          ip_hash?: string | null
+          message?: string
+          name?: string
+          plan_interest?: string | null
+          subject?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       generated_documents: {
         Row: {
           created_at: string
@@ -128,6 +164,36 @@ export type Database = {
           share_expires_at?: string
           share_token?: string
           title?: string
+        }
+        Relationships: []
+      }
+      share_access_log: {
+        Row: {
+          created_at: string
+          document_id: string
+          id: string
+          ip_hash: string | null
+          outcome: string
+          share_token_prefix: string
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          document_id: string
+          id?: string
+          ip_hash?: string | null
+          outcome: string
+          share_token_prefix: string
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          document_id?: string
+          id?: string
+          ip_hash?: string | null
+          outcome?: string
+          share_token_prefix?: string
+          user_agent?: string | null
         }
         Relationships: []
       }
