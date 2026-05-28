@@ -1296,7 +1296,13 @@ function openWizard(topic, prefillUserText) {
 
   const form = document.createElement('form');
   const allFields = [...w.fields, ...COMMON_FIELDS];
-  form.onsubmit = e => { e.preventDefault(); submitWizard(topic, w, form, allFields, prefillUserText); };
+  form.onsubmit = e => {
+    e.preventDefault();
+    const submitBtn = form.querySelector('button[type="submit"]');
+    setBusy(submitBtn, true, 'Asking CARA…');
+    try { submitWizard(topic, w, form, allFields, prefillUserText); }
+    finally { setTimeout(() => setBusy(submitBtn, false), 500); }
+  };
 
   const draft = wizardDrafts[topic] || {};
 
