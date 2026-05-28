@@ -1,6 +1,9 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
+// Side-effect import: exposes window.iNRECO.{generatePdf,generateDocx} so the
+// legacy vanilla app in index.html can produce branded PDF / Word downloads.
+import "./lib/documents/clientEntry";
 
 // The legacy vanilla app owns the document body and renders into existing
 // markup in index.html. React only takes over for specific app routes

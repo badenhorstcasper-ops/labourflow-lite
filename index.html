@@ -1301,16 +1301,20 @@ function showDocumentModal(title, content) {
   box.style.maxWidth = '720px';
   box.innerHTML = `
     <div class="wizard-header">
-      <div><h2></h2><p>Review, then copy, share or download.</p></div>
+      <div><h2></h2><p>Edit the text below, then download as PDF or Word. Your company letterhead, logo, address and signature line are added automatically.</p></div>
       <button class="wizard-close" type="button">×</button>
     </div>
-    <div class="doc-body" style="background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:14px; max-height:50vh; overflow-y:auto; font-size:13px; line-height:1.55;"></div>
+    <div class="brand-warn" style="display:none; background:#fef3c7; border:1px solid #f59e0b; color:#92400e; border-radius:8px; padding:10px 12px; font-size:13px; margin-bottom:10px;">
+      <strong>Add your company details</strong> so your downloads carry your own letterhead (name, logo, address, signatory).
+      <a href="/account-app/profile" target="_blank" rel="noopener" style="color:#92400e; text-decoration:underline; margin-left:6px;">Open company profile →</a>
+    </div>
+    <textarea class="doc-edit" style="width:100%; min-height:40vh; background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:12px; font-size:13px; line-height:1.55; font-family:inherit; color:var(--text); resize:vertical;"></textarea>
     <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:8px;">
-      <button class="wiz-submit" data-act="copy">📋 Copy</button>
-      <button class="wiz-submit" data-act="wa" style="background:#22c55e;">💬 Share via WhatsApp</button>
-      <button class="wiz-submit" data-act="email" style="background:var(--accent);">📧 Share via Email</button>
-      <button class="wiz-submit" data-act="dl" style="background:var(--surface);">⬇️ Download</button>
-      <button class="wiz-submit" data-act="shareApp" style="background:var(--surface-2); border:1px solid var(--border); grid-column: 1/-1;">🔗 Share iNRECO</button>
+      <button class="wiz-submit" data-act="pdf" style="background:var(--primary);">⬇️ PDF</button>
+      <button class="wiz-submit" data-act="docx" style="background:#2563eb;">⬇️ Word</button>
+      <button class="wiz-submit" data-act="copy">📋 Copy text</button>
+      <button class="wiz-submit" data-act="wa" style="background:#22c55e;">💬 WhatsApp</button>
+      <button class="wiz-submit" data-act="email" style="background:var(--accent);">📧 Email</button>
     </div>
     <div style="border-top:1px solid var(--border); padding-top:12px; display:flex; flex-direction:column; gap:8px;">
       <button class="wiz-submit" data-act="another" style="background:var(--primary);">Generate another document</button>
@@ -1318,20 +1322,39 @@ function showDocumentModal(title, content) {
       <button class="wiz-submit" data-act="new" style="background:var(--surface-2); border:1px solid var(--border);">Start a new matter</button>
     </div>`;
   box.querySelector('h2').textContent = title;
-  box.querySelector('.doc-body').innerHTML = renderMarkdown(content);
+  const editEl = box.querySelector('.doc-edit');
+  // Strip any AI-invented letterhead / forbidden brand lines before showing.
+  const cleanedInitial = String(content || '').split(/\r?\n/)
+    .filter(ln => !/(labourflow|inreco\s+consulting|powered\s+by)/i.test(ln))
+    .join('\n').replace(/^\n+/, '');
+  editEl.value = cleanedInitial;
+  const getText = () => editEl.value;
   const closeModal = () => overlay.remove();
   box.querySelector('.wizard-close').onclick = closeModal;
-  box.querySelector('[data-act="copy"]').onclick = () => { navigator.clipboard.writeText(content); };
-  box.querySelector('[data-act="wa"]').onclick = () => shareWhatsApp(content);
-  box.querySelector('[data-act="email"]').onclick = () => shareEmail(title, content);
-  box.querySelector('[data-act="dl"]').onclick = () => {
-    const blob = new Blob([content], { type: 'text/plain' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = title.replace(/[^a-z0-9]+/gi,'_') + '.txt';
-    a.click();
+  box.querySelector('[data-act="copy"]').onclick = () => { navigator.clipboard.writeText(getText()); };
+  box.querySelector('[data-act="wa"]').onclick = () => shareWhatsApp(getText());
+  box.querySelector('[data-act="email"]').onclick = () => shareEmail(title, getText());
+  const warn = box.querySelector('.brand-warn');
+  const handleErr = (e) => {
+    const msg = (e && e.message) || String(e);
+    if (msg === 'company_profile_incomplete' || msg === 'not_signed_in') {
+      warn.style.display = '';
+    } else {
+      alert('Could not generate file: ' + msg);
+    }
   };
-  box.querySelector('[data-act="shareApp"]').onclick = () => openShareAppModal();
+  box.querySelector('[data-act="pdf"]').onclick = async () => {
+    try {
+      if (!window.iNRECO?.generatePdf) throw new Error('Renderer not loaded yet — please reload the page.');
+      await window.iNRECO.generatePdf(title, getText());
+    } catch (e) { handleErr(e); }
+  };
+  box.querySelector('[data-act="docx"]').onclick = async () => {
+    try {
+      if (!window.iNRECO?.generateDocx) throw new Error('Renderer not loaded yet — please reload the page.');
+      await window.iNRECO.generateDocx(title, getText());
+    } catch (e) { handleErr(e); }
+  };
   box.querySelector('[data-act="another"]').onclick = () => { closeModal(); renderFollowups(); chatEl.scrollTop = chatEl.scrollHeight; };
   box.querySelector('[data-act="continue"]').onclick = () => { closeModal(); renderFollowups(); };
   box.querySelector('[data-act="new"]').onclick = () => { closeModal(); resetToNewMatter(); };
@@ -1431,8 +1454,7 @@ async function generateDocument(docName, opts = {}) {
   }
 
   const factsText = Object.entries(currentMatter.facts).map(([k,v]) => `- ${k}: ${v}`).join('\n');
-  const prompt = `Generate the following document for an SA employer. Output ONLY the final document text — no preamble, no commentary, ready to copy/paste/print.\n\nDocument: ${docName}\nMatter type: ${currentMatter.topic}\n\nFacts already collected (use these — do not ask for anything else):\n${factsText}\n\nInclude proper SA labour-law structure: header, addressee (employee name from facts), date (today's date from facts), subject line, body, signature block. Keep it professional and concise.`;
-
+  const prompt = `Draft the BODY of the following SA labour document. Output ONLY the body text — no commentary, no preamble.\n\nDocument: ${docName}\nMatter type: ${currentMatter.topic}\n\nFacts (use these — do not ask for more):\n${factsText}\n\nSTRICT RULES:\n- DO NOT invent or include any letterhead, company name, logo line, address block, contact details, registration number, VAT number, website, or footer. These are added automatically by the system from the employer's saved company profile.\n- DO NOT write "LABOURFLOW", "iNRECO Consulting", "Powered by" or any platform/brand name. Never.\n- Start at the date line, then subject line, then salutation ("Dear <employee name>"), then the body, then closing ("Yours sincerely,"), then a blank line for the signatory. Do NOT type a company name or signatory name — leave it blank.\n- Use the employee name and date from the facts above.\n- Reference SA labour law (LRA, BCEA, Schedule 8) where appropriate. Professional, concise tone.`;
   try {
     const { data: { session } } = await supabase.auth.getSession();
     const token = session?.access_token || ANON_KEY;
@@ -1440,7 +1462,7 @@ async function generateDocument(docName, opts = {}) {
       method: 'POST',
       headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+token, 'apikey':ANON_KEY },
       body: JSON.stringify({
-        system: 'You are CARA. Output only the requested document text exactly as it should appear on company letterhead. No commentary, no questions.',
+        system: 'You are CARA, an SA labour-law assistant. Output ONLY the body text of the requested document. Never include a letterhead, company name, address, logo, signatory name, or any brand/platform name (especially never "Labourflow", "iNRECO Consulting" or "Powered by"). The host application adds the employer letterhead, footer and signature line automatically.',
         messages: [{ role:'user', content: prompt }],
         profile: currentProfile || {}
       })
