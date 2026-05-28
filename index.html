@@ -1392,9 +1392,14 @@ function saveWizardDraft(topic, form, allFields) {
     }
   });
   wizardDrafts[topic] = d;
+  persistState();
 }
 function closeWizard() { $('wizardOverlay').classList.remove('show'); }
 window.closeWizard = closeWizard;
+
+
+// Track the most recent matter (topic + collected facts) so document buttons can reuse it
+let currentMatter = _initial.currentMatter || null;
 
 
 // Track the most recent matter (topic + collected facts) so document buttons can reuse it
