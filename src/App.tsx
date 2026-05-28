@@ -22,6 +22,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         <Toaster />
+        {import.meta.env.DEV && <ContrastAudit />}
       </BrowserRouter>
     </QueryClientProvider>
   );
