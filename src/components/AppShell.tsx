@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import ReportProblemButton from "@/components/ReportProblemButton";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation();
@@ -10,7 +11,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         : "text-foreground hover:bg-muted"
     }`;
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
       <header className="border-b">
         <div className="container mx-auto max-w-5xl px-4 py-3 flex items-center justify-between gap-4">
           <a href="/" className="font-bold tracking-tight text-lg">iNRECO</a>
@@ -27,7 +28,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </Button>
         </div>
       </header>
-      <main className="container mx-auto max-w-5xl px-4 py-8">{children}</main>
+      <main className="container mx-auto max-w-5xl px-4 py-8 flex-1">{children}</main>
+      <footer className="border-t mt-12">
+        <div className="container mx-auto max-w-5xl px-4 py-4 flex items-center justify-between gap-2 text-xs text-muted-foreground">
+          <span>© {new Date().getFullYear()} iNRECO</span>
+          <ReportProblemButton />
+        </div>
+      </footer>
     </div>
   );
 }

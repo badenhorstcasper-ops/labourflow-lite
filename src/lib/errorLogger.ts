@@ -78,7 +78,7 @@ export async function logError(
         stack: local.stack,
         user_agent: ua,
         severity: ctx?.severity ?? "error",
-        context: ctx?.context ?? null,
+        context: (ctx?.context ?? null) as never,
       })
       .select("short_id")
       .single();
