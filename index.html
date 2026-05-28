@@ -1423,10 +1423,12 @@ async function generateDocument(docName, opts = {}) {
     const risk = checkRisk(docName);
     if (risk) { showRiskWarning(docName, risk, (chosen) => generateDocument(chosen, { skipRiskCheck: true })); return; }
   }
-  if (usageCount >= FREE_LIMIT) { openUpgrade(); return; }
+  if (!isDevPaid() && usageCount >= FREE_LIMIT) { openUpgrade(); return; }
   showTyping();
-  const { data: newCount } = await supabase.rpc('increment_question_usage');
-  if (typeof newCount === 'number') { usageCount = newCount; updateTrialBadge(); }
+  if (!isDevPaid()) {
+    const { data: newCount } = await supabase.rpc('increment_question_usage');
+    if (typeof newCount === 'number') { usageCount = newCount; updateTrialBadge(); }
+  }
 
   const factsText = Object.entries(currentMatter.facts).map(([k,v]) => `- ${k}: ${v}`).join('\n');
   const prompt = `Generate the following document for an SA employer. Output ONLY the final document text — no preamble, no commentary, ready to copy/paste/print.\n\nDocument: ${docName}\nMatter type: ${currentMatter.topic}\n\nFacts already collected (use these — do not ask for anything else):\n${factsText}\n\nInclude proper SA labour-law structure: header, addressee (employee name from facts), date (today's date from facts), subject line, body, signature block. Keep it professional and concise.`;
