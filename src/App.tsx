@@ -5,6 +5,7 @@ import CompanyProfilePage from "@/pages/CompanyProfile";
 import DocumentsPage from "@/pages/Documents";
 import SharePage from "@/pages/Share";
 import ContactPage from "@/pages/Contact";
+import ContrastAudit from "@/components/dev/ContrastAudit";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +22,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         <Toaster />
+        {import.meta.env.DEV && <ContrastAudit />}
       </BrowserRouter>
     </QueryClientProvider>
   );
