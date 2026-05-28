@@ -784,6 +784,15 @@ const SUPABASE_URL = 'https://ckjevliuwlijfvdjxmmp.supabase.co';
 const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNramV2bGl1d2xpamZ2ZGp4bW1wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwNjgzMzMsImV4cCI6MjA5MzY0NDMzM30.ipCCqFvjr_m2LNwqnRu0kRarrSPrfVZ_BZ1QN3bwyYw';
 const ENDPOINT = SUPABASE_URL + '/functions/v1/super-endpoint';
 const FREE_LIMIT = 5;
+// Dev override: these accounts bypass the free-tier limit so we can test paid-tier flows
+// without going through the PayFast sandbox. Remove before launch.
+const DEV_PAID_EMAILS = new Set([
+  'casperbadenhorst77@outlook.com',
+  'badenhorst.casper@gmail.com',
+]);
+function isDevPaid() {
+  return !!(currentUser && currentUser.email && DEV_PAID_EMAILS.has(currentUser.email.toLowerCase()));
+}
 const SYSTEM_PROMPT_BASE = "You are CARA, Compliance and Relations Adviser at iNRECO powered by iNRECO. Help SA employers with IR guidance. Always greet with 'Hello' — never use time-based greetings. Never include legal-advice disclaimers (the app footer already shows one). When you receive a 'Topic:' message with structured facts from a wizard, NEVER ask follow-up questions and NEVER repeat/summarise the facts. Go straight into advice. RESPONSE LENGTH RULES: For SIMPLE matters (warnings, AWOL notices, suspensions, grievances, poor performance, union letters, incapacity, disciplinary hearings) keep it brief and practical — a one-line risk flag, then numbered practical steps, no case law, no legal theory, no padding. For COMPLEX matters (CCMA referrals, retrenchments, automatically unfair dismissal) include relevant SA case law (e.g. Sidumo, NUM v De Beers, Fidelity Cash) and detailed legal context. The wizard message will say 'Complexity: simple' or 'Complexity: complex' — obey it. Address the employee by the name given in the wizard. Never ask for information already given in the wizard.";
 
 const supabase = createClient(SUPABASE_URL, ANON_KEY);
@@ -986,8 +995,12 @@ async function loadUsage() {
 }
 
 function updateTrialBadge() {
+  const badge = $('trialCount');
+  if (!badge) return;
+  if (isDevPaid()) { badge.textContent = '∞'; badge.title = 'Dev: paid tier (unlimited)'; return; }
   const remaining = Math.max(0, FREE_LIMIT - usageCount);
-  $('trialCount').textContent = remaining;
+  badge.textContent = remaining;
+  badge.title = '';
 }
 
 // --- Chat ---
@@ -1410,10 +1423,12 @@ async function generateDocument(docName, opts = {}) {
     const risk = checkRisk(docName);
     if (risk) { showRiskWarning(docName, risk, (chosen) => generateDocument(chosen, { skipRiskCheck: true })); return; }
   }
-  if (usageCount >= FREE_LIMIT) { openUpgrade(); return; }
+  if (!isDevPaid() && usageCount >= FREE_LIMIT) { openUpgrade(); return; }
   showTyping();
-  const { data: newCount } = await supabase.rpc('increment_question_usage');
-  if (typeof newCount === 'number') { usageCount = newCount; updateTrialBadge(); }
+  if (!isDevPaid()) {
+    const { data: newCount } = await supabase.rpc('increment_question_usage');
+    if (typeof newCount === 'number') { usageCount = newCount; updateTrialBadge(); }
+  }
 
   const factsText = Object.entries(currentMatter.facts).map(([k,v]) => `- ${k}: ${v}`).join('\n');
   const prompt = `Generate the following document for an SA employer. Output ONLY the final document text — no preamble, no commentary, ready to copy/paste/print.\n\nDocument: ${docName}\nMatter type: ${currentMatter.topic}\n\nFacts already collected (use these — do not ask for anything else):\n${factsText}\n\nInclude proper SA labour-law structure: header, addressee (employee name from facts), date (today's date from facts), subject line, body, signature block. Keep it professional and concise.`;
@@ -1616,7 +1631,7 @@ async function sendMessage(opts) {
   const text = input.value.trim();
   if (!text) return;
   const isWizardSubmission = !!(opts && opts.countAsQuestion) || text.startsWith('Topic:');
-  if (isWizardSubmission && usageCount >= FREE_LIMIT) { openUpgrade(); return; }
+  if (isWizardSubmission && !isDevPaid() && usageCount >= FREE_LIMIT) { openUpgrade(); return; }
 
   emptyState.style.display = 'none';
   removeFollowups();
@@ -1627,7 +1642,7 @@ async function sendMessage(opts) {
   showTyping();
 
   // Increment usage atomically only for new wizard submissions (one per matter)
-  if (isWizardSubmission) {
+  if (isWizardSubmission && !isDevPaid()) {
     const { data: newCount, error: rpcErr } = await supabase.rpc('increment_question_usage');
     if (!rpcErr && typeof newCount === 'number') {
       usageCount = newCount;
@@ -1673,7 +1688,7 @@ async function sendMessage(opts) {
     addMessageToDOM('assistant', reply);
     renderFollowups();
     maybeShowFirstAdvicePrompt();
-    if (usageCount >= FREE_LIMIT) setTimeout(openUpgrade, 600);
+    if (!isDevPaid() && usageCount >= FREE_LIMIT) setTimeout(openUpgrade, 600);
   } catch (err) {
     hideTyping();
     addMessageToDOM('assistant', '⚠️ ' + (err.message || 'Something went wrong.'));
