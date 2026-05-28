@@ -2038,7 +2038,7 @@ async function refreshAccountModal() {
 }
 window.refreshAccountModal = refreshAccountModal;
 
-function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+// (escapeHtml is declared once above near line 1556)
 function copyText(t) { navigator.clipboard?.writeText(t).then(() => alert('Link copied')).catch(() => prompt('Copy this link:', t)); }
 window.copyText = copyText;
 
