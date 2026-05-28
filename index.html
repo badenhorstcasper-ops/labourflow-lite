@@ -1540,9 +1540,13 @@ QUICK_ACTIONS.forEach(label => {
   b.addEventListener('click', () => {
     removeFollowups();
     currentTopicSystem = TOPIC_SYSTEM_PROMPTS[label] || null;
-    input.value = label;
-    autoResize();
-    sendMessage({ countAsQuestion: true });
+    if (WIZARDS[label]) {
+      openWizard(label, label);
+    } else {
+      input.value = label;
+      autoResize();
+      sendMessage({ countAsQuestion: true });
+    }
   });
   qaWrap.appendChild(b);
 });
