@@ -1398,7 +1398,7 @@ function showDocumentModal(title, content) {
   editEl.value = cleanedInitial;
   const getText = () => editEl.value;
   const closeModal = () => overlay.remove();
-  box.querySelector('.wizard-close').onclick = closeModal;
+  box.querySelectorAll('.wizard-close').forEach(b => { b.onclick = () => { closeModal(); renderFollowups(); }; });
   box.querySelector('[data-act="copy"]').onclick = () => { navigator.clipboard.writeText(getText()); };
   box.querySelector('[data-act="wa"]').onclick = () => shareWhatsApp(getText());
   box.querySelector('[data-act="email"]').onclick = () => shareEmail(title, getText());
