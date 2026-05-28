@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      bug_reports: {
+        Row: {
+          created_at: string
+          description: string
+          email: string | null
+          id: string
+          last_error_id: string | null
+          route: string | null
+          status: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          email?: string | null
+          id?: string
+          last_error_id?: string | null
+          route?: string | null
+          status?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          email?: string | null
+          id?: string
+          last_error_id?: string | null
+          route?: string | null
+          status?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bug_reports_last_error_id_fkey"
+            columns: ["last_error_id"]
+            isOneToOne: false
+            referencedRelation: "error_logs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_profiles: {
         Row: {
           accent_color: string
@@ -119,6 +163,48 @@ export type Database = {
           plan_interest?: string | null
           subject?: string | null
           user_agent?: string | null
+        }
+        Relationships: []
+      }
+      error_logs: {
+        Row: {
+          context: Json | null
+          created_at: string
+          email: string | null
+          id: string
+          message: string
+          route: string | null
+          severity: string
+          short_id: string
+          stack: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          context?: Json | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          message: string
+          route?: string | null
+          severity?: string
+          short_id?: string
+          stack?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          context?: Json | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          message?: string
+          route?: string | null
+          severity?: string
+          short_id?: string
+          stack?: string | null
+          user_agent?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -344,6 +430,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -351,6 +458,13 @@ export type Database = {
     Functions: {
       accept_team_invite: { Args: { _token: string }; Returns: Json }
       current_account_owner: { Args: never; Returns: string }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       next_document_number: { Args: { _owner: string }; Returns: string }
       register_device: {
         Args: { _device_id: string; _label?: string; _ua?: string }
@@ -372,7 +486,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -499,6 +613,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+    },
   },
 } as const
