@@ -1676,6 +1676,7 @@ function removeFollowups() {
 function resetToNewMatter() {
   state.messages = [];
   currentMatter = null;
+  Object.keys(wizardDrafts).forEach(k => delete wizardDrafts[k]);
   chatEl.querySelectorAll('.msg').forEach(n => n.remove());
   removeFollowups();
   emptyState.style.display = '';
