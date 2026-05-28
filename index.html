@@ -995,8 +995,12 @@ async function loadUsage() {
 }
 
 function updateTrialBadge() {
+  const badge = $('trialCount');
+  if (!badge) return;
+  if (isDevPaid()) { badge.textContent = '∞'; badge.title = 'Dev: paid tier (unlimited)'; return; }
   const remaining = Math.max(0, FREE_LIMIT - usageCount);
-  $('trialCount').textContent = remaining;
+  badge.textContent = remaining;
+  badge.title = '';
 }
 
 // --- Chat ---
