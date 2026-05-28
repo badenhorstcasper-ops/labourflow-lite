@@ -1346,7 +1346,10 @@ function showDocumentModal(title, content) {
   box.innerHTML = `
     <div class="wizard-header">
       <div><h2></h2><p>Edit the text below, then download as PDF or Word. Your company letterhead, logo, address and signature line are added automatically.</p></div>
-      <button class="wizard-close" type="button">×</button>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <button class="wizard-close" type="button" data-act="back" style="font-size:13px; padding:4px 10px; border:1px solid var(--border); border-radius:8px;">← Back to chat</button>
+        <button class="wizard-close" type="button">×</button>
+      </div>
     </div>
     <div class="brand-warn" style="display:none; background:#fef3c7; border:1px solid #f59e0b; color:#92400e; border-radius:8px; padding:10px 12px; font-size:13px; margin-bottom:10px;">
       <div class="brand-warn-msg">
