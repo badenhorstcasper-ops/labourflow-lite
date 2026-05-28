@@ -113,6 +113,18 @@
     scrollbar-width: none; -ms-overflow-style: none;
   }
   .quick-actions::-webkit-scrollbar { display: none; width: 0; height: 0; }
+
+  /* Toast / in-app dialog */
+  #toastStack { position: fixed; right: 16px; bottom: 16px; z-index: 9000; display: flex; flex-direction: column; gap: 8px; pointer-events: none; max-width: 360px; }
+  .toast { pointer-events: auto; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-left: 4px solid var(--primary-soft); border-radius: 10px; padding: 12px 14px; font-size: 13px; box-shadow: 0 10px 30px rgba(0,0,0,0.35); animation: toastIn .2s ease; }
+  .toast.success { border-left-color: #16a34a; }
+  .toast.error { border-left-color: #dc2626; }
+  .toast.warn { border-left-color: var(--warn); }
+  @keyframes toastIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .btn-loading { position: relative; opacity: 0.7; pointer-events: none; }
+  .btn-loading::after { content: ""; position: absolute; right: 12px; top: 50%; width: 12px; height: 12px; margin-top: -6px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
   .quick-btn {
     background: var(--surface); color: var(--text);
     border: 1px solid var(--border); padding: 8px 14px;
