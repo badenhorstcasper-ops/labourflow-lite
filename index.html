@@ -979,9 +979,9 @@ async function afterLogin() {
       const { error } = await supabase.rpc('accept_team_invite', { _token: token });
       localStorage.removeItem('inreco.pendingInviteToken');
       if (error) {
-        alert('Could not join team: ' + (error.message || 'invalid invite'));
+        toast('Could not join team: ' + (error.message || 'invalid invite'), 'error');
       } else {
-        alert('You have joined the team.');
+        toast('You have joined the team.', 'success');
       }
     }
   } catch (_) {}
@@ -1018,7 +1018,7 @@ async function registerThisDevice() {
   });
   if (error) {
     if ((error.message || '').includes('device_limit_reached')) {
-      alert('This account already has 2 active devices.\n\nSign out of another device first, or remove one from Account → Devices on a device that is still signed in.');
+      toast('This account already has 2 active devices. Sign out elsewhere or remove a device from Account → Devices first.', 'error', 6000);
       await supabase.auth.signOut();
       currentUser = null; currentProfile = null;
       showScreen('welcome');
@@ -1550,7 +1550,7 @@ function showDocumentModal(title, content) {
       brandForm.style.display = '';
       prefillBrandForm();
     } else {
-      alert('Could not generate file: ' + msg);
+      toast('Could not generate file: ' + msg, 'error');
     }
   };
   box.querySelector('[data-act="pdf"]').onclick = async () => {
@@ -1999,7 +1999,7 @@ function submitPayfastForm(plan, amount, userId, email) {
 
 async function payWithPayfast(plan) {
   const amount = PLAN_AMOUNTS[plan];
-  if (!amount) { alert('Unknown plan: ' + plan); return; }
+  if (!amount) { toast('Unknown plan: ' + plan, 'error'); return; }
   let userId = null, email = null;
   try {
     const { data: { user } } = await supabase.auth.getUser();
@@ -2213,7 +2213,7 @@ const SEAT_LIMITS = { Starter: 1, Solo: 1, Business: 5, Professional: 10, Enterp
 let currentPlanName = 'Starter';
 
 async function openAccountModal() {
-  if (!currentUser) { alert('Please sign in first.'); return; }
+  if (!currentUser) { toast('Please sign in first.', 'warn'); return; }
   document.getElementById('accountModal').style.display = 'flex';
   await refreshAccountModal();
 }
@@ -2293,33 +2293,34 @@ async function refreshAccountModal() {
 window.refreshAccountModal = refreshAccountModal;
 
 // (escapeHtml is declared once above near line 1556)
-function copyText(t) { navigator.clipboard?.writeText(t).then(() => alert('Link copied')).catch(() => prompt('Copy this link:', t)); }
+function copyText(t) { navigator.clipboard?.writeText(t).then(() => toast('Link copied', 'success')).catch(() => prompt('Copy this link:', t)); }
 window.copyText = copyText;
 
 async function addInvite() {
   const email = (prompt('Teammate email:') || '').trim().toLowerCase();
   if (!email) return;
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { alert('Please enter a valid email.'); return; }
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { toast('Please enter a valid email.', 'warn'); return; }
   const { error } = await supabase.from('team_members').insert({
     owner_user_id: currentUser.id, member_email: email, status: 'pending'
   });
-  if (error) { alert('Could not add invite: ' + error.message); return; }
+  if (error) { toast('Could not add invite: ' + error.message, 'error'); return; }
   await refreshAccountModal();
 }
 window.addInvite = addInvite;
 
 async function removeMember(id) {
-  if (!confirm('Remove this team member?')) return;
+  if (!(await confirmModal('Remove this team member?', { confirmText: 'Remove', danger: true }))) return;
   const { error } = await supabase.from('team_members').delete().eq('id', id);
-  if (error) { alert(error.message); return; }
+  if (error) { toast(error.message, 'error'); return; }
   await refreshAccountModal();
 }
 window.removeMember = removeMember;
 
 async function removeDevice(id, isThis) {
-  if (!confirm(isThis ? 'Remove THIS device? You will be signed out.' : 'Remove this device?')) return;
+  const msg = isThis ? 'Remove THIS device? You will be signed out.' : 'Remove this device?';
+  if (!(await confirmModal(msg, { confirmText: 'Remove', danger: true }))) return;
   const { error } = await supabase.from('user_devices').delete().eq('id', id);
-  if (error) { alert(error.message); return; }
+  if (error) { toast(error.message, 'error'); return; }
   if (isThis) { await doSignOut(); return; }
   await refreshAccountModal();
 }
