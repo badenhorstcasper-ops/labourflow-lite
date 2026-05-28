@@ -1642,7 +1642,7 @@ async function sendMessage(opts) {
   showTyping();
 
   // Increment usage atomically only for new wizard submissions (one per matter)
-  if (isWizardSubmission) {
+  if (isWizardSubmission && !isDevPaid()) {
     const { data: newCount, error: rpcErr } = await supabase.rpc('increment_question_usage');
     if (!rpcErr && typeof newCount === 'number') {
       usageCount = newCount;
