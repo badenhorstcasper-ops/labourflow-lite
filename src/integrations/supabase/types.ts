@@ -167,6 +167,57 @@ export type Database = {
         }
         Relationships: []
       }
+      payfast_webhook_log: {
+        Row: {
+          amount_gross: number | null
+          created_at: string
+          id: string
+          m_payment_id: string | null
+          matched_email: string | null
+          matched_user_id: string | null
+          merchant_id: string | null
+          outcome: string
+          payload: Json | null
+          payment_status: string | null
+          pf_payment_id: string | null
+          plan_name: string | null
+          reason: string | null
+          source_ip: string | null
+        }
+        Insert: {
+          amount_gross?: number | null
+          created_at?: string
+          id?: string
+          m_payment_id?: string | null
+          matched_email?: string | null
+          matched_user_id?: string | null
+          merchant_id?: string | null
+          outcome: string
+          payload?: Json | null
+          payment_status?: string | null
+          pf_payment_id?: string | null
+          plan_name?: string | null
+          reason?: string | null
+          source_ip?: string | null
+        }
+        Update: {
+          amount_gross?: number | null
+          created_at?: string
+          id?: string
+          m_payment_id?: string | null
+          matched_email?: string | null
+          matched_user_id?: string | null
+          merchant_id?: string | null
+          outcome?: string
+          payload?: Json | null
+          payment_status?: string | null
+          pf_payment_id?: string | null
+          plan_name?: string | null
+          reason?: string | null
+          source_ip?: string | null
+        }
+        Relationships: []
+      }
       share_access_log: {
         Row: {
           created_at: string
