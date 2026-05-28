@@ -1329,6 +1329,7 @@ function submitWizard(topic, w, form, allFields, prefillUserText) {
     lines.push('', 'Give detailed advice including relevant SA case law and legal context, then numbered practical steps.');
   }
   currentMatter = { topic, facts, complexity: meta.complexity, docs: meta.docs };
+  delete wizardDrafts[topic];
   closeWizard();
   input.value = lines.join('\n');
   sendMessage({ countAsQuestion: true });
