@@ -1767,6 +1767,11 @@ function resetToNewMatter() {
 }
 window.resetToNewMatter = resetToNewMatter;
 
+function tryExample(text) {
+  try { input.value = text; autoResize(); input.focus(); } catch (_) {}
+}
+window.tryExample = tryExample;
+
 // Generic 2-option popup used by home button and browser back
 function showNavConfirm() {
   if (document.getElementById('navConfirmOverlay')) return;
