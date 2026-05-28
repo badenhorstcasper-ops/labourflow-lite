@@ -20,7 +20,7 @@ const MERCHANT_KEY = "46f0cd694581a";
 const RETURN_URL = "https://app.inreco.co.za/payment-success";
 const CANCEL_URL = "https://app.inreco.co.za/payment-cancelled";
 const NOTIFY_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/payfast-webhook`;
-const CONTACT_EMAIL = "info@inreco.co.za";
+
 
 type PlanKind = "free" | "paid" | "contact";
 
@@ -225,9 +225,9 @@ const Pricing = () => {
 
                   {plan.kind === "contact" && (
                     <Button asChild className="w-full" variant="outline">
-                      <a href={`mailto:${CONTACT_EMAIL}?subject=iNRECO Enterprise enquiry`}>
+                      <Link to={`/contact?plan=${encodeURIComponent(plan.name)}`}>
                         {plan.cta}
-                      </a>
+                      </Link>
                     </Button>
                   )}
 

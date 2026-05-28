@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/sonner";
 import CompanyProfilePage from "@/pages/CompanyProfile";
 import DocumentsPage from "@/pages/Documents";
 import SharePage from "@/pages/Share";
+import ContactPage from "@/pages/Contact";
 
 const queryClient = new QueryClient();
 
@@ -16,6 +17,7 @@ export default function App() {
           <Route path="/account-app/profile" element={<CompanyProfilePage />} />
           <Route path="/account-app/documents" element={<DocumentsPage />} />
           <Route path="/d/:token" element={<SharePage />} />
+          <Route path="/contact" element={<ContactPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         <Toaster />
