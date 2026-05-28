@@ -1559,19 +1559,23 @@ function showDocumentModal(title, content) {
       toast('Could not generate file: ' + msg, 'error');
     }
   };
-  box.querySelector('[data-act="pdf"]').onclick = async () => {
+  box.querySelector('[data-act="pdf"]').onclick = async (ev) => {
     pendingAct = 'pdf';
+    const btn = ev.currentTarget; setBusy(btn, true, 'Generating…');
     try {
       if (!window.iNRECO?.generatePdf) throw new Error('Renderer not loaded yet — please reload the page.');
       await window.iNRECO.generatePdf(title, getText());
-    } catch (e) { handleErr(e); }
+    } catch (err) { handleErr(err); }
+    finally { setBusy(btn, false); }
   };
-  box.querySelector('[data-act="docx"]').onclick = async () => {
+  box.querySelector('[data-act="docx"]').onclick = async (ev) => {
     pendingAct = 'docx';
+    const btn = ev.currentTarget; setBusy(btn, true, 'Generating…');
     try {
       if (!window.iNRECO?.generateDocx) throw new Error('Renderer not loaded yet — please reload the page.');
       await window.iNRECO.generateDocx(title, getText());
-    } catch (e) { handleErr(e); }
+    } catch (err) { handleErr(err); }
+    finally { setBusy(btn, false); }
   };
   box.querySelector('[data-act="another"]').onclick = () => { closeModal(); renderFollowups(); chatEl.scrollTop = chatEl.scrollHeight; };
   box.querySelector('[data-act="continue"]').onclick = () => { closeModal(); renderFollowups(); };
