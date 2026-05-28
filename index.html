@@ -1423,6 +1423,7 @@ function submitWizard(topic, w, form, allFields, prefillUserText) {
   }
   currentMatter = { topic, facts, complexity: meta.complexity, docs: meta.docs };
   delete wizardDrafts[topic];
+  persistState();
   closeWizard();
   input.value = lines.join('\n');
   sendMessage({ countAsQuestion: true });
