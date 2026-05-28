@@ -1454,16 +1454,14 @@ async function generateDocument(docName, opts = {}) {
   }
 
   const factsText = Object.entries(currentMatter.facts).map(([k,v]) => `- ${k}: ${v}`).join('\n');
-  const prompt = `Generate the following document for an SA employer. Output ONLY the final document text — no preamble, no commentary, ready to copy/paste/print.\n\nDocument: ${docName}\nMatter type: ${currentMatter.topic}\n\nFacts already collected (use these — do not ask for anything else):\n${factsText}\n\nInclude proper SA labour-law structure: header, addressee (employee name from facts), date (today's date from facts), subject line, body, signature block. Keep it professional and concise.`;
-
-  try {
+  const prompt = `Draft the BODY of the following SA labour document. Output ONLY the body text — no commentary, no preamble.\n\nDocument: ${docName}\nMatter type: ${currentMatter.topic}\n\nFacts (use these — do not ask for more):\n${factsText}\n\nSTRICT RULES:\n- DO NOT invent or include any letterhead, company name, logo line, address block, contact details, registration number, VAT number, website, or footer. These are added automatically by the system from the employer's saved company profile.\n- DO NOT write \"LABOURFLOW\", \"iNRECO Consulting\", \"Powered by\" or any platform/brand name. Never.\n- Start at the date line, then subject line, then salutation (\"Dear <employee name>\"), then the body, then closing (\"Yours sincerely,\"), then a blank line for the signatory. Do NOT type a company name or signatory name — leave it blank.\n- Use the employee name and date from the facts above.\n- Reference SA labour law (LRA, BCEA, Schedule 8) where appropriate. Professional, concise tone.`;\n\n  try {
     const { data: { session } } = await supabase.auth.getSession();
     const token = session?.access_token || ANON_KEY;
     const res = await fetch(ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+token, 'apikey':ANON_KEY },
       body: JSON.stringify({
-        system: 'You are CARA. Output only the requested document text exactly as it should appear on company letterhead. No commentary, no questions.',
+        system: 'You are CARA, an SA labour-law assistant. Output ONLY the body text of the requested document. Never include a letterhead, company name, address, logo, signatory name, or any brand/platform name (especially never "Labourflow", "iNRECO Consulting" or "Powered by"). The host application adds the employer\\'s letterhead, footer and signature line automatically.',
         messages: [{ role:'user', content: prompt }],
         profile: currentProfile || {}
       })
