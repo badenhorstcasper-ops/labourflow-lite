@@ -1,43 +1,57 @@
-## Why the regression happened
+## What's happening
 
-The doc generation in `index.html` (`generateDocument`, line 1420) just asks the AI to "output the document as it should appear on company letterhead" and downloads the raw AI reply as `.txt`. There is no real letterhead, no company branding, and no PDF/DOCX renderer — so the AI invents a header, sometimes "LABOURFLOW — POWERED BY iNRECO CONSULTING". The React document system under `src/lib/documents/` (renderPdf, renderDocx, company_profiles) was built for this exact purpose but is not wired into the in-app wizard.
+When the document modal warns "Add your company details…" the link points to `/account-app/profile` and opens in a new tab (`target="_blank"`). That new tab tries to mount the React app at a different route:
 
-## What the fix does
+- On the **preview** URL, the new tab goes through Lovable's auth-bridge first and loses the legacy app's auth session — the React Company Profile page renders without an authenticated user (or stays blank waiting on auth).
+- On the **published** site, even when the route loads, the user has to leave the wizard, fill out a long form, come back to the chat, regenerate the document, and try Word/PDF again. That's the "blank page" they're seeing.
 
-1. **Kill the invented letterhead in the AI output.** Change the prompt so the AI returns only the BODY of the document (subject + body + signature placeholder) — no header block, no "Powered by" line, no company name guess. Add an explicit instruction never to use "Labourflow", "iNRECO Consulting", or any made-up letterhead.
+Root cause: we ask the user to leave the document modal to fix a small data gap, in a flow that breaks across tabs.
 
-2. **Load the user's real company profile on login.** In `index.html`, after auth, fetch the `company_profiles` row for the account owner (already exists, populated from `/account-app/profile`). Cache it as `companyBrand` alongside `currentProfile`.
+## Fix
 
-3. **Show a "Complete company details" banner** in the document modal when the profile is empty. Button opens `/account-app/profile` in a new tab so they can fill in name, address, contact, logo, accent colour.
+Solve it where the problem appears — inside the document modal — and keep `/account-app/profile` as the full editor for later.
 
-4. **Edit before download.** Replace the read-only doc preview with an editable `<textarea>` (Markdown-friendly). The user can tweak every line of the warning before generating the file.
+### 1. Inline "Company details" panel in the document modal (`index.html`)
 
-5. **Real PDF / Word downloads using the existing renderer.** Replace the "⬇️ Download" button with two buttons: **"⬇️ PDF"** and **"⬇️ Word"**. Both routes go through the shared house-style layout in `src/lib/documents/` so every employer's docs look consistent:
-   - Header: their logo (left), their company name + reg/VAT + doc number + date (right), accent rule
-   - Body: the edited text the user just approved
-   - Signatures: signatory name/title from profile + Employee
-   - Footer: their address · email · phone · website · page numbers
-   
-   Implementation: bundle a tiny `src/lib/documents/clientEntry.ts` that exposes `window.iNRECO.generatePdf(text, title)` and `window.iNRECO.generateDocx(text, title)`. The legacy `index.html` calls those. The AI text is split into the body blocks (paragraphs + simple bullet detection) and fed to the existing `renderPdf` / `renderDocx`.
+Replace the yellow warning's link with a **"Complete now"** button that expands a compact form right inside the modal:
 
-6. **Brand-name guard.** Before rendering, strip any line matching `/labourflow|inreco consulting|powered by/i` from the edited text as a safety net.
+- Company name *
+- Address (single line) 
+- Contact email
+- Contact phone  
+- Signatory name + title
+- Logo upload (optional, drag-drop file input → uploads to `company-logos/<owner>/logo.<ext>` exactly like `CompanyProfile.tsx` already does)
+- Accent colour (colour picker, defaults `#2563eb`)
 
-7. **Memory unchanged.** `mem://constraints/forbidden-brand-names` and the existing `brand.test.ts` already forbid these strings in templates — this fix extends the same rule to runtime AI output.
+A **Save & continue** button upserts to `company_profiles` (same shape `CompanyProfile.tsx` writes), hides the panel, and immediately retries the PDF/Word download the user just clicked.
+
+Only "Company name" is required; everything else is optional but recommended. Pre-fill any fields the row already has so the panel doubles as a quick edit.
+
+### 2. Same-tab fallback link
+
+Keep an "Open full company profile" link under the panel for users who want the larger editor, but change it to `target="_self"` so it doesn't spawn a broken new tab. Wizard state is non-critical; they can re-open the chip.
+
+### 3. Reuse, don't duplicate
+
+- Use the existing `supabase` client already imported in `index.html`.
+- Use the same `company-logos` storage bucket and `company_profiles` upsert pattern as `src/pages/CompanyProfile.tsx`.
+- After save, refresh the cached `companyBrand` object so `window.iNRECO.generatePdf` / `generateDocx` (already loaded via `src/lib/documents/clientEntry.ts`) picks it up on the retry.
+
+### 4. Mobile
+
+Panel is a single-column form inside the existing `.wizard` modal — already responsive. No layout changes needed.
 
 ## Out of scope
 
-- Subscription / PayFast / dev-paid changes (handled in the previous turn).
-- Wizard question flow (already restored).
-- Any new document type — same wizard topics, same `currentMatter.docs` list.
+- React `/account-app/profile` page itself — no changes; it still works for power users.
+- Auth, document rendering, brand-name guard, DEV_PAID list — all unchanged.
+- No DB migration, no new tables, no edge functions.
 
 ## Files touched
 
 ```text
-index.html                          edit generateDocument(), showDocumentModal(), load companyBrand, add PDF/Word buttons
-src/lib/documents/clientEntry.ts    new — exposes window.iNRECO.generatePdf/generateDocx using existing renderPdf/renderDocx
-src/main.tsx                        import clientEntry so the helpers are available globally on every page
-src/lib/documents/renderPdf.ts      no logic change — confirm it never prints PLATFORM_NAME in the header/footer (it already only prints company.company_name)
-src/lib/documents/renderDocx.ts     same check
+index.html   replace .brand-warn block with inline company-details panel,
+             add save handler, retry the pending PDF/Word action on success
 ```
 
-No DB migration, no new tables, no edge function changes. The `company_profiles`, `generated_documents`, `documents` bucket and share-link flow stay exactly as they are.
+That's it — one file.
