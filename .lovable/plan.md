@@ -1,57 +1,90 @@
-## Goal
-Find and fix all places where text is hard to read because of poor contrast — light text on light backgrounds, or dark text on dark backgrounds — across both the legacy `index.html` marketing/app shell and the React app pages.
+## Root cause (confirmed by your screenshots)
 
-## Scope
-Two surfaces:
-1. **`index.html`** — landing, pricing, signup, login, onboarding, chat, plans panel (hand-written CSS, lots of hardcoded `#fff` / `var(--primary)` combinations).
-2. **React app** (`src/pages/*`, `src/components/*`) — Auth, Dashboard, Pricing, Contact, Share, Settings, CompanyProfile, Documents, AppShell, TeamManagement.
+`src/index.css` and `index.html` both declare design tokens on `:root` using the **same names** — `--primary`, `--border`, `--accent`, `--muted`, `--background`, `--foreground`, `--secondary`, `--destructive`, `--ring`, `--input`, `--radius`.
 
-## Approach
+- `index.html` (legacy app shell — chat, signup, login, onboarding, plans) stores **hex** values and uses them raw: `background: var(--primary)`.
+- `src/index.css` (shadcn) stores **HSL triplets** like `222.2 47.4% 11.2%` meant for `hsl(var(--primary))`.
 
-### 1. Sweep for contrast offenders
-For each page/section, check:
-- Light text (`#fff`, `text-white`, `text-slate-50`, `text-muted-foreground`) sitting on a light background.
-- Dark text (`#000`, default `text-foreground`, `text-slate-800`) sitting on a dark/colored background (e.g. `bg-primary`, `bg-slate-500`, gradient banners).
-- Placeholder / muted text using opacity that drops below WCAG AA.
-- Buttons where label color matches button background.
+`src/main.tsx` does `import "./index.css"` unconditionally, so Vite injects the shadcn stylesheet on **every** page — including the legacy app screens, where React never mounts. Same selector, later in source order ⇒ shadcn wins. The legacy CSS then resolves `var(--primary)` to the string `"222.2 47.4% 11.2%"`, which is invalid for `background`/`color`/`border-color`, so:
 
-### 2. Fix rules
-- **React components**: replace hardcoded Tailwind colors with semantic pairs from the design system — `bg-primary` + `text-primary-foreground`, `bg-secondary` + `text-secondary-foreground`, `bg-muted` + `text-foreground`, etc. No `text-white` / `text-black` / `text-slate-*` / `text-gray-*` in components.
-- **`index.html`**: keep its existing CSS-var system but make sure every colored background has an explicit, high-contrast text color declared on the same rule. Where buttons currently render light-on-light (the recent `btn bg-slate-500 text-slate-50` edits), restore a confidently dark button (`var(--primary)` bg, `#fff` text) so it stands out on the light card.
-- Drop the ad‑hoc inline `style="color:#fff;font-weight:700"` patches added during earlier debugging once the underlying class is correct.
+- Chat bubbles lose their `--surface` / `--primary` background and inherit the body navy.
+- Bubble text loses the explicit `#fff` (user) or inherited `--text` and falls back to dark.
+- The "💡 Tip" box, the "Was CARA helpful?" share banner, follow-up chips, and primary buttons all collapse the same way.
 
-### 3. Verify
-- Open each route in the preview at the current viewport, screenshot, and visually confirm every heading, body line, label, helper text, button, badge, and link is legible.
-- Re-check the signup / login / onboarding / chat flows specifically, since those have been the recurring trouble spots.
+This matches every screenshot you sent — chat, signup, plans, onboarding all show dark-on-dark text and washed-out buttons. The React account/documents pages look fine because they use the shadcn tokens *as intended*.
 
-## Pages I will inspect and fix
+## Fix
+
+Two small, surgical changes — no visual redesign, no class renaming, no token chasing.
+
+### 1. `src/main.tsx` — don't ship the React stylesheet to legacy app routes
+
+Replace the top-level `import "./index.css"` with a dynamic import inside the existing `shouldMountReact` branch and make the bootstrap async:
+
+```ts
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import App from "./App";
+
+const REACT_ROUTES = ["/d/", "/account-app", "/share/"];
+const shouldMountReact = (p: string) =>
+  REACT_ROUTES.some((r) => p === r || p.startsWith(r));
+
+if (shouldMountReact(window.location.pathname)) {
+  void (async () => {
+    await import("./index.css");
+    document.body.innerHTML = '<div id="root"></div>';
+    createRoot(document.getElementById("root")!).render(
+      <StrictMode><App /></StrictMode>,
+    );
+  })();
+}
+```
+
+Effect: on `/`, `/auth`, the chat screen, signup, plans — no shadcn variables get injected, so `index.html`'s hex tokens win and the legacy app renders exactly as its CSS was written.
+
+### 2. `src/index.css` — scope shadcn tokens to the React subtree (defense-in-depth)
+
+Even on React routes the legacy `<style>` block stays in the document until `document.body.innerHTML` is overwritten. Move the shadcn definitions off bare `:root` so the names can never collide again:
+
+```css
+@layer base {
+  :root,
+  #root {
+    /* existing shadcn light tokens */
+  }
+  .dark,
+  #root.dark {
+    /* existing shadcn dark tokens */
+  }
+}
+```
+
+Keeps current behavior intact on React pages; guarantees that if these two stylesheets ever co-exist in the same document, the legacy hex tokens are not silently overwritten.
+
+## Verification
+
+On `/` and inside the chat screen after signup:
+- `getComputedStyle(document.documentElement).getPropertyValue('--primary').trim()` returns `#2563eb`, not `222.2 47.4% 11.2%`.
+- Bot bubble: dark surface background, light text. User bubble: blue (`--primary`) background, white text.
+- 💡 Tip box: muted light text on `--surface-2`.
+- "Was CARA helpful?" banner: light text, visible green Share button, visible Dismiss outline.
+- Signup / login / onboarding primary buttons: blue background, white label.
+
+On `/account-app/profile` and `/account-app/documents`:
+- shadcn Button/Card/Input render unchanged from today.
+
+Re-screenshot the chat screen and one React account page after the change to confirm both paths look right.
+
+## Files touched
 
 ```text
-index.html
-  - landing hero + nav CTA
-  - pricing cards (.plan, .price-card, .btn-price)
-  - signup screen (#su-info, #su-btn and inline-styled patches)
-  - login screen
-  - onboarding screen (#ob-btn)
-  - chat screen (.bubble, .send-btn, .avatar.bot)
-  - plans panel inside app
-
-src/pages/Auth.tsx           - card + Google button + muted helper text
-src/pages/Dashboard.tsx      - nav buttons on #fcfbf8
-src/pages/Pricing.tsx
-src/pages/Contact.tsx
-src/pages/Share.tsx          - public doc, custom accent colors
-src/pages/Settings.tsx
-src/pages/CompanyProfile.tsx - logo preview on bg-white
-src/pages/Documents.tsx
-src/components/AppShell.tsx  - active vs inactive nav link contrast
-src/components/TeamManagement.tsx
+src/main.tsx   — gate index.css behind shouldMountReact via dynamic import
+src/index.css  — add #root to the :root / .dark selectors
 ```
 
 ## Out of scope
-- Visual redesign, spacing, typography changes.
-- shadcn primitive internals (Dialog/Sheet/Drawer overlays at `bg-black/80` are intentional).
-- Backend / data logic.
 
-## Deliverable
-One pass of targeted edits per file above, then a short summary of what changed per page.
+- Visual redesign, spacing, typography.
+- Further `text-white` / `text-slate-*` sweeps in components — already done; the real bug is the variable collision.
+- `ContrastAudit` dev overlay stays as-is.
