@@ -1192,6 +1192,12 @@ function detectTopic(text) {
   return best;
 }
 
+// Persist in-progress wizard answers per topic so users don't lose work
+// when they close the wizard to look something up. Cleared on submit
+// or "Start a new matter".
+const wizardDrafts = {};
+window.wizardDrafts = wizardDrafts;
+
 function openWizard(topic, prefillUserText) {
   const w = WIZARDS[topic];
   if (!w) return false;
@@ -1205,15 +1211,28 @@ function openWizard(topic, prefillUserText) {
   left.querySelector('h2').textContent = w.title;
   left.querySelector('p').textContent = w.subtitle;
   header.appendChild(left);
+  const headerActions = document.createElement('div');
+  headerActions.style.cssText = 'display:flex; align-items:center; gap:6px;';
+  const backBtn = document.createElement('button');
+  backBtn.type = 'button';
+  backBtn.className = 'wizard-close';
+  backBtn.title = 'Back — your answers are saved';
+  backBtn.style.cssText = 'font-size:13px; padding:4px 10px; border:1px solid var(--border); border-radius:8px;';
+  backBtn.textContent = '← Back';
+  backBtn.onclick = closeWizard;
   const close = document.createElement('button');
   close.className = 'wizard-close'; close.textContent = '×';
   close.type = 'button'; close.onclick = closeWizard;
-  header.appendChild(close);
+  headerActions.appendChild(backBtn);
+  headerActions.appendChild(close);
+  header.appendChild(headerActions);
   body.appendChild(header);
 
   const form = document.createElement('form');
   const allFields = [...w.fields, ...COMMON_FIELDS];
   form.onsubmit = e => { e.preventDefault(); submitWizard(topic, w, form, allFields, prefillUserText); };
+
+  const draft = wizardDrafts[topic] || {};
 
   allFields.forEach(f => {
     const wrap = document.createElement('div');
@@ -1226,21 +1245,26 @@ function openWizard(topic, prefillUserText) {
       const i = document.createElement('input');
       i.className = 'wiz-input'; i.type = f.type === 'date' ? 'date' : 'text'; i.name = f.id;
       if (f.autoToday) i.value = new Date().toISOString().slice(0,10);
+      if (draft[f.id] != null) i.value = draft[f.id];
       if (f.required) i.required = true;
       wrap.appendChild(i);
     } else if (f.type === 'textarea') {
       const i = document.createElement('textarea');
       i.className = 'wiz-textarea'; i.name = f.id; i.rows = 3;
+      if (draft[f.id] != null) i.value = draft[f.id];
       wrap.appendChild(i);
     } else {
       const opts = document.createElement('div');
       opts.className = 'wiz-options';
+      const draftVal = draft[f.id];
+      const draftArr = Array.isArray(draftVal) ? draftVal : (draftVal != null ? [draftVal] : []);
       f.options.forEach(opt => {
         const row = document.createElement('label');
         row.className = 'wiz-opt';
         const inp = document.createElement('input');
         inp.type = f.type === 'check' ? 'checkbox' : 'radio';
         inp.name = f.id; inp.value = opt;
+        if (draftArr.includes(opt)) inp.checked = true;
         const sp = document.createElement('span'); sp.textContent = opt;
         row.appendChild(inp); row.appendChild(sp);
         opts.appendChild(row);
@@ -1249,6 +1273,10 @@ function openWizard(topic, prefillUserText) {
     }
     form.appendChild(wrap);
   });
+
+  // Save draft on any change so closing/re-opening keeps every answer.
+  form.addEventListener('input', () => saveWizardDraft(topic, form, allFields));
+  form.addEventListener('change', () => saveWizardDraft(topic, form, allFields));
 
   const submit = document.createElement('button');
   submit.type = 'submit'; submit.className = 'wiz-submit';
@@ -1259,8 +1287,23 @@ function openWizard(topic, prefillUserText) {
   $('wizardOverlay').classList.add('show');
   return true;
 }
+function saveWizardDraft(topic, form, allFields) {
+  const data = new FormData(form);
+  const d = {};
+  allFields.forEach(f => {
+    if (f.type === 'check') {
+      const vals = data.getAll(f.id);
+      if (vals.length) d[f.id] = vals;
+    } else {
+      const v = (data.get(f.id) || '').toString();
+      if (v) d[f.id] = v;
+    }
+  });
+  wizardDrafts[topic] = d;
+}
 function closeWizard() { $('wizardOverlay').classList.remove('show'); }
 window.closeWizard = closeWizard;
+
 
 // Track the most recent matter (topic + collected facts) so document buttons can reuse it
 let currentMatter = null;
@@ -1286,6 +1329,7 @@ function submitWizard(topic, w, form, allFields, prefillUserText) {
     lines.push('', 'Give detailed advice including relevant SA case law and legal context, then numbered practical steps.');
   }
   currentMatter = { topic, facts, complexity: meta.complexity, docs: meta.docs };
+  delete wizardDrafts[topic];
   closeWizard();
   input.value = lines.join('\n');
   sendMessage({ countAsQuestion: true });
@@ -1302,7 +1346,10 @@ function showDocumentModal(title, content) {
   box.innerHTML = `
     <div class="wizard-header">
       <div><h2></h2><p>Edit the text below, then download as PDF or Word. Your company letterhead, logo, address and signature line are added automatically.</p></div>
-      <button class="wizard-close" type="button">×</button>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <button class="wizard-close" type="button" data-act="back" style="font-size:13px; padding:4px 10px; border:1px solid var(--border); border-radius:8px;">← Back to chat</button>
+        <button class="wizard-close" type="button">×</button>
+      </div>
     </div>
     <div class="brand-warn" style="display:none; background:#fef3c7; border:1px solid #f59e0b; color:#92400e; border-radius:8px; padding:10px 12px; font-size:13px; margin-bottom:10px;">
       <div class="brand-warn-msg">
@@ -1351,7 +1398,7 @@ function showDocumentModal(title, content) {
   editEl.value = cleanedInitial;
   const getText = () => editEl.value;
   const closeModal = () => overlay.remove();
-  box.querySelector('.wizard-close').onclick = closeModal;
+  box.querySelectorAll('.wizard-close').forEach(b => { b.onclick = () => { closeModal(); renderFollowups(); }; });
   box.querySelector('[data-act="copy"]').onclick = () => { navigator.clipboard.writeText(getText()); };
   box.querySelector('[data-act="wa"]').onclick = () => shareWhatsApp(getText());
   box.querySelector('[data-act="email"]').onclick = () => shareEmail(title, getText());
@@ -1632,6 +1679,7 @@ function removeFollowups() {
 function resetToNewMatter() {
   state.messages = [];
   currentMatter = null;
+  Object.keys(wizardDrafts).forEach(k => delete wizardDrafts[k]);
   chatEl.querySelectorAll('.msg').forEach(n => n.remove());
   removeFollowups();
   emptyState.style.display = '';
