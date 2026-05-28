@@ -784,6 +784,15 @@ const SUPABASE_URL = 'https://ckjevliuwlijfvdjxmmp.supabase.co';
 const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNramV2bGl1d2xpamZ2ZGp4bW1wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwNjgzMzMsImV4cCI6MjA5MzY0NDMzM30.ipCCqFvjr_m2LNwqnRu0kRarrSPrfVZ_BZ1QN3bwyYw';
 const ENDPOINT = SUPABASE_URL + '/functions/v1/super-endpoint';
 const FREE_LIMIT = 5;
+// Dev override: these accounts bypass the free-tier limit so we can test paid-tier flows
+// without going through the PayFast sandbox. Remove before launch.
+const DEV_PAID_EMAILS = new Set([
+  'casperbadenhorst77@outlook.com',
+  'badenhorst.casper@gmail.com',
+]);
+function isDevPaid() {
+  return !!(currentUser && currentUser.email && DEV_PAID_EMAILS.has(currentUser.email.toLowerCase()));
+}
 const SYSTEM_PROMPT_BASE = "You are CARA, Compliance and Relations Adviser at iNRECO powered by iNRECO. Help SA employers with IR guidance. Always greet with 'Hello' — never use time-based greetings. Never include legal-advice disclaimers (the app footer already shows one). When you receive a 'Topic:' message with structured facts from a wizard, NEVER ask follow-up questions and NEVER repeat/summarise the facts. Go straight into advice. RESPONSE LENGTH RULES: For SIMPLE matters (warnings, AWOL notices, suspensions, grievances, poor performance, union letters, incapacity, disciplinary hearings) keep it brief and practical — a one-line risk flag, then numbered practical steps, no case law, no legal theory, no padding. For COMPLEX matters (CCMA referrals, retrenchments, automatically unfair dismissal) include relevant SA case law (e.g. Sidumo, NUM v De Beers, Fidelity Cash) and detailed legal context. The wizard message will say 'Complexity: simple' or 'Complexity: complex' — obey it. Address the employee by the name given in the wizard. Never ask for information already given in the wizard.";
 
 const supabase = createClient(SUPABASE_URL, ANON_KEY);
