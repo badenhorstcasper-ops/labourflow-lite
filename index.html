@@ -1356,21 +1356,99 @@ function showDocumentModal(title, content) {
   box.querySelector('[data-act="wa"]').onclick = () => shareWhatsApp(getText());
   box.querySelector('[data-act="email"]').onclick = () => shareEmail(title, getText());
   const warn = box.querySelector('.brand-warn');
+  const brandForm = box.querySelector('.brand-form');
+  const brandMsg = box.querySelector('[data-bf-msg]');
+  const logoPreview = box.querySelector('[data-bf-logo-preview]');
+  let pendingAct = null; // 'pdf' | 'docx'
+
+  async function getOwnerId() {
+    try {
+      const { data, error } = await supabase.rpc('current_account_owner');
+      if (error) throw error;
+      if (data) return data;
+    } catch (_) { /* fall through */ }
+    const { data: { user } } = await supabase.auth.getUser();
+    return user ? user.id : null;
+  }
+
+  async function prefillBrandForm() {
+    const ownerId = await getOwnerId();
+    if (!ownerId) return;
+    const { data } = await supabase.from('company_profiles').select('*').eq('owner_user_id', ownerId).maybeSingle();
+    if (!data) return;
+    brandForm.querySelectorAll('[data-bf]').forEach(el => {
+      const k = el.getAttribute('data-bf');
+      if (data[k] != null && data[k] !== '') el.value = data[k];
+    });
+    if (data.logo_url) logoPreview.innerHTML = `<img src="${data.logo_url}" alt="Logo" style="height:32px; vertical-align:middle; border:1px solid #e4e4e7; border-radius:4px; padding:2px; background:#fff;"/> <span>current logo</span>`;
+  }
+
+  box.querySelector('.brand-warn-open').onclick = async () => {
+    brandForm.style.display = '';
+    await prefillBrandForm();
+  };
+  box.querySelector('.brand-form-cancel').onclick = () => { brandForm.style.display = 'none'; brandMsg.textContent = ''; };
+
+  box.querySelector('.brand-form-save').onclick = async () => {
+    brandMsg.textContent = '';
+    const ownerId = await getOwnerId();
+    if (!ownerId) { brandMsg.textContent = 'Please sign in again to save.'; return; }
+    const payload = { owner_user_id: ownerId };
+    brandForm.querySelectorAll('[data-bf]').forEach(el => {
+      payload[el.getAttribute('data-bf')] = el.value.trim() || null;
+    });
+    if (!payload.company_name) { brandMsg.textContent = 'Company name is required.'; return; }
+    if (!payload.accent_color) payload.accent_color = '#2563eb';
+
+    const logoInput = brandForm.querySelector('[data-bf-logo]');
+    const file = logoInput && logoInput.files && logoInput.files[0];
+    const saveBtn = box.querySelector('.brand-form-save');
+    saveBtn.disabled = true; saveBtn.textContent = 'Saving…';
+    try {
+      if (file) {
+        const ext = (file.name.split('.').pop() || 'png').toLowerCase();
+        const path = `${ownerId}/logo.${ext}`;
+        const up = await supabase.storage.from('company-logos').upload(path, file, { upsert: true, contentType: file.type });
+        if (up.error) throw up.error;
+        const { data: pub } = supabase.storage.from('company-logos').getPublicUrl(path);
+        payload.logo_url = pub.publicUrl + '?t=' + Date.now();
+      }
+      const { error } = await supabase.from('company_profiles').upsert(payload, { onConflict: 'owner_user_id' });
+      if (error) throw error;
+      brandForm.style.display = 'none';
+      warn.style.display = 'none';
+      // Retry whichever download the user clicked.
+      if (pendingAct === 'pdf' && window.iNRECO?.generatePdf) {
+        await window.iNRECO.generatePdf(title, getText());
+      } else if (pendingAct === 'docx' && window.iNRECO?.generateDocx) {
+        await window.iNRECO.generateDocx(title, getText());
+      }
+    } catch (e) {
+      brandMsg.textContent = 'Save failed: ' + (e?.message || e);
+    } finally {
+      saveBtn.disabled = false; saveBtn.textContent = 'Save & continue';
+    }
+  };
+
   const handleErr = (e) => {
     const msg = (e && e.message) || String(e);
     if (msg === 'company_profile_incomplete' || msg === 'not_signed_in') {
       warn.style.display = '';
+      brandForm.style.display = '';
+      prefillBrandForm();
     } else {
       alert('Could not generate file: ' + msg);
     }
   };
   box.querySelector('[data-act="pdf"]').onclick = async () => {
+    pendingAct = 'pdf';
     try {
       if (!window.iNRECO?.generatePdf) throw new Error('Renderer not loaded yet — please reload the page.');
       await window.iNRECO.generatePdf(title, getText());
     } catch (e) { handleErr(e); }
   };
   box.querySelector('[data-act="docx"]').onclick = async () => {
+    pendingAct = 'docx';
     try {
       if (!window.iNRECO?.generateDocx) throw new Error('Renderer not loaded yet — please reload the page.');
       await window.iNRECO.generateDocx(title, getText());
