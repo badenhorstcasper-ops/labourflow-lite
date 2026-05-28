@@ -814,6 +814,57 @@ const supabase = createClient(SUPABASE_URL, ANON_KEY);
 window.supabase = supabase;
 
 const $ = (id) => document.getElementById(id);
+
+// ---- In-app helpers ----
+function toast(message, kind, timeoutMs) {
+  try {
+    const stack = $('toastStack'); if (!stack) { console.log(message); return; }
+    const el = document.createElement('div');
+    el.className = 'toast' + (kind ? ' ' + kind : '');
+    el.textContent = String(message);
+    stack.appendChild(el);
+    setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .2s'; }, (timeoutMs || 3800) - 200);
+    setTimeout(() => el.remove(), timeoutMs || 3800);
+  } catch (_) { /* no-op */ }
+}
+window.toast = toast;
+
+function confirmModal(message, opts) {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'wizard-overlay show'; overlay.style.zIndex = 700;
+    const box = document.createElement('div'); box.className = 'wizard'; box.style.maxWidth = '420px';
+    const danger = !!(opts && opts.danger);
+    box.innerHTML =
+      '<div class="wizard-header"><div><h2>' + (opts && opts.title ? opts.title : 'Are you sure?') + '</h2><p></p></div></div>' +
+      '<div style="display:flex; gap:8px; flex-wrap:wrap;">' +
+        '<button class="wiz-submit" data-act="ok" style="flex:1; min-width:140px; background:' + (danger ? '#dc2626' : 'var(--primary)') + ';">' + ((opts && opts.confirmText) || 'Confirm') + '</button>' +
+        '<button class="wiz-submit" data-act="no" style="flex:1; min-width:140px; background:var(--surface); border:1px solid var(--border); color:var(--text);">' + ((opts && opts.cancelText) || 'Cancel') + '</button>' +
+      '</div>';
+    box.querySelector('p').textContent = message;
+    const done = (v) => { overlay.remove(); resolve(v); };
+    box.querySelector('[data-act="ok"]').onclick = () => done(true);
+    box.querySelector('[data-act="no"]').onclick = () => done(false);
+    overlay.appendChild(box); document.body.appendChild(overlay);
+  });
+}
+window.confirmModal = confirmModal;
+
+function setBusy(btn, busy, busyText) {
+  if (!btn) return;
+  if (busy) {
+    btn.dataset._label = btn.textContent || '';
+    if (busyText) btn.textContent = busyText;
+    btn.classList.add('btn-loading');
+    btn.disabled = true;
+  } else {
+    if (btn.dataset._label != null) btn.textContent = btn.dataset._label;
+    btn.classList.remove('btn-loading');
+    btn.disabled = false;
+  }
+}
+window.setBusy = setBusy;
+
 function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   $('screen-' + name).classList.add('active');
