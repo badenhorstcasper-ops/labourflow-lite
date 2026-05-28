@@ -1688,7 +1688,7 @@ async function sendMessage(opts) {
     addMessageToDOM('assistant', reply);
     renderFollowups();
     maybeShowFirstAdvicePrompt();
-    if (usageCount >= FREE_LIMIT) setTimeout(openUpgrade, 600);
+    if (!isDevPaid() && usageCount >= FREE_LIMIT) setTimeout(openUpgrade, 600);
   } catch (err) {
     hideTyping();
     addMessageToDOM('assistant', '⚠️ ' + (err.message || 'Something went wrong.'));
