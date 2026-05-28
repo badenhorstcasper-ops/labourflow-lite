@@ -1782,7 +1782,20 @@ function resetToNewMatter() {
   removeFollowups();
   emptyState.style.display = '';
   chatEl.scrollTop = 0;
+  persistState();
 }
+
+// On load, if a previous matter was in progress, show the follow-ups so the
+// user can resume (generate docs / ask another question) without redoing the wizard.
+setTimeout(() => {
+  try {
+    if (currentMatter && typeof renderFollowups === 'function') {
+      emptyState.style.display = 'none';
+      renderFollowups();
+      toast && toast('Resumed your previous matter');
+    }
+  } catch (_) {}
+}, 300);
 window.resetToNewMatter = resetToNewMatter;
 
 function tryExample(text) {
