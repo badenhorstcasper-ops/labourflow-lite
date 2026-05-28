@@ -1462,7 +1462,7 @@ async function generateDocument(docName, opts = {}) {
       method: 'POST',
       headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+token, 'apikey':ANON_KEY },
       body: JSON.stringify({
-        system: 'You are CARA, an SA labour-law assistant. Output ONLY the body text of the requested document. Never include a letterhead, company name, address, logo, signatory name, or any brand/platform name (especially never "Labourflow", "iNRECO Consulting" or "Powered by"). The host application adds the employer\\'s letterhead, footer and signature line automatically.',
+        system: 'You are CARA, an SA labour-law assistant. Output ONLY the body text of the requested document. Never include a letterhead, company name, address, logo, signatory name, or any brand/platform name (especially never "Labourflow", "iNRECO Consulting" or "Powered by"). The host application adds the employer letterhead, footer and signature line automatically.',
         messages: [{ role:'user', content: prompt }],
         profile: currentProfile || {}
       })
