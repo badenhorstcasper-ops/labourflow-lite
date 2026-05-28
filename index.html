@@ -1264,9 +1264,25 @@ function detectTopic(text) {
 
 // Persist in-progress wizard answers per topic so users don't lose work
 // when they close the wizard to look something up. Cleared on submit
-// or "Start a new matter".
-const wizardDrafts = {};
+// or "Start a new matter". Also mirrored to localStorage (per-user) so
+// drafts and the current matter survive a page reload.
+function _storeKey() {
+  const who = (window.currentUser && window.currentUser.email) || 'guest';
+  return 'lf:state:' + who.toLowerCase();
+}
+function _loadStore() {
+  try { return JSON.parse(localStorage.getItem(_storeKey()) || '{}'); } catch (_) { return {}; }
+}
+function _saveStore(s) {
+  try { localStorage.setItem(_storeKey(), JSON.stringify(s)); } catch (_) {}
+}
+const _initial = _loadStore();
+const wizardDrafts = _initial.wizardDrafts || {};
 window.wizardDrafts = wizardDrafts;
+function persistState() {
+  _saveStore({ wizardDrafts, currentMatter: (typeof currentMatter !== 'undefined' ? currentMatter : null) });
+}
+window.persistState = persistState;
 
 function openWizard(topic, prefillUserText) {
   const w = WIZARDS[topic];
