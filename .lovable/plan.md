@@ -1,57 +1,55 @@
-## What's happening
+## How I looked at this
 
-When the document modal warns "Add your company details…" the link points to `/account-app/profile` and opens in a new tab (`target="_blank"`). That new tab tries to mount the React app at a different route:
+I walked the legacy app shell (`index.html`), the React surfaces (`/account-app/profile`, `/account-app/documents`, `/d/:token`, `/contact`, `/pricing`), and traced the main user journeys: sign up → pick a chip → wizard → advice → document → share. Below are the friction points I'd address, ranked by impact vs. effort. **Pick the ones you want and I'll ship them — don't need to do all of these.**
 
-- On the **preview** URL, the new tab goes through Lovable's auth-bridge first and loses the legacy app's auth session — the React Company Profile page renders without an authenticated user (or stays blank waiting on auth).
-- On the **published** site, even when the route loads, the user has to leave the wizard, fill out a long form, come back to the chat, regenerate the document, and try Word/PDF again. That's the "blank page" they're seeing.
+## Tier 1 — quick wins (low risk, high impact)
 
-Root cause: we ask the user to leave the document modal to fix a small data gap, in a flow that breaks across tabs.
+1. **Confirm `alert()` / `confirm()` replaced with in-app toasts.**
+   Right now errors, "Remove team member?", "Remove device?", brand-warning failures all use native browser dialogs. They look broken on mobile PWAs and break flow. Use the existing toast system (Sonner is already loaded for React routes; add a tiny `toast()` helper in the legacy script).
 
-## Fix
+2. **Loading states on every async button.**
+   "Get CARA's Advice", "Generate PDF/Word", "Send invite", "Save profile", PayFast checkout — most don't disable + show a spinner while waiting. Users double-click and trigger duplicates. One small `setBusy(btn, true/false)` helper covers it.
 
-Solve it where the problem appears — inside the document modal — and keep `/account-app/profile` as the full editor for later.
+3. **Empty / first-run guidance.**
+   The chat screen drops a signed-in user straight onto a wall of 10 chips. Add a one-line "Tap a topic to start, or type your question below" hint plus a single "Try an example" chip that fills the input with a sample question. New users currently freeze.
 
-### 1. Inline "Company details" panel in the document modal (`index.html`)
+4. **Wizard required-field hinting.**
+   Submit silently fails when a required radio isn't picked. Show a soft red outline + "Please answer this" near the offending field instead of relying on the browser's tooltip.
 
-Replace the yellow warning's link with a **"Complete now"** button that expands a compact form right inside the modal:
+5. **Connection / offline banner.**
+   If `navigator.onLine === false` or the edge function errors, show a sticky banner: "Offline — your last message will retry when reconnected." Currently a failed AI call just shows nothing.
 
-- Company name *
-- Address (single line) 
-- Contact email
-- Contact phone  
-- Signatory name + title
-- Logo upload (optional, drag-drop file input → uploads to `company-logos/<owner>/logo.<ext>` exactly like `CompanyProfile.tsx` already does)
-- Accent colour (colour picker, defaults `#2563eb`)
+## Tier 2 — flow improvements
 
-A **Save & continue** button upserts to `company_profiles` (same shape `CompanyProfile.tsx` writes), hides the panel, and immediately retries the PDF/Word download the user just clicked.
+6. **Resume an in-progress matter on reload.**
+   `currentMatter` and `wizardDrafts` live in memory only. Save them to `localStorage` keyed by user, so closing the browser/PWA tab doesn't lose the matter. Auto-restore on next sign-in with a "Resume your last matter?" prompt.
 
-Only "Company name" is required; everything else is optional but recommended. Pre-fill any fields the row already has so the panel doubles as a quick edit.
+7. **Document history shortcut from chat.**
+   After a download, surface a "View all your documents →" link that opens `/account-app/documents` in the **same tab** (current pattern opens new tabs that lose session on preview, same root cause as the company-profile bug we just fixed).
 
-### 2. Same-tab fallback link
+8. **Account / profile menu consolidation.**
+   Today the header has Home, install, sign-out, badge — and the side actions (Company profile, Generated documents, Team, Subscription) live in a modal. Move them into a single dropdown (avatar + email) so users find them without hunting. Sign-out moves into the same dropdown.
 
-Keep an "Open full company profile" link under the panel for users who want the larger editor, but change it to `target="_self"` so it doesn't spawn a broken new tab. Wizard state is non-critical; they can re-open the chip.
+9. **Inline plan picker when free tier hits zero.**
+   The trial badge shows "∞" or a number, but when usage hits 0 we open the upgrade modal. Show remaining count inline with a soft warning at 1 left ("1 free question left — upgrade to keep going") so the upgrade isn't a surprise.
 
-### 3. Reuse, don't duplicate
+10. **Company profile completeness meter.**
+    On `/account-app/profile`, show a small "Profile 60% complete — add a logo and signatory to finish" bar. Drives the data we actually need for branded docs.
 
-- Use the existing `supabase` client already imported in `index.html`.
-- Use the same `company-logos` storage bucket and `company_profiles` upsert pattern as `src/pages/CompanyProfile.tsx`.
-- After save, refresh the cached `companyBrand` object so `window.iNRECO.generatePdf` / `generateDocx` (already loaded via `src/lib/documents/clientEntry.ts`) picks it up on the retry.
+## Tier 3 — polish
 
-### 4. Mobile
+11. **Keyboard support.** Esc closes any open modal (wizard, document, brand panel, nav confirm). Enter on a chip = activate. Currently inconsistent.
+12. **Mobile bottom-action safety.** PDF/Word buttons sit below the editable textarea on small screens — content can scroll the buttons off. Stick them to the modal bottom.
+13. **Share-link clarity.** When generating a doc, tell the user it expires in 7 days (already in DB) before they share it.
+14. **A11y labels.** Many `icon-btn`s have `aria-label`, but the chips and dynamic close buttons don't.
+15. **Long AI replies.** Add a "Copy reply" affordance on every bot message, not just generated documents.
 
-Panel is a single-column form inside the existing `.wizard` modal — already responsive. No layout changes needed.
+## Out of scope (intentionally)
 
-## Out of scope
+- Visual redesign / theming.
+- Backend schema changes — none required for any of the above.
+- Pricing/PayFast flow rewrite.
 
-- React `/account-app/profile` page itself — no changes; it still works for power users.
-- Auth, document rendering, brand-name guard, DEV_PAID list — all unchanged.
-- No DB migration, no new tables, no edge functions.
+## What I need from you
 
-## Files touched
-
-```text
-index.html   replace .brand-warn block with inline company-details panel,
-             add save handler, retry the pending PDF/Word action on success
-```
-
-That's it — one file.
+Tell me **which numbers to do**. My suggestion if you want a focused next sprint: **1, 2, 3, 6, 8** — biggest day-to-day wins for the least change.
