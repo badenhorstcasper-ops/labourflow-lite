@@ -1631,7 +1631,7 @@ async function sendMessage(opts) {
   const text = input.value.trim();
   if (!text) return;
   const isWizardSubmission = !!(opts && opts.countAsQuestion) || text.startsWith('Topic:');
-  if (isWizardSubmission && usageCount >= FREE_LIMIT) { openUpgrade(); return; }
+  if (isWizardSubmission && !isDevPaid() && usageCount >= FREE_LIMIT) { openUpgrade(); return; }
 
   emptyState.style.display = 'none';
   removeFollowups();
