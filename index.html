@@ -1401,10 +1401,6 @@ window.closeWizard = closeWizard;
 // Track the most recent matter (topic + collected facts) so document buttons can reuse it
 let currentMatter = _initial.currentMatter || null;
 
-
-// Track the most recent matter (topic + collected facts) so document buttons can reuse it
-let currentMatter = null;
-
 function submitWizard(topic, w, form, allFields, prefillUserText) {
   const data = new FormData(form);
   const meta = TOPIC_META[topic] || { complexity: 'simple', docs: [] };
