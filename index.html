@@ -794,7 +794,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const SUPABASE_URL = 'https://ckjevliuwlijfvdjxmmp.supabase.co';
 const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNramV2bGl1d2xpamZ2ZGp4bW1wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwNjgzMzMsImV4cCI6MjA5MzY0NDMzM30.ipCCqFvjr_m2LNwqnRu0kRarrSPrfVZ_BZ1QN3bwyYw';
 const ENDPOINT = SUPABASE_URL + '/functions/v1/super-endpoint';
-const FREE_LIMIT = 5;
+const FREE_LIMIT = 0;
 // Dev override: these accounts bypass the free-tier limit so we can test paid-tier flows
 // without going through the PayFast sandbox. Remove before launch.
 const DEV_PAID_EMAILS = new Set([
