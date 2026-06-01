@@ -28,18 +28,19 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </Button>
         </div>
       </header>
-      <main className="container mx-auto max-w-5xl px-4 py-8 flex-1">{children}</main>
-      <footer className="border-t">
-        <div className="container mx-auto max-w-5xl px-4 py-2 flex items-center justify-between text-[11px] text-muted-foreground">
+      <main className="container mx-auto max-w-5xl px-4 py-8 flex-1 pb-12">{children}</main>
+      <div className="fixed bottom-12 right-3 z-50">
+        <ReportProblemButton />
+      </div>
+      <footer className="fixed bottom-0 left-0 right-0 z-40 border-t bg-background">
+        <div className="px-4 py-1.5 flex items-center justify-center gap-2 text-[11px] text-muted-foreground whitespace-nowrap overflow-x-auto">
           <span>© {new Date().getFullYear()} iNRECO</span>
-          <nav className="flex items-center gap-3 whitespace-nowrap">
-            <Link to="/terms" className="hover:underline">Terms</Link>
-            <span aria-hidden>·</span>
-            <Link to="/privacy" className="hover:underline">Privacy</Link>
-            <span aria-hidden>·</span>
-            <Link to="/disclaimer" className="hover:underline">Disclaimer</Link>
-          </nav>
-          <ReportProblemButton />
+          <span aria-hidden>·</span>
+          <Link to="/terms" className="hover:underline">Terms</Link>
+          <span aria-hidden>·</span>
+          <Link to="/privacy" className="hover:underline">Privacy</Link>
+          <span aria-hidden>·</span>
+          <Link to="/disclaimer" className="hover:underline">Disclaimer</Link>
         </div>
       </footer>
     </div>

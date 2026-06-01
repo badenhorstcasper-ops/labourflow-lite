@@ -227,10 +227,13 @@
 
   /* Global footer */
   .app-footer {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
     text-align: center; font-size: 11px; color: var(--muted);
     padding: 6px 12px; border-top: 1px solid var(--border);
-    background: rgba(10,31,68,0.6); line-height: 1.2; white-space: nowrap;
+    background: rgba(10,31,68,0.92); line-height: 1.2; white-space: nowrap;
+    overflow-x: auto;
   }
+  body { padding-bottom: 32px; }
 
   /* T&C checkbox row */
   .terms-row { display: flex; gap: 8px; align-items: flex-start; font-size: 12px; color: var(--muted); line-height: 1.4; }
