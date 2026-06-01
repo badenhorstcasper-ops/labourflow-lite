@@ -18,7 +18,7 @@ installGlobalErrorHandlers();
 // as raw HSL triplets and would otherwise clobber the legacy app's
 // hex-valued tokens of the same name in index.html, breaking contrast
 // across the chat / signup / onboarding / plans screens.
-const REACT_ROUTES = ["/d/", "/account-app", "/share/"];
+const REACT_ROUTES = ["/d/", "/account-app", "/share/", "/terms", "/privacy", "/disclaimer"];
 
 function shouldMountReact(pathname: string) {
   return REACT_ROUTES.some((p) => pathname === p || pathname.startsWith(p));

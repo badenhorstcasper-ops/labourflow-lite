@@ -802,7 +802,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
 // React owns these routes — skip the legacy bootstrap entirely.
 {
   const p = window.location.pathname;
-  if (p.startsWith('/d/') || p.startsWith('/account-app') || p.startsWith('/share/')) {
+  if (p.startsWith('/d/') || p.startsWith('/account-app') || p.startsWith('/share/') || p === '/terms' || p === '/privacy' || p === '/disclaimer') {
     throw new Error('react-route');
   }
 }
