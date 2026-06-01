@@ -16,6 +16,7 @@ const Auth = () => {
   const [mode, setMode] = useState<Mode>("signup");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -31,6 +32,14 @@ const Auth = () => {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (mode === "signup" && !acceptedTerms) {
+      toast({
+        title: "Please accept the terms",
+        description: "You must agree to the Terms, Privacy Policy and Disclaimer to sign up.",
+        variant: "destructive",
+      });
+      return;
+    }
     setBusy(true);
     try {
       if (mode === "signup") {
@@ -64,6 +73,14 @@ const Auth = () => {
   }
 
   async function handleGoogle() {
+    if (mode === "signup" && !acceptedTerms) {
+      toast({
+        title: "Please accept the terms",
+        description: "You must agree to the Terms, Privacy Policy and Disclaimer to sign up.",
+        variant: "destructive",
+      });
+      return;
+    }
     setBusy(true);
     const result = await lovable.auth.signInWithOAuth("google", {
       redirect_uri: `${window.location.origin}/`,
@@ -118,6 +135,25 @@ const Auth = () => {
                 autoComplete={mode === "signup" ? "new-password" : "current-password"}
               />
             </div>
+            {mode === "signup" && (
+              <label className="flex items-start gap-2 text-xs text-muted-foreground">
+                <input
+                  type="checkbox"
+                  className="mt-0.5"
+                  checked={acceptedTerms}
+                  onChange={(e) => setAcceptedTerms(e.target.checked)}
+                  required
+                />
+                <span>
+                  I agree to the{" "}
+                  <Link to="/terms" target="_blank" className="underline">Terms of Use</Link>,{" "}
+                  <Link to="/privacy" target="_blank" className="underline">Privacy Policy</Link>{" "}
+                  and{" "}
+                  <Link to="/disclaimer" target="_blank" className="underline">Disclaimer</Link>.
+                  I understand that iNRECO provides IR guidance, not legal advice.
+                </span>
+              </label>
+            )}
             <Button type="submit" className="w-full" disabled={busy}>
               {busy ? "Please wait…" : mode === "signup" ? "Create account" : "Sign in"}
             </Button>

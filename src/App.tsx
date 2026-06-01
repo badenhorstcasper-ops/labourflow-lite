@@ -6,6 +6,9 @@ import DocumentsPage from "@/pages/Documents";
 import SharePage from "@/pages/Share";
 import ContactPage from "@/pages/Contact";
 import HealthPage from "@/pages/Health";
+import Terms from "@/pages/Terms";
+import Privacy from "@/pages/Privacy";
+import Disclaimer from "@/pages/Disclaimer";
 import ContrastAudit from "@/components/dev/ContrastAudit";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
@@ -23,6 +26,9 @@ export default function App() {
             <Route path="/account-app/health" element={<HealthPage />} />
             <Route path="/d/:token" element={<SharePage />} />
             <Route path="/contact" element={<ContactPage />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/disclaimer" element={<Disclaimer />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
           <Toaster />

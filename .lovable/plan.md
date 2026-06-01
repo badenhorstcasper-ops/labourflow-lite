@@ -1,60 +1,73 @@
-# Make errors & security easy to handle
+## 1. Remove the free "Starter" tier
 
-Goal: when something breaks or a security issue appears, you see it in one place, in plain English, with a one-click way to send it to Lovable to fix.
+**`src/pages/Pricing.tsx`** — delete the Starter plan from `PLANS`; update subheading to highlight the 7-day free trial.
 
-## 1. In-app error catcher
+**`index.html`** (legacy marketing + app shell)
+- Remove the Starter pricing card (line ~516).
+- Remove "5 free questions/month" hero copy (lines 510–511), the "Ask CARA your first question free" CTA (line 598), and the "Start with 5 free questions" tagline (line 626).
+- Remove the in-app free-question trial mechanic:
+  - `trialBadge` element + click handler (lines 722–723, 1912)
+  - "You've used your 5 free questions" paywall modal (line 771)
+  - Dev override + counter logic (lines 806, 1068)
+- In `SEAT_LIMITS` and `currentPlanName` (lines 2262–2288): drop `Starter`; default plan to `null` so users without a subscription get routed to `/pricing`.
 
-- Add a global error boundary around the React app so a crash shows a friendly screen ("Something went wrong — we've logged it") instead of a blank page.
-- Catch unhandled JS errors and promise rejections in `index.html` and in the React tree.
-- Each caught error is:
-  - shown as a toast to you ("An error occurred — tap to view"),
-  - written to a new `error_logs` table in Lovable Cloud (timestamp, user email, route, message, stack, browser),
-  - and given a short **Error ID** you can copy.
+## 2. Add a 7-day free trial to Solo, Business, Professional
 
-## 2. "Report a problem" button
+**Pricing UI**
+- Add "7-day free trial · cancel anytime · no charge during trial" line under each of the three paid plans (Enterprise stays "Contact Us").
+- Change paid-plan CTA copy to "Start 7-day free trial".
 
-- Add a small "Report a problem" link in the footer / account menu.
-- Opens a dialog with: what you were doing (free text), auto-attached last error + route + device info.
-- Writes to a `bug_reports` table you can review later.
+**PayFast checkout (`src/pages/Pricing.tsx` form)**
+PayFast supports a free trial on a recurring subscription via these fields:
+- Keep `subscription_type = 1`, `frequency = 3`, `cycles = 0`.
+- Set the signup `amount = 0.00` (card tokenised, no debit).
+- Keep `recurring_amount` at the plan price.
+- Add `billing_date = today + 7 days` (YYYY-MM-DD) so the first real debit only happens after the trial.
 
-## 3. Admin "Health" page (you only)
+**Webhook (`supabase/functions/payfast-webhook/index.ts`)**
+- When a `COMPLETE` ITN arrives with `amount_gross = 0`, treat it as **trial signup**: write subscription row with `status = 'trialing'` and `trial_ends_at = billing_date`. Skip the existing amount-mismatch check for zero-amount ITNs.
+- On the first non-zero recurring ITN, the existing amount check applies and `status` flips to `'active'`.
 
-New route `/account-app/health`, visible only to your admin account:
-- **Recent errors** (last 50) — message, route, user, time, "Copy for Lovable" button that copies a ready-to-paste prompt: *"Fix this error: <id>, <message>, <route>, <stack>"*.
-- **Recent bug reports** from users.
-- **Backend status** indicator (auth reachable? database reachable? storage reachable?).
-- **Security checklist** (see §4) with green/red ticks.
+**DB migration**
+- `subscriptions`: add `trial_ends_at timestamptz` (nullable). Existing rows untouched. `status` is already free-text, so `'trialing'` needs no enum change.
 
-## 4. Security baseline + scan
+**Access gate**
+- Update the single place that checks `status = 'active'` to also accept `'trialing'`.
 
-Run Lovable's security scanner and the Supabase linter, then fix what comes back. Typical items I'll address:
-- Confirm every table has Row-Level Security on and policies are correct (especially `company_profiles`, `generated_documents`, `subscriptions`, `user_roles`, `bug_reports`, `error_logs`).
-- Confirm `documents` storage bucket is private and only served via signed URLs (already partly true).
-- Confirm `payfast-webhook` and `get-shared-document` are the only public edge functions.
-- Turn on **leaked-password protection** (HIBP) in auth.
-- Confirm no secret keys are in client code (only the publishable anon key is, which is correct).
-- Document everything in a short `SECURITY.md` so you know what is and isn't protected.
+## 3. Legal pages: Terms, Privacy, Disclaimer
 
-## 5. Plain-language "What to do when X happens" guide
+Three new React pages + routes, plus footer links and a signup checkbox.
 
-Add `docs/troubleshooting-for-owner.md` written for you, not for developers:
-- "App shows a white screen" → steps
-- "I get an error toast" → copy the Error ID, paste into Lovable chat with the words *"Please fix error <ID>"*
-- "A user emailed me about a bug" → open /health, find their report, click Copy-for-Lovable
-- "PayFast payment didn't activate a plan" → where to look
-- "Document won't generate" → likely company profile incomplete; link to fix
+**New files**
+- `src/pages/Terms.tsx` → `/terms`
+- `src/pages/Privacy.tsx` → `/privacy`
+- `src/pages/Disclaimer.tsx` → `/disclaimer`
 
-## Technical section (for me, not for you)
+Each is plain readable prose using existing card/typography tokens, with a "Last updated" date and a print-friendly layout. All three pages are public (no auth).
 
-- New tables: `error_logs(id, created_at, user_id, email, route, message, stack, user_agent, severity)` and `bug_reports(id, created_at, user_id, email, route, description, last_error_id, status)`. Both with RLS: insert allowed for `authenticated` and `anon`; select restricted to `admin` role via `has_role()`.
-- Client logger: `src/lib/errorLogger.ts` exposing `logError(err, ctx)`; wired into `window.onerror`, `window.onunhandledrejection`, React `ErrorBoundary`, and supabase fetch failures.
-- Admin page: `src/pages/Health.tsx` gated by `has_role(uid, 'admin')`.
-- Edge function `health-check` returns `{ db: ok, auth: ok, storage: ok }` for the status widget.
-- Run `security--run_security_scan` + `supabase--linter` and fix findings in the same pass.
+**Confirmed company details** (from your POPIA certificate)
+- Registered name: **INRECO CONSULTING** (sole proprietorship, proprietor Casper Hendrik Badenhorst)
+- Trading / brand name: **iNRECO**
+- Contact email: **info@inreco.co.za**
+- Information Officer: **Casper Hendrik Badenhorst**
+- Information Regulator registration: **2026-010530** (registered 24 April 2026)
+
+Note: per project memory the user-facing brand stays "iNRECO". The legal pages will use the registered name only where the law requires it (responsible-party identity for POPIA, supplier identity for ECTA §43). I will **not** use "iNRECO Consulting" anywhere else.
+
+**Content scope**
+- **Terms of Use** — ECTA 2002 §43 supplier disclosures (legal name, IO contact, description of service, payment terms, refund / cancellation, 7-day cooling-off honoured by the free trial, termination, acceptable use, IP, limitation of liability, governing law = RSA, dispute resolution), plus subscription / auto-renewal terms, account & device limits, team-seat rules.
+- **Privacy Policy** — POPIA-compliant: responsible party identity, Information Officer + Regulator registration number, categories of personal information (account, company profile, generated documents, payment metadata via PayFast as operator, error logs, device IDs), purposes, lawful basis, operators (Lovable Cloud / Supabase, PayFast), cross-border transfers, retention, data-subject rights (access, correction, deletion, objection, complaint to the Information Regulator with the Regulator's contact details), cookies / local storage, security measures (RLS, HIBP, TLS in transit).
+- **Disclaimer** — iNRECO provides IR guidance and document templates, **not legal advice**; CARA AI output may be inaccurate and must be reviewed by a qualified labour relations practitioner or attorney; no attorney–client relationship; users remain responsible for LRA, BCEA, EEA and CCMA compliance.
+
+**Wiring**
+- `src/App.tsx`: register `/terms`, `/privacy`, `/disclaimer` (public routes).
+- `src/components/AppShell.tsx` footer: add "Terms · Privacy · Disclaimer" links beside the © line.
+- `index.html` legacy footer + signup form (line 638): add the three links; update checkbox to "I agree to the Terms of Use, Privacy Policy and Disclaimer."
+- `src/pages/Auth.tsx`: add the same required checkbox above the Sign-up button.
 
 ## Out of scope
+- No cookie-consent banner — the app only uses essential storage (auth session + install hint), which POPIA does not require opt-in consent for.
+- No changes to existing pricing amounts.
+- No external payment-provider switch.
 
-- External error-monitoring SaaS (Sentry etc.) — not needed; we use the database.
-- Redesigning existing pages.
-
-If you approve, I'll build it in that order: tables → logger + boundary → Health page → Report button → security scan & fixes → owner guide.
+I'll wait for your approval, then build in this order: DB migration → Pricing.tsx + index.html cleanup → PayFast trial fields + webhook → three legal pages + footer/auth wiring.

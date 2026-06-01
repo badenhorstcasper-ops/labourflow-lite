@@ -178,19 +178,25 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 5. Amount / plan cross-check
+    // 5. Amount / plan cross-check.
+    //    Special case: a "trial signup" ITN has amount_gross = 0 because we
+    //    set amount=0 on the PayFast form and the first real debit only
+    //    happens on billing_date. We accept that and store status='trialing'.
     const expected = PLAN_PRICES[planName];
     if (expected === undefined) {
       await logAttempt(supabase, { ...baseLog, outcome: "rejected", reason: "unknown_plan" });
       return ok();
     }
-    if (amountGross === null || Math.abs(amountGross - expected) > 0.01) {
-      await logAttempt(supabase, {
-        ...baseLog,
-        outcome: "rejected",
-        reason: `amount_mismatch:expected=${expected} got=${amountGross}`,
-      });
-      return ok();
+    const isTrialSignup = amountGross !== null && Math.abs(amountGross) < 0.01;
+    if (!isTrialSignup) {
+      if (amountGross === null || Math.abs(amountGross - expected) > 0.01) {
+        await logAttempt(supabase, {
+          ...baseLog,
+          outcome: "rejected",
+          reason: `amount_mismatch:expected=${expected} got=${amountGross}`,
+        });
+        return ok();
+      }
     }
 
     // Resolve user_id / email
@@ -205,6 +211,12 @@ Deno.serve(async (req) => {
     }
 
     const now = new Date().toISOString();
+    const newStatus = isTrialSignup ? "trialing" : "active";
+    // billing_date arrives back from PayFast on the trial signup ITN.
+    const trialEndsAt = isTrialSignup
+      ? (data["billing_date"] ? new Date(data["billing_date"]).toISOString() : null)
+      : null;
+
     let existingId: string | null = null;
     if (userId) {
       const { data: row } = await supabase
@@ -231,8 +243,9 @@ Deno.serve(async (req) => {
         .from("subscriptions")
         .update({
           plan_name: planName,
-          status: "active",
+          status: newStatus,
           updated_at: now,
+          ...(trialEndsAt ? { trial_ends_at: trialEndsAt } : {}),
           ...(userId ? { user_id: userId } : {}),
           ...(email ? { email } : {}),
         })
@@ -242,7 +255,8 @@ Deno.serve(async (req) => {
         user_id: userId,
         email,
         plan_name: planName,
-        status: "active",
+        status: newStatus,
+        trial_ends_at: trialEndsAt,
         updated_at: now,
       });
     }

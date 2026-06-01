@@ -30,8 +30,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </header>
       <main className="container mx-auto max-w-5xl px-4 py-8 flex-1">{children}</main>
       <footer className="border-t mt-12">
-        <div className="container mx-auto max-w-5xl px-4 py-4 flex items-center justify-between gap-2 text-xs text-muted-foreground">
+        <div className="container mx-auto max-w-5xl px-4 py-4 flex flex-col gap-2 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <span>© {new Date().getFullYear()} iNRECO</span>
+          <nav className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <Link to="/terms" className="hover:underline">Terms</Link>
+            <span aria-hidden>·</span>
+            <Link to="/privacy" className="hover:underline">Privacy</Link>
+            <span aria-hidden>·</span>
+            <Link to="/disclaimer" className="hover:underline">Disclaimer</Link>
+          </nav>
           <ReportProblemButton />
         </div>
       </footer>
