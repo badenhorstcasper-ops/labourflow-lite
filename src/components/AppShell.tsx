@@ -29,10 +29,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
       <main className="container mx-auto max-w-5xl px-4 py-8 flex-1">{children}</main>
-      <footer className="border-t mt-12">
-        <div className="container mx-auto max-w-5xl px-4 py-4 flex flex-col gap-2 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+      <footer className="border-t">
+        <div className="container mx-auto max-w-5xl px-4 py-2 flex items-center justify-between text-[11px] text-muted-foreground">
           <span>© {new Date().getFullYear()} iNRECO</span>
-          <nav className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <nav className="flex items-center gap-3 whitespace-nowrap">
             <Link to="/terms" className="hover:underline">Terms</Link>
             <span aria-hidden>·</span>
             <Link to="/privacy" className="hover:underline">Privacy</Link>
