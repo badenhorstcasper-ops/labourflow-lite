@@ -211,6 +211,12 @@ Deno.serve(async (req) => {
     }
 
     const now = new Date().toISOString();
+    const newStatus = isTrialSignup ? "trialing" : "active";
+    // billing_date arrives back from PayFast on the trial signup ITN.
+    const trialEndsAt = isTrialSignup
+      ? (data["billing_date"] ? new Date(data["billing_date"]).toISOString() : null)
+      : null;
+
     let existingId: string | null = null;
     if (userId) {
       const { data: row } = await supabase
@@ -237,8 +243,9 @@ Deno.serve(async (req) => {
         .from("subscriptions")
         .update({
           plan_name: planName,
-          status: "active",
+          status: newStatus,
           updated_at: now,
+          ...(trialEndsAt ? { trial_ends_at: trialEndsAt } : {}),
           ...(userId ? { user_id: userId } : {}),
           ...(email ? { email } : {}),
         })
@@ -248,7 +255,8 @@ Deno.serve(async (req) => {
         user_id: userId,
         email,
         plan_name: planName,
-        status: "active",
+        status: newStatus,
+        trial_ends_at: trialEndsAt,
         updated_at: now,
       });
     }
