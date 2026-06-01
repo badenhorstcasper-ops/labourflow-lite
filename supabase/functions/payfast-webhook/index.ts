@@ -178,19 +178,25 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 5. Amount / plan cross-check
+    // 5. Amount / plan cross-check.
+    //    Special case: a "trial signup" ITN has amount_gross = 0 because we
+    //    set amount=0 on the PayFast form and the first real debit only
+    //    happens on billing_date. We accept that and store status='trialing'.
     const expected = PLAN_PRICES[planName];
     if (expected === undefined) {
       await logAttempt(supabase, { ...baseLog, outcome: "rejected", reason: "unknown_plan" });
       return ok();
     }
-    if (amountGross === null || Math.abs(amountGross - expected) > 0.01) {
-      await logAttempt(supabase, {
-        ...baseLog,
-        outcome: "rejected",
-        reason: `amount_mismatch:expected=${expected} got=${amountGross}`,
-      });
-      return ok();
+    const isTrialSignup = amountGross !== null && Math.abs(amountGross) < 0.01;
+    if (!isTrialSignup) {
+      if (amountGross === null || Math.abs(amountGross - expected) > 0.01) {
+        await logAttempt(supabase, {
+          ...baseLog,
+          outcome: "rejected",
+          reason: `amount_mismatch:expected=${expected} got=${amountGross}`,
+        });
+        return ok();
+      }
     }
 
     // Resolve user_id / email
