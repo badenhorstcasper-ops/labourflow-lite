@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,8 +21,9 @@ const RETURN_URL = "https://app.inreco.co.za/payment-success";
 const CANCEL_URL = "https://app.inreco.co.za/payment-cancelled";
 const NOTIFY_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/payfast-webhook`;
 
+const TRIAL_DAYS = 7;
 
-type PlanKind = "free" | "paid" | "contact";
+type PlanKind = "paid" | "contact";
 
 type Plan = {
   name: string;
@@ -34,26 +35,11 @@ type Plan = {
   features: string[];
   cta: string;
   kind: PlanKind;
+  trial?: boolean;
   highlight?: boolean;
 };
 
 const PLANS: Plan[] = [
-  {
-    name: "Starter",
-    amount: 0,
-    priceLabel: "R0",
-    priceSuffix: "Forever free",
-    tagline: "1 user · 5 questions/month",
-    description: "For individuals trying iNRECO.",
-    features: [
-      "5 AI questions/month",
-      "All topic wizards",
-      "Basic documents",
-      "CARA AI adviser",
-    ],
-    cta: "Get Started Free",
-    kind: "free",
-  },
   {
     name: "Solo",
     amount: 259,
@@ -67,8 +53,9 @@ const PLANS: Plan[] = [
       "CCMA deadline tracker",
       "CARA AI adviser",
     ],
-    cta: "Get Solo",
+    cta: "Start 7-day free trial",
     kind: "paid",
+    trial: true,
   },
   {
     name: "Business",
@@ -84,8 +71,9 @@ const PLANS: Plan[] = [
       "CARA AI adviser",
       "CCMA tracker",
     ],
-    cta: "Get Business",
+    cta: "Start 7-day free trial",
     kind: "paid",
+    trial: true,
     highlight: true,
   },
   {
@@ -101,8 +89,9 @@ const PLANS: Plan[] = [
       "CARA as your dedicated AI adviser",
       "WhatsApp support",
     ],
-    cta: "Get Professional",
+    cta: "Start 7-day free trial",
     kind: "paid",
+    trial: true,
   },
   {
     name: "Enterprise",
@@ -123,6 +112,13 @@ const PLANS: Plan[] = [
   },
 ];
 
+function trialBillingDate(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + TRIAL_DAYS);
+  // PayFast expects YYYY-MM-DD
+  return d.toISOString().slice(0, 10);
+}
+
 const Pricing = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string>("");
@@ -137,6 +133,7 @@ const Pricing = () => {
 
   const checkoutEmail = userEmail || guestEmail.trim().toLowerCase();
   const canSubmit = Boolean(checkoutEmail);
+  const billingDate = useMemo(() => trialBillingDate(), []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -144,7 +141,15 @@ const Pricing = () => {
         <header className="mb-10 text-center">
           <h1 className="text-3xl font-bold tracking-tight">Choose your plan</h1>
           <p className="mt-2 text-sm text-muted-foreground">
+            Every paid plan starts with a <strong>7-day free trial</strong> — no
+            charge during the trial, cancel anytime.
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
             Secure recurring billing via PayFast (sandbox mode — no real charges).
+            By subscribing you agree to our{" "}
+            <Link to="/terms" className="underline">Terms of Use</Link>,{" "}
+            <Link to="/privacy" className="underline">Privacy Policy</Link> and{" "}
+            <Link to="/disclaimer" className="underline">Disclaimer</Link>.
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
             Already have an account?{" "}
@@ -170,12 +175,12 @@ const Pricing = () => {
               className="mt-2"
             />
             <p className="mt-2 text-xs text-muted-foreground">
-              We'll link this payment to your account when you sign up after checkout.
+              We'll link this trial to your account when you sign up after checkout.
             </p>
           </div>
         )}
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {PLANS.map((plan) => {
             const mPaymentId = `${userId ?? "guest"}|${plan.name}|${Date.now()}`;
             return (
@@ -198,6 +203,11 @@ const Pricing = () => {
                   <div>
                     <p className="text-3xl font-bold">{plan.priceLabel}</p>
                     <p className="mt-1 text-sm text-muted-foreground">{plan.priceSuffix}</p>
+                    {plan.trial && (
+                      <p className="mt-2 inline-block rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                        7-day free trial · cancel anytime
+                      </p>
+                    )}
                     <ul className="mt-4 space-y-2">
                       {plan.features.map((f) => (
                         <li key={f} className="flex items-start gap-2 text-sm">
@@ -207,21 +217,6 @@ const Pricing = () => {
                       ))}
                     </ul>
                   </div>
-
-                  {plan.kind === "free" && (
-                    <Button
-                      asChild
-                      className="w-full"
-                      variant={plan.highlight ? "default" : "outline"}
-                      onClick={() => {
-                        try {
-                          localStorage.setItem("inreco.pendingInstallPrompt", "1");
-                        } catch (_) {}
-                      }}
-                    >
-                      <Link to="/auth">{plan.cta}</Link>
-                    </Button>
-                  )}
 
                   {plan.kind === "contact" && (
                     <Button asChild className="w-full" variant="outline">
@@ -248,16 +243,21 @@ const Pricing = () => {
                         }
                       }}
                     >
-
                       <input type="hidden" name="merchant_id" value={MERCHANT_ID} />
                       <input type="hidden" name="merchant_key" value={MERCHANT_KEY} />
                       <input type="hidden" name="return_url" value={RETURN_URL} />
                       <input type="hidden" name="cancel_url" value={CANCEL_URL} />
                       <input type="hidden" name="notify_url" value={NOTIFY_URL} />
                       <input type="hidden" name="m_payment_id" value={mPaymentId} />
-                      <input type="hidden" name="amount" value={plan.amount.toFixed(2)} />
-                      <input type="hidden" name="item_name" value={`iNRECO ${plan.name} Plan`} />
+                      {/* Free 7-day trial: signup amount is 0; first real debit on billing_date. */}
+                      <input type="hidden" name="amount" value="0.00" />
+                      <input
+                        type="hidden"
+                        name="item_name"
+                        value={`iNRECO ${plan.name} Plan — 7-day free trial`}
+                      />
                       <input type="hidden" name="subscription_type" value="1" />
+                      <input type="hidden" name="billing_date" value={billingDate} />
                       <input type="hidden" name="frequency" value="3" />
                       <input type="hidden" name="cycles" value="0" />
                       <input
@@ -281,6 +281,10 @@ const Pricing = () => {
                       >
                         {canSubmit ? plan.cta : "Enter your email above"}
                       </Button>
+                      <p className="mt-2 text-center text-[11px] text-muted-foreground">
+                        No charge today. First debit of {plan.priceLabel} on{" "}
+                        {new Date(billingDate).toLocaleDateString("en-ZA")}.
+                      </p>
                     </form>
                   )}
                 </CardContent>
