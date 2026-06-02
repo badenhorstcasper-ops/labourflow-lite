@@ -16,8 +16,10 @@ const corsHeaders = {
 
 // Public PayFast merchant credentials — not secret.
 const MERCHANT_ID = "12090292";
-// Mode: "sandbox" or "live". Sandbox tolerates the public test merchant.
-const PAYFAST_MODE: "sandbox" | "live" = "sandbox";
+// Mode: "sandbox" or "live". Set PAYFAST_MODE secret to "live" before launch.
+// Defaults to "sandbox" so dev/preview never accidentally hits real PayFast.
+const PAYFAST_MODE: "sandbox" | "live" =
+  (Deno.env.get("PAYFAST_MODE")?.toLowerCase() === "live" ? "live" : "sandbox");
 const SANDBOX_TEST_MERCHANT = "10000100";
 
 const PAYFAST_HOST = PAYFAST_MODE === "live" ? "www.payfast.co.za" : "sandbox.payfast.co.za";

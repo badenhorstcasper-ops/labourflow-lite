@@ -1,48 +1,125 @@
-## Goal
+# Pre-launch audit — iNRECO
 
-Bring `index.html` (the landing page at app.inreco.co.za / inrecoapp.inreco.co.za) in line with the updated subscription tiers:
+Below is a full sweep across functionality, error reporting, security, payments, SEO, and operations. Items are grouped by priority. Each "Fix" is a small, scoped change I can implement once you approve.
 
-- Solo — R259 / 1 user
-- Business — R499 / 5 users (Most Popular)
-- Professional — R1,499 / 10 users
-- Enterprise — R3,999 / 15 users — all start with a 7-day free trial.
+---
 
-The main pricing section (lines 524–600) already lists the correct tiers. Two things are out of sync.
+## P0 — Must fix before launch (blockers)
 
-## Changes
+### 1. `register_device` RPC missing in DB
+Console shows:
+> `Could not find the function public.register_device(_device_id, _label, _ua) in the schema cache`
 
-### 1. Replace the stale Upgrade modal (lines 778–797)
+But the function **does exist** in the DB (it's listed under db-functions). This means the Supabase client cache is stale OR signature mismatch. Every login currently logs a warning and device registration silently fails — your 2-device limit is **not being enforced**.
+**Fix:** re-create the function with `CREATE OR REPLACE` to refresh the PostgREST schema cache, and grant `EXECUTE ... TO authenticated`. Verify by logging in and checking `user_devices` gets a row.
 
-Currently shows the old 3-tier model (Solo R259, Business R499, Enterprise **R1,200 / unlimited users**) plus a Pay-as-you-go R29/question card.
+### 2. Subscriptions table — confirm no client-side INSERT
+Security scan flags that `subscriptions` should never accept an INSERT from an authenticated user (would let a user grant themselves any plan). Need to confirm RLS denies INSERT/UPDATE from `authenticated` and only `service_role` (PayFast webhook) can write. If a policy is missing, add explicit deny.
+**Fix:** add a migration with `REVOKE INSERT, UPDATE ON public.subscriptions FROM authenticated, anon;` and verify webhook still works (it uses service role).
 
-Replace those 4 `.plan` cards with 4 new cards matching the live tiers:
+### 3. PayFast webhook end-to-end test
+The webhook is the only path to plan activation. Before launch I should:
+- Confirm `PAYFAST_MERCHANT_ID`, `PAYFAST_MERCHANT_KEY`, `PAYFAST_PASSPHRASE` secrets are set
+- Confirm webhook URL configured in PayFast dashboard points to live edge function
+- Run one sandbox transaction and verify a row lands in `subscriptions` with `status='active'`
 
-- Solo — R259/month — 50 AI questions/month · All documents · CCMA tracker · CARA AI adviser
-- Business (`featured`) — R499/month — Unlimited questions · Up to 5 users · All documents · CARA · CCMA tracker
-- Professional — R1,499/month — Everything in Business · Up to 10 users · Dedicated CARA · WhatsApp support
-- Enterprise — R3,999/month — Everything in Professional · Up to 15 users · Always-on CARA · Pay 10 get 12 annual · WhatsApp support
+### 4. Edge function secrets sanity check
+Need to confirm these are set in Lovable Cloud:
+- PayFast: merchant id/key/passphrase, sandbox-vs-live flag
+- `submit-contact`: any email/SMTP secrets it needs
+- `invite-team-member`: email sender config
+I'll list missing ones once I check.
 
-Each button: `Start 7-day free trial`, calls `selectPlan('<Tier>')`. Remove the PAYG card entirely. Update modal copy to "Start a 7-day free trial on any plan." (already says this — keep).
+### 5. Auth configuration
+- HIBP leaked-password check: confirmed in SECURITY.md as enabled — re-verify in Cloud
+- Google OAuth: confirm enabled and `redirect_uri` includes `https://app.inreco.co.za` AND `https://inrecoapp.inreco.co.za` AND the preview domain
+- Email confirmation: currently auto-confirmed? Decide intended behaviour for launch
+- Site URL + additional redirect URLs in Auth settings must include your custom domain
 
-### 2. Unify CTAs in the main pricing section (lines 548–585)
+---
 
-Solo button already reads "Start 7-day free trial" and routes to `/pricing`. Make the Business, Professional, and Enterprise buttons match:
+## P1 — Strongly recommended before launch
 
-- Button label: `Start 7-day free trial` (was "Get Business" / "Get Professional" / "Get Enterprise")
-- Button action: `window.location.href='/pricing'` (was `payWithPayfast('<Tier>')`)
+### 6. Stale duplicate domains
+You have two production hostnames in play: `app.inreco.co.za` (custom domain) and `inrecoapp.inreco.co.za`. Pick one canonical, 301-redirect the other, and ensure:
+- PayFast webhook callback URL uses canonical
+- Auth redirect URLs include both until redirect is in place
+- Canonical `<link rel="canonical">` in `index.html`
 
-This routes every paid tier through the React `/pricing` page, which already implements the proper PayFast 7-day-trial form (R0 today, recurring debit after 7 days) — matching the trial promise in the section header.
+### 7. Error reporting end-to-end check
+- `error_logs` + `bug_reports` tables exist with admin-only read — good
+- Verify your account has the `admin` role in `user_roles` (otherwise you can't see `/account-app/health`)
+- Trigger a deliberate error from the legacy app to confirm `window.iNRECO.logError` writes a row
 
-### 3. Leave handlers alone
+### 8. Security definer function grants (Supabase linter WARNs)
+6 linter warnings about `SECURITY DEFINER` functions being callable by anon/authenticated. Several of yours are intentional (`accept_team_invite`, `current_account_owner`, `next_document_number`, `has_role`, `register_device`, `link_*_on_signup`). I should:
+- Revoke EXECUTE from `anon` for everything except what truly needs anonymous access
+- Keep `authenticated` grants only on the ones the React app calls
 
-`payWithPayfast` and `selectPlan` stay (still used by the upgrade modal and post-signup resume flow). `PLAN_AMOUNTS` already has all four tiers.
+### 9. Document generation prerequisites
+The `generateDocument` flow throws `company_profile_incomplete` if profile is empty. Confirm:
+- New-signup flow prompts user to fill `/account-app/profile` before first document
+- `documents` bucket is private (it is) and signed URLs expire appropriately (1h owner / 30m share — confirmed)
+- Brand test (`src/lib/documents/__tests__/brand.test.ts`) passes — run `bunx vitest run`
 
-## Files touched
+### 10. Subscription tier enforcement
+`accept_team_invite` enforces seat cap. But the rest of the app needs to enforce:
+- AI question quota for Solo (50/month) — is this counted anywhere?
+- Plan-gated features (Professional WhatsApp support, Enterprise always-on CARA)
+I should check the legacy app's quota logic.
 
-- `index.html` — only the two blocks above. No JS logic changes, no other sections, no styling changes.
+---
 
-## Out of scope
+## P2 — Polish & SEO
 
-- Tier names, prices, feature lists themselves (user confirmed they're correct).
-- The React `/pricing` page (already matches).
-- Footer, auth, or any other section.
+### 11. SEO basics on `index.html`
+- Verify single H1, `<title>` < 60 chars with keyword, meta description < 160 chars
+- `og:image`, `twitter:card`, `canonical`
+- `robots.txt` and `sitemap.xml` for `/`, `/pricing`, `/contact`, `/terms`, `/privacy`, `/disclaimer`
+- JSON-LD `Organization` + `SoftwareApplication` schema
+
+### 12. 404 handling
+`public/404.html` exists for static hosting; React Router `*` route redirects to `/`. Confirm hard refresh on `/account-app/xxx` works on the production host (SPA fallback).
+
+### 13. Service worker (`public/sw.js`)
+Verify it doesn't cache stale `index.html` or React bundles — a bad SW is the #1 cause of "users see old version" complaints.
+
+### 14. Legal pages
+`/terms`, `/privacy`, `/disclaimer` route to React pages. Quick content review for: company name "iNRECO", correct entity name, POPIA mentions (you're South Africa), contact email.
+
+### 15. Branding consistency
+Memory rule already in place: never use "Labourflow" or "iNRECO Consulting". Quick grep to confirm no stragglers in UI strings or generated-doc templates.
+
+### 16. Mobile/responsive sweep
+You mentioned footer issues recently. Sweep the landing page + `/account-app/*` at 360px, 768px, 1024px.
+
+---
+
+## P3 — Operational readiness
+
+### 17. Backups
+Confirm Lovable Cloud daily backups are enabled (default yes), and you know how to restore.
+
+### 18. Admin role bootstrap
+Make sure your own user_id has a row in `user_roles` with role=`admin`. Otherwise `/account-app/health` is invisible to you.
+
+### 19. Contact form deliverability
+`submit-contact` edge function — where do messages land? Email? Just `contact_messages` table? You need a notification path or you'll miss leads.
+
+### 20. Analytics
+No analytics installed. Decide if you want Plausible/GA4 before launch.
+
+---
+
+## Recommended next step
+
+If you approve, I'll work P0 items first in this order:
+1. Re-create `register_device` to refresh schema cache + grants
+2. Lock down `subscriptions` table writes
+3. Audit + tighten SECURITY DEFINER grants
+4. Confirm/list missing edge-function secrets and auth redirect URLs
+5. Run the vitest suite and report
+
+Then P1 and P2 in follow-up turns.
+
+Tell me which of P0–P3 to tackle, or say "do all P0" and I'll start there.
