@@ -134,8 +134,12 @@ Deno.serve(async (req) => {
 
     const authHeader = req.headers.get("Authorization") ?? "";
     const cronHeader = req.headers.get("x-cron-secret") ?? "";
+    const bearer = authHeader.replace(/^Bearer\s+/i, "").trim();
 
-    if (cronHeader && CRON_SECRET && cronHeader === CRON_SECRET) {
+    const isService = bearer && bearer === SERVICE_ROLE;
+    const isCron = cronHeader && CRON_SECRET && cronHeader === CRON_SECRET;
+
+    if (isService || isCron) {
       trigger_type = "scheduled";
     } else {
       const userClient = createClient(SUPABASE_URL, ANON_KEY, {
