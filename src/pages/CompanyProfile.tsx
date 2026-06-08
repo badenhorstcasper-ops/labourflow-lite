@@ -89,7 +89,7 @@ export default function CompanyProfilePage() {
       .from("company-logos")
       .upload(path, file, { upsert: true, contentType: file.type });
     if (error) {
-      toast.error("Logo upload failed: " + error.message);
+      toast.error("Couldn't upload that logo. The rest of your profile will still save. (" + error.message + ")");
       return;
     }
     const { data } = supabase.storage.from("company-logos").getPublicUrl(path);
@@ -97,16 +97,29 @@ export default function CompanyProfilePage() {
     toast.success("Logo uploaded");
   }
 
+  function removeLogo() {
+    set("logo_url", "");
+    toast.success("Logo removed. Remember to save.");
+  }
+
+  function resetColor() {
+    set("accent_color", "#2563eb");
+  }
+
   async function save() {
     if (!ownerId) return;
+    if (!form.company_name.trim()) {
+      toast.error("Please enter a company name before saving.");
+      return;
+    }
     setSaving(true);
     const payload = { ...form, owner_user_id: ownerId };
     const { error } = await supabase
       .from("company_profiles")
       .upsert(payload, { onConflict: "owner_user_id" });
     setSaving(false);
-    if (error) toast.error(error.message);
-    else toast.success("Company profile saved");
+    if (error) toast.error("Save failed: " + error.message);
+    else toast.success("Saved — your branding will appear on all new documents.");
   }
 
   async function generateSample() {
@@ -184,23 +197,32 @@ export default function CompanyProfilePage() {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Branding</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Branding <span className="text-sm font-normal text-muted-foreground">(optional)</span></CardTitle>
+          </CardHeader>
           <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              You can skip this entirely. Documents will still generate — just without a custom logo or accent colour.
+            </p>
             <div>
-              <Label>Logo</Label>
-              <div className="flex items-center gap-4 mt-2">
+              <Label>Logo (optional)</Label>
+              <div className="flex flex-wrap items-center gap-3 mt-2">
                 {form.logo_url && (
                   <img src={form.logo_url} alt="Logo" className="h-16 w-auto rounded border bg-white p-1" />
                 )}
                 <Input
                   type="file"
                   accept="image/png,image/jpeg"
+                  className="max-w-xs"
                   onChange={(e) => e.target.files?.[0] && uploadLogo(e.target.files[0])}
                 />
+                {form.logo_url && (
+                  <Button type="button" variant="outline" size="sm" onClick={removeLogo}>Remove logo</Button>
+                )}
               </div>
             </div>
             <div>
-              <Label>Accent colour</Label>
+              <Label>Accent colour (optional)</Label>
               <div className="flex items-center gap-3 mt-2">
                 <input
                   type="color"
@@ -209,6 +231,7 @@ export default function CompanyProfilePage() {
                   className="h-10 w-16 rounded border bg-background"
                 />
                 <Input value={form.accent_color} onChange={(e) => set("accent_color", e.target.value)} className="w-32" />
+                <Button type="button" variant="outline" size="sm" onClick={resetColor}>Use default</Button>
               </div>
             </div>
           </CardContent>

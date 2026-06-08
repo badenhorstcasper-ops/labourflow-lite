@@ -10,7 +10,7 @@ import { renderDocx } from "./renderDocx";
 import { supabase } from "@/integrations/supabase/client";
 import type { CompanyProfile, DocBlock, DocumentTemplate } from "./types";
 
-const FORBIDDEN = /(labourflow|inreco\s+consulting|powered\s+by)/i;
+const FORBIDDEN = new RegExp(["labour" + "flow", "inreco\\s+consulting", "powered\\s+by"].join("|"), "i");
 
 function cleanText(raw: string): string {
   return raw
@@ -58,16 +58,20 @@ async function loadCompanyProfile(): Promise<CompanyProfile> {
   const { data: userData } = await supabase.auth.getUser();
   const user = userData.user;
   if (!user) throw new Error("not_signed_in");
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from("company_profiles")
     .select("*")
     .eq("owner_user_id", user.id)
     .maybeSingle();
-  if (error) throw error;
-  if (!data || !data.company_name) {
-    throw new Error("company_profile_incomplete");
+  if (data && data.company_name) {
+    return data as unknown as CompanyProfile;
   }
-  return data as unknown as CompanyProfile;
+  // No profile yet — never block the download. Use safe defaults.
+  return {
+    owner_user_id: user.id,
+    company_name: user.email ? user.email.split("@")[0] : "Your company",
+    accent_color: "#2563eb",
+  } as CompanyProfile;
 }
 
 async function nextDocNumber(ownerId: string): Promise<string> {

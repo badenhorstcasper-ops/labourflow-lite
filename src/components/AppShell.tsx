@@ -1,20 +1,32 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 import ReportProblemButton from "@/components/ReportProblemButton";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const linkCls = (p: string) =>
     `px-3 py-1.5 rounded-md text-sm transition ${
       pathname === p
         ? "bg-primary text-primary-foreground"
         : "text-foreground hover:bg-muted"
     }`;
+  const goBack = () => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate("/");
+  };
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <header className="border-b">
         <div className="container mx-auto max-w-5xl px-4 py-3 flex items-center justify-between gap-4">
-          <a href="/" className="font-bold tracking-tight text-lg">iNRECO</a>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={goBack} aria-label="Go back">
+              <ArrowLeft className="h-4 w-4" />
+              <span className="hidden sm:inline">Back</span>
+            </Button>
+            <a href="/" className="font-bold tracking-tight text-lg">iNRECO</a>
+          </div>
           <nav className="flex items-center gap-1">
             <Link className={linkCls("/account-app/profile")} to="/account-app/profile">
               Company profile

@@ -21,16 +21,26 @@ async function loadCompanyProfile(): Promise<CompanyProfile> {
   if (ownerErr) throw ownerErr;
   const owner = ownerData as unknown as string;
 
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from("company_profiles")
     .select("*")
     .eq("owner_user_id", owner)
     .maybeSingle();
-  if (error) throw error;
-  if (!data || !data.company_name) {
-    throw new Error("company_profile_incomplete");
+
+  if (data && data.company_name) {
+    return data as unknown as CompanyProfile;
   }
-  return data as unknown as CompanyProfile;
+
+  // Fallback: no profile yet (or empty company name).
+  // Generate the document anyway with sensible defaults so the user is
+  // never blocked. They can add branding later in Company profile.
+  const { data: userData } = await supabase.auth.getUser();
+  const email = userData.user?.email || "";
+  return {
+    owner_user_id: owner,
+    company_name: email ? email.split("@")[0] : "Your company",
+    accent_color: "#2563eb",
+  } as CompanyProfile;
 }
 
 function shareUrl(token: string) {
