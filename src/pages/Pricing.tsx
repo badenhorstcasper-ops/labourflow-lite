@@ -12,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import TestModeBanner from "@/components/TestModeBanner";
 
 // SANDBOX endpoint — switch to https://www.payfast.co.za/eng/process for live
 const PAYFAST_URL = "https://sandbox.payfast.co.za/eng/process";
@@ -137,6 +138,7 @@ const Pricing = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <TestModeBanner />
       <div className="container mx-auto max-w-7xl px-4 py-12">
         <header className="mb-10 text-center">
           <h1 className="text-3xl font-bold tracking-tight">Choose your plan</h1>
