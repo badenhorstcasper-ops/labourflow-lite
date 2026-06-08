@@ -89,7 +89,7 @@ export default function CompanyProfilePage() {
       .from("company-logos")
       .upload(path, file, { upsert: true, contentType: file.type });
     if (error) {
-      toast.error("Logo upload failed: " + error.message);
+      toast.error("Couldn't upload that logo. The rest of your profile will still save. (" + error.message + ")");
       return;
     }
     const { data } = supabase.storage.from("company-logos").getPublicUrl(path);
@@ -97,16 +97,29 @@ export default function CompanyProfilePage() {
     toast.success("Logo uploaded");
   }
 
+  function removeLogo() {
+    set("logo_url", "");
+    toast.success("Logo removed. Remember to save.");
+  }
+
+  function resetColor() {
+    set("accent_color", "#2563eb");
+  }
+
   async function save() {
     if (!ownerId) return;
+    if (!form.company_name.trim()) {
+      toast.error("Please enter a company name before saving.");
+      return;
+    }
     setSaving(true);
     const payload = { ...form, owner_user_id: ownerId };
     const { error } = await supabase
       .from("company_profiles")
       .upsert(payload, { onConflict: "owner_user_id" });
     setSaving(false);
-    if (error) toast.error(error.message);
-    else toast.success("Company profile saved");
+    if (error) toast.error("Save failed: " + error.message);
+    else toast.success("Saved — your branding will appear on all new documents.");
   }
 
   async function generateSample() {
