@@ -569,6 +569,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _sec_scan_collect: {
+        Args: never
+        Returns: {
+          detail: string
+          kind: string
+          obj: string
+        }[]
+      }
       accept_team_invite: { Args: { _token: string }; Returns: Json }
       current_account_owner: { Args: never; Returns: string }
       has_role: {
