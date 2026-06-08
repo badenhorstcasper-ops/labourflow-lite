@@ -1456,25 +1456,28 @@ function showDocumentModal(title, content) {
     </div>
     <div class="brand-warn" style="display:none; background:#fef3c7; border:1px solid #f59e0b; color:#92400e; border-radius:8px; padding:10px 12px; font-size:13px; margin-bottom:10px;">
       <div class="brand-warn-msg">
-        <strong>Add your company details</strong> so your downloads carry your own letterhead (name, logo, address, signatory).
-        <button type="button" class="brand-warn-open" style="margin-left:8px; background:#92400e; color:#fff; border:none; border-radius:6px; padding:4px 10px; cursor:pointer; font-size:12px;">Complete now</button>
+        <strong>Add your company details (optional)</strong> so your downloads carry your own letterhead. You can also skip this and download a plain copy now.
+        <button type="button" class="brand-warn-open" style="margin-left:8px; background:#92400e; color:#fff; border:none; border-radius:6px; padding:4px 10px; cursor:pointer; font-size:12px;">Add details</button>
+        <button type="button" class="brand-warn-skip" style="margin-left:6px; background:#fff; color:#92400e; border:1px solid #92400e; border-radius:6px; padding:4px 10px; cursor:pointer; font-size:12px;">Skip &amp; download</button>
+        <button type="button" class="brand-warn-dismiss" style="margin-left:6px; background:transparent; color:#92400e; border:none; cursor:pointer; font-size:12px; text-decoration:underline;">Dismiss</button>
         <a href="/account-app/profile" style="color:#92400e; text-decoration:underline; margin-left:8px;">Open full profile editor</a>
       </div>
       <div class="brand-form" style="display:none; margin-top:10px; background:#fff; border:1px solid #f59e0b; border-radius:8px; padding:12px; color:#111;">
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-          <label style="font-size:12px; grid-column:1/-1;">Company name *<input data-bf="company_name" style="width:100%; padding:6px 8px; border:1px solid #d4d4d8; border-radius:6px; font-size:13px;"/></label>
+          <label style="font-size:12px; grid-column:1/-1;">Company name<input data-bf="company_name" style="width:100%; padding:6px 8px; border:1px solid #d4d4d8; border-radius:6px; font-size:13px;"/></label>
           <label style="font-size:12px; grid-column:1/-1;">Address<input data-bf="address_line1" placeholder="Street, City, Postal code" style="width:100%; padding:6px 8px; border:1px solid #d4d4d8; border-radius:6px; font-size:13px;"/></label>
           <label style="font-size:12px;">Contact email<input data-bf="contact_email" type="email" style="width:100%; padding:6px 8px; border:1px solid #d4d4d8; border-radius:6px; font-size:13px;"/></label>
           <label style="font-size:12px;">Contact phone<input data-bf="contact_phone" style="width:100%; padding:6px 8px; border:1px solid #d4d4d8; border-radius:6px; font-size:13px;"/></label>
           <label style="font-size:12px;">Signatory name<input data-bf="signatory_name" style="width:100%; padding:6px 8px; border:1px solid #d4d4d8; border-radius:6px; font-size:13px;"/></label>
           <label style="font-size:12px;">Signatory title<input data-bf="signatory_title" placeholder="e.g. HR Manager" style="width:100%; padding:6px 8px; border:1px solid #d4d4d8; border-radius:6px; font-size:13px;"/></label>
-          <label style="font-size:12px;">Logo (PNG/JPG)<input data-bf-logo type="file" accept="image/png,image/jpeg" style="width:100%; font-size:12px;"/></label>
-          <label style="font-size:12px;">Accent colour<input data-bf="accent_color" type="color" value="#2563eb" style="width:100%; height:32px; padding:0; border:1px solid #d4d4d8; border-radius:6px;"/></label>
+          <label style="font-size:12px;">Logo (optional, PNG/JPG)<input data-bf-logo type="file" accept="image/png,image/jpeg" style="width:100%; font-size:12px;"/></label>
+          <label style="font-size:12px;">Accent colour (optional)<input data-bf="accent_color" type="color" value="#2563eb" style="width:100%; height:32px; padding:0; border:1px solid #d4d4d8; border-radius:6px;"/></label>
         </div>
         <div data-bf-logo-preview style="margin-top:6px; font-size:11px; color:#52525b;"></div>
         <div data-bf-msg style="margin-top:8px; font-size:12px; color:#b91c1c; min-height:14px;"></div>
-        <div style="margin-top:10px; display:flex; gap:8px; justify-content:flex-end;">
+        <div style="margin-top:10px; display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap;">
           <button type="button" class="brand-form-cancel" style="background:#e4e4e7; color:#111; border:none; border-radius:6px; padding:6px 12px; cursor:pointer; font-size:13px;">Cancel</button>
+          <button type="button" class="brand-form-skip" style="background:#fff; color:#92400e; border:1px solid #92400e; border-radius:6px; padding:6px 12px; cursor:pointer; font-size:13px;">Skip &amp; download</button>
           <button type="button" class="brand-form-save" style="background:#16a34a; color:#fff; border:none; border-radius:6px; padding:6px 14px; cursor:pointer; font-size:13px;">Save &amp; continue</button>
         </div>
       </div>
