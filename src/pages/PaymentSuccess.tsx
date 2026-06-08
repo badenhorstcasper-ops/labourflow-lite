@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import InstallAppButton from "@/components/InstallAppButton";
+import TestModeBanner from "@/components/TestModeBanner";
 
 const PaymentSuccess = () => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
@@ -15,7 +16,9 @@ const PaymentSuccess = () => {
     typeof window !== "undefined" ? localStorage.getItem("inreco.pendingEmail") : null;
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background p-6 text-center">
+    <div className="min-h-screen bg-background">
+      <TestModeBanner />
+      <div className="flex min-h-[calc(100vh-2.5rem)] flex-col items-center justify-center gap-6 p-6 text-center">
       <h1 className="text-3xl font-bold">Payment successful!</h1>
 
       {isLoggedIn ? (
@@ -46,6 +49,7 @@ const PaymentSuccess = () => {
       <p className="text-xs text-muted-foreground">
         Tip: on iPhone, use Safari's Share menu → "Add to Home Screen" to install iNRECO.
       </p>
+      </div>
     </div>
   );
 };
