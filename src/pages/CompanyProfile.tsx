@@ -222,7 +222,7 @@ export default function CompanyProfilePage() {
               </div>
             </div>
             <div>
-              <Label>Accent colour</Label>
+              <Label>Accent colour (optional)</Label>
               <div className="flex items-center gap-3 mt-2">
                 <input
                   type="color"
@@ -231,6 +231,7 @@ export default function CompanyProfilePage() {
                   className="h-10 w-16 rounded border bg-background"
                 />
                 <Input value={form.accent_color} onChange={(e) => set("accent_color", e.target.value)} className="w-32" />
+                <Button type="button" variant="outline" size="sm" onClick={resetColor}>Use default</Button>
               </div>
             </div>
           </CardContent>
