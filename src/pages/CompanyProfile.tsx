@@ -197,19 +197,28 @@ export default function CompanyProfilePage() {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Branding</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Branding <span className="text-sm font-normal text-muted-foreground">(optional)</span></CardTitle>
+          </CardHeader>
           <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              You can skip this entirely. Documents will still generate — just without a custom logo or accent colour.
+            </p>
             <div>
-              <Label>Logo</Label>
-              <div className="flex items-center gap-4 mt-2">
+              <Label>Logo (optional)</Label>
+              <div className="flex flex-wrap items-center gap-3 mt-2">
                 {form.logo_url && (
                   <img src={form.logo_url} alt="Logo" className="h-16 w-auto rounded border bg-white p-1" />
                 )}
                 <Input
                   type="file"
                   accept="image/png,image/jpeg"
+                  className="max-w-xs"
                   onChange={(e) => e.target.files?.[0] && uploadLogo(e.target.files[0])}
                 />
+                {form.logo_url && (
+                  <Button type="button" variant="outline" size="sm" onClick={removeLogo}>Remove logo</Button>
+                )}
               </div>
             </div>
             <div>
