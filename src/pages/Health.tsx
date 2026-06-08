@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import SecurityTab from "@/components/health/SecurityTab";
 
 type ErrorRow = {
   id: string; short_id: string; created_at: string; email: string | null;
@@ -36,7 +38,6 @@ export default function HealthPage() {
         ]);
         setErrors((e as ErrorRow[]) ?? []);
         setBugs((b as BugRow[]) ?? []);
-        // Status checks
         const auth = !!u.user;
         let db = false; try { const { error } = await supabase.from("user_roles").select("id").limit(1); db = !error; } catch { /* */ }
         let storage = false; try { const { error } = await supabase.storage.from("documents").list("", { limit: 1 }); storage = !error; } catch { /* */ }
@@ -58,59 +59,69 @@ export default function HealthPage() {
 
   return (
     <AppShell>
-      <div className="space-y-8">
+      <div className="space-y-6">
         <header>
           <h1 className="text-2xl font-bold">Health & errors</h1>
-          <p className="text-sm text-muted-foreground">Everything in one place. Copy any error and paste into Lovable chat to get it fixed.</p>
+          <p className="text-sm text-muted-foreground">Everything in one place. Copy any item and paste into Lovable chat to get it fixed.</p>
         </header>
 
-        <section className="rounded-lg border bg-card p-4">
-          <h2 className="font-semibold mb-2">Backend status</h2>
-          <ul className="text-sm grid grid-cols-3 gap-2">
-            <Indicator label="Database" ok={status.db} />
-            <Indicator label="Authentication" ok={status.auth} />
-            <Indicator label="File storage" ok={status.storage} />
-          </ul>
-        </section>
+        <Tabs defaultValue="errors">
+          <TabsList>
+            <TabsTrigger value="errors">Errors ({errors.length})</TabsTrigger>
+            <TabsTrigger value="reports">User reports ({bugs.length})</TabsTrigger>
+            <TabsTrigger value="security">Security</TabsTrigger>
+            <TabsTrigger value="status">Backend status</TabsTrigger>
+          </TabsList>
 
-        <section>
-          <h2 className="font-semibold mb-2">Recent errors ({errors.length})</h2>
-          {errors.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No errors logged. 🎉</p>
-          ) : (
-            <div className="space-y-2">
-              {errors.map((e) => (
-                <div key={e.id} className="rounded border bg-card p-3 text-sm">
-                  <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <div className="font-mono text-xs">
-                      <b>{e.short_id}</b> · {new Date(e.created_at).toLocaleString()} · {e.email ?? "guest"} · {e.route ?? "—"}
+          <TabsContent value="errors" className="mt-4">
+            {errors.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No errors logged. 🎉</p>
+            ) : (
+              <div className="space-y-2">
+                {errors.map((e) => (
+                  <div key={e.id} className="rounded border bg-card p-3 text-sm">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="font-mono text-xs">
+                        <b>{e.short_id}</b> · {new Date(e.created_at).toLocaleString()} · {e.email ?? "guest"} · {e.route ?? "—"}
+                      </div>
+                      <Button size="sm" variant="outline" onClick={() => copyForLovable(e)}>Copy for Lovable</Button>
                     </div>
-                    <Button size="sm" variant="outline" onClick={() => copyForLovable(e)}>Copy for Lovable</Button>
+                    <div className="mt-1">{e.message}</div>
                   </div>
-                  <div className="mt-1">{e.message}</div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
+                ))}
+              </div>
+            )}
+          </TabsContent>
 
-        <section>
-          <h2 className="font-semibold mb-2">User reports ({bugs.length})</h2>
-          {bugs.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No user reports.</p>
-          ) : (
-            <div className="space-y-2">
-              {bugs.map((b) => (
-                <div key={b.id} className="rounded border bg-card p-3 text-sm">
-                  <div className="text-xs text-muted-foreground">
-                    {new Date(b.created_at).toLocaleString()} · {b.email ?? "guest"} · {b.route ?? "—"} · <span className="uppercase">{b.status}</span>
+          <TabsContent value="reports" className="mt-4">
+            {bugs.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No user reports.</p>
+            ) : (
+              <div className="space-y-2">
+                {bugs.map((b) => (
+                  <div key={b.id} className="rounded border bg-card p-3 text-sm">
+                    <div className="text-xs text-muted-foreground">
+                      {new Date(b.created_at).toLocaleString()} · {b.email ?? "guest"} · {b.route ?? "—"} · <span className="uppercase">{b.status}</span>
+                    </div>
+                    <div className="mt-1 whitespace-pre-wrap">{b.description}</div>
                   </div>
-                  <div className="mt-1 whitespace-pre-wrap">{b.description}</div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="security" className="mt-4">
+            <SecurityTab />
+          </TabsContent>
+
+          <TabsContent value="status" className="mt-4">
+            <ul className="text-sm grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <Indicator label="Database" ok={status.db} />
+              <Indicator label="Authentication" ok={status.auth} />
+              <Indicator label="File storage" ok={status.storage} />
+            </ul>
+          </TabsContent>
+        </Tabs>
       </div>
     </AppShell>
   );
