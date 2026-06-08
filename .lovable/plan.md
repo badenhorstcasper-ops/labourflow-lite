@@ -1,26 +1,24 @@
-## Finding
-
-The word "Free" has already been removed from every button in the codebase. A repo-wide search returns zero matches, and `index.html` currently reads:
-
-- Hero CTA: **Get Started**
-- Contact CTA: **Open iNRECO**
-- Bottom CTA: **Get Started**
-
-## Why you still see "Get Started Free"
-
-The screenshot is showing a stale version of the page — most likely either:
-1. The **published site** (`app.inreco.co.za` / `basic-task-sparkle.lovable.app`) hasn't been republished since the change, or
-2. Your **browser cache** is serving the old `index.html`.
-
 ## Plan
 
-No code changes required. To see the update:
+1. Update the actual landing-page source in this project where the old hero text is still hardcoded.
+2. Remove the stale app description copy so browser/install metadata matches the landing page.
+3. Re-publish the frontend and verify the live result on the intended domain.
+4. If `inrecoapp.inreco.co.za` still differs after publish, check domain mapping because it appears to be serving a different deployment than `app.inreco.co.za`.
 
-1. In the Lovable preview, hard-refresh (Cmd/Ctrl + Shift + R).
-2. If you're looking at the live custom domain, click **Publish** to push the latest build:
+## What I found
 
-<presentation-actions>
-<presentation-open-publish>Publish your app</presentation-open-publish>
-</presentation-actions>
+- `app.inreco.co.za` and the published Lovable URL are serving the same current deployment.
+- `inrecoapp.inreco.co.za` is serving a different landing page version that still says `Get Started Free`.
+- In this project, the remaining old copy is still present in:
+  - `index.html` hero heading
+  - `public/manifest.json` description
 
-If after a hard refresh + republish you still see "Free" somewhere, send a screenshot of the *preview* URL and I'll dig in further.
+## Technical details
+
+- Replace the hero/button text in `index.html` so the published frontend matches the preview.
+- Update `public/manifest.json` to remove the old “Pocket Labour Consultant” wording from metadata.
+- After publish, verify the final rendered text on:
+  - the Lovable published URL
+  - `app.inreco.co.za`
+  - `inrecoapp.inreco.co.za`
+- If only `inrecoapp.inreco.co.za` remains stale, the next step is not a code change but fixing which project/deployment that subdomain points to.
