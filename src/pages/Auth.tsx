@@ -49,11 +49,12 @@ const Auth = () => {
           options: { emailRedirectTo: `${window.location.origin}/` },
         });
         if (error) throw error;
-        toast({
-          title: "Check your email",
-          description: "Confirm your address to finish signing up.",
-        });
-        setMode("login");
+        // Auto-confirm is on, so sign them in immediately.
+        const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
+        if (signInErr) throw signInErr;
+        localStorage.removeItem("inreco.pendingEmail");
+        localStorage.removeItem("inreco.pendingPlan");
+        navigate("/", { replace: true });
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;

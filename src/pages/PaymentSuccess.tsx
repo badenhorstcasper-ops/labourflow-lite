@@ -49,6 +49,7 @@ const PaymentSuccess = () => {
       <p className="text-xs text-muted-foreground">
         Tip: on iPhone, use Safari's Share menu → "Add to Home Screen" to install iNRECO.
       </p>
+      </div>
     </div>
   );
 };
