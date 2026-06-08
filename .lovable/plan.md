@@ -1,75 +1,46 @@
+## What's wrong today
 
-# Security findings dashboard
+When you click **PDF** or **Word** on a generated document, the app throws `company_profile_incomplete` unless you've already saved a company profile. That pops a yellow "Add your company details" form that, in practice, behaves as if **logo and colour are required** — and any storage hiccup while uploading the logo blocks the whole save.
 
-## Where it lives
-On the existing admin page `/account-app/health` (already admin-only). I'll convert that page to tabs:
+There are also no Back buttons on `/account-app/profile`, `/account-app/documents`, `/account-app/health`, or `/contact`, so once you're in a settings page the only way out is the browser back arrow.
 
-- **Errors** (current list)
-- **User reports** (current list)
-- **Security** (new)
-- **Backend status** (current indicators, moved into its own tab)
+## What I'll change
 
-That keeps everything you already use in one place — no new menu items to learn.
+### 1. Documents generate even without a company profile
+- `src/lib/documents/index.ts` and `src/lib/documents/clientEntry.ts`: stop throwing `company_profile_incomplete`. If no profile exists, use safe fallbacks (Company name = the signed-in user's email or just blank header, no logo, default accent `#2563eb`).
+- The PDF/Word will still be produced — just without branded letterhead. A small non-blocking toast says: *"Tip: add your company details to brand future documents"* with a link to the profile page.
 
-## What the Security tab shows
+### 2. Logo and accent colour become truly optional, with no error gates
+- **In-app profile page** (`src/pages/CompanyProfile.tsx`):
+  - Re-label the Branding section "Branding (optional)".
+  - Add a "Use default colour" / "Remove logo" button so a user can blank either field.
+  - Move logo upload errors to inline warnings — the rest of the profile still saves even if logo upload to the `company-logos` bucket fails.
+  - Show a clearer error toast (currently the raw Postgres message) and validate `company_name` client-side before submitting.
+- **Inline brand form inside the document modal** (`index.html`, around lines 1457–1581):
+  - Remove the asterisk on company name in cases where the user just wants to skip; offer a **"Skip and download anyway"** button next to "Save & continue" that immediately runs the PDF/Word with defaults.
+  - Make the logo file input and the colour picker explicitly labelled "(optional)".
+  - If the logo upload fails, save the rest and continue with the download — don't block.
 
-1. **Latest scan summary card**
-   - Big badges: `Critical 2 · High 1 · Medium 0 · Low 3` (color-coded red / orange / yellow / grey)
-   - "Last scanned: 8 Jun 2026 14:02" + **Re-run scan now** button (admin only)
-   - Overall status pill: ✅ All clear / ⚠️ Action needed
+### 3. Back buttons everywhere
+- `src/components/AppShell.tsx`: add a left-aligned **← Back** button (uses `navigate(-1)`; falls back to `/`). Appears on every page that uses AppShell (Profile, Documents, Health, Contact).
+- `src/pages/Share.tsx`, `src/pages/Terms.tsx`, `src/pages/Privacy.tsx`, `src/pages/Disclaimer.tsx`: add the same Back link at the top.
+- In `index.html`'s document modal the existing "← Back to chat" stays; I'll make sure the brand sub-form's **Cancel** clearly returns you to the document view (not just hides the inline form silently) and that the brand warning has a visible **Dismiss** button so it's clear the form is optional.
 
-2. **Findings list** (current scan)
-   Each row:
-   - Severity chip (color-coded)
-   - Title + plain-English description
-   - Affected table/function
-   - Two buttons:
-     - **Copy for Lovable** → copies a pre-written fix prompt to clipboard, same pattern as the existing "Copy for Lovable" on errors. You paste into chat → I fix it.
-     - **Mark as ignored** (with reason) — for false positives.
+### 4. Small polish
+- Profile page: success/failure toasts get plain-English wording ("Saved — your branding will appear on all new documents." / "We couldn't upload that logo file. The rest of your profile was saved.").
+- Document modal: when downloads succeed without a profile, show "Downloaded. Branding can be added in *Account → Company profile*."
 
-3. **Scan history** (collapsible)
-   - Table: date · critical · high · medium · low · who triggered
-   - Click a row to see that snapshot's findings (read-only).
-   - Sparkline showing finding count over last 30 days so you can see if things are trending better or worse.
+## Out of scope
+- No changes to the database, RLS, or storage buckets.
+- No changes to the security dashboard or the e-mail flow.
+- No redesign of the wizard itself — only the brand prompt and the buttons around it.
 
-## How scans run
+## Files I expect to touch
+- `src/lib/documents/index.ts`
+- `src/lib/documents/clientEntry.ts`
+- `src/pages/CompanyProfile.tsx`
+- `src/components/AppShell.tsx`
+- `src/pages/Share.tsx`, `src/pages/Terms.tsx`, `src/pages/Privacy.tsx`, `src/pages/Disclaimer.tsx` (Back link only)
+- `index.html` (the inline brand form + a "Skip and download" button)
 
-- **Manual**: "Re-run scan now" button calls a new edge function `run-security-scan` which executes the same checks the Lovable scanner uses (RLS coverage, GRANT correctness, policy permissiveness, public-table exposure, function search_path, exposed sensitive columns) and writes a snapshot.
-- **Automatic daily**: pg_cron job runs the same edge function every morning at 06:00 SAST. If new critical/high findings appear, a row is added to `error_logs` so it shows up in your Errors tab too — no separate inbox to check.
-
-## Data model (new tables, admin-only)
-
-- `security_scans` — one row per scan run: `triggered_by`, `trigger_type` (manual/scheduled), `started_at`, `finished_at`, `critical_count`, `high_count`, `medium_count`, `low_count`, `status`.
-- `security_findings` — one row per finding in a scan: `scan_id`, `rule_id`, `severity`, `title`, `description`, `affected_object`, `remediation`, `state` (open/ignored/fixed), `ignored_reason`.
-
-Both tables: RLS on, only admins can read/write, service_role full access for the edge function.
-
-## "Press a button to fix" flow
-The **Copy for Lovable** button on each finding copies text like:
-
-> Please fix security finding `rls-missing-on-bug_reports` (Critical):
-> Table `public.bug_reports` allows public SELECT.
-> Suggested fix: tighten the SELECT policy to admins only.
-
-You paste it into Lovable chat → I read it, write the migration, and the finding disappears on the next scan. Same muscle memory as the Errors tab.
-
-## Deeper re-scan now
-After the tables exist, I'll run a deeper scan that goes beyond what the standard check covers:
-- Every public table: RLS enabled? GRANTs present? Any policy using `true` / `USING (true)`?
-- Every SECURITY DEFINER function: `search_path` set? Caller authorization checked?
-- Storage buckets: public buckets that contain user files?
-- Auth: leaked-password protection on? Anonymous sign-ups off?
-- Edge functions: any without JWT verification that touch user data?
-
-I'll report new findings in the dashboard and tell you which ones I can fix automatically vs. which need your decision.
-
-## Technical notes (skip if you like)
-- Tables: `security_scans`, `security_findings` with admin-only RLS via existing `has_role(auth.uid(),'admin')`.
-- Edge function: `supabase/functions/run-security-scan/index.ts`, JWT-verified, admin-checked, uses service role for inserts.
-- Cron: `pg_cron` + `pg_net` to call the edge function daily.
-- Frontend: refactor `src/pages/Health.tsx` to use shadcn `Tabs`; new `SecurityTab.tsx`, `FindingRow.tsx`, `ScanHistory.tsx` components using existing design tokens (no custom colors — severity chips use `destructive`, `warning`-style tokens already in the theme).
-
-## Out of scope (ask if you want them)
-- Email/SMS alerts when a critical finding appears.
-- Auto-fix without your approval (intentional — you stay in control).
-- Aikido API integration (you chose Lovable scanner only).
+After implementing, I'll generate a sample PDF without a profile to confirm it no longer errors, then test saving a profile with no logo.
