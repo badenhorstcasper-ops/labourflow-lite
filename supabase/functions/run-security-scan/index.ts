@@ -24,23 +24,12 @@ const CRON_SECRET = Deno.env.get("CRON_SECRET") ?? "";
 
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
 
-async function rpcSql<T = any>(sql: string): Promise<T[]> {
-  // Use PostgREST sql via pg_meta-ish: not available; instead use direct fetch to pg via REST is not possible.
-  // We rely on pre-created helper RPC. As fallback, return [] when missing.
-  const { data, error } = await admin.rpc("_sec_scan_query" as any, { _sql: sql });
-  if (error) throw error;
-  return (data as T[]) ?? [];
-}
-
-// --- Built-in checks that don't need raw SQL ---
 async function runChecks(): Promise<Finding[]> {
   const findings: Finding[] = [];
-
-  // 1. Tables without RLS, missing GRANTs, permissive policies, search_path issues
   try {
-    const rows = await rpcSql<{ kind: string; obj: string; detail: string }>(
-      `select * from public._sec_scan_collect()`,
-    );
+    const { data, error } = await admin.rpc("_sec_scan_collect" as any);
+    if (error) throw error;
+    const rows = (data ?? []) as { kind: string; obj: string; detail: string }[];
     for (const r of rows) {
       switch (r.kind) {
         case "rls_disabled":
