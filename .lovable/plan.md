@@ -1,24 +1,24 @@
-## Plan
+## What's going on
 
-1. Update the actual landing-page source in this project where the old hero text is still hardcoded.
-2. Remove the stale app description copy so browser/install metadata matches the landing page.
-3. Re-publish the frontend and verify the live result on the intended domain.
-4. If `inrecoapp.inreco.co.za` still differs after publish, check domain mapping because it appears to be serving a different deployment than `app.inreco.co.za`.
+The landing page at `inrecoapp.inreco.co.za` is **not served by this project**. This project (`basic-task-sparkle` / `app.inreco.co.za`) was already updated and no longer says "Free".
 
-## What I found
+`inrecoapp.inreco.co.za` is served by a different Lovable project in your workspace: **iNRECO HR Hub** (`inreco-co-za.lovable.app`). That project still contains "Get Started Free" in two components:
 
-- `app.inreco.co.za` and the published Lovable URL are serving the same current deployment.
-- `inrecoapp.inreco.co.za` is serving a different landing page version that still says `Get Started Free`.
-- In this project, the remaining old copy is still present in:
-  - `index.html` hero heading
-  - `public/manifest.json` description
+- `src/components/landing/ExitIntentModal.tsx` — line 41
+- `src/components/landing/MobileStickyCTA.tsx` — line 25
 
-## Technical details
+That is why publishing this project makes no difference to that domain.
 
-- Replace the hero/button text in `index.html` so the published frontend matches the preview.
-- Update `public/manifest.json` to remove the old “Pocket Labour Consultant” wording from metadata.
-- After publish, verify the final rendered text on:
-  - the Lovable published URL
-  - `app.inreco.co.za`
-  - `inrecoapp.inreco.co.za`
-- If only `inrecoapp.inreco.co.za` remains stale, the next step is not a code change but fixing which project/deployment that subdomain points to.
+## How to fix
+
+You have two options — pick one and I'll do it:
+
+1. **Open the iNRECO HR Hub project and remove "Free" there.**
+   I can switch over (or you open it) and edit those two files to change "Get Started Free" → "Get Started", then publish that project. This is the correct fix if `inrecoapp.inreco.co.za` is meant to keep being its own landing page.
+
+2. **Repoint `inrecoapp.inreco.co.za` to this project instead.**
+   If you want this project's landing page to be the one users see, the fix is not code — it's moving the `inrecoapp.inreco.co.za` custom domain off the *iNRECO HR Hub* project and connecting it to *this* project in Project Settings → Domains. Then both `app.inreco.co.za` and `inrecoapp.inreco.co.za` would serve the same updated landing.
+
+## Recommended
+
+Option 1 is the smaller, safer change and matches what you've already asked for ("remove Free from the button"). Tell me to go ahead and I'll make the edit in the **iNRECO HR Hub** project and have you publish it.
