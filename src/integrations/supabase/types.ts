@@ -304,6 +304,116 @@ export type Database = {
         }
         Relationships: []
       }
+      security_findings: {
+        Row: {
+          affected_object: string | null
+          created_at: string
+          description: string
+          id: string
+          ignored_at: string | null
+          ignored_by: string | null
+          ignored_reason: string | null
+          remediation: string | null
+          rule_id: string
+          scan_id: string
+          severity: string
+          state: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          affected_object?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          ignored_at?: string | null
+          ignored_by?: string | null
+          ignored_reason?: string | null
+          remediation?: string | null
+          rule_id: string
+          scan_id: string
+          severity: string
+          state?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          affected_object?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          ignored_at?: string | null
+          ignored_by?: string | null
+          ignored_reason?: string | null
+          remediation?: string | null
+          rule_id?: string
+          scan_id?: string
+          severity?: string
+          state?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "security_findings_scan_id_fkey"
+            columns: ["scan_id"]
+            isOneToOne: false
+            referencedRelation: "security_scans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      security_scans: {
+        Row: {
+          created_at: string
+          critical_count: number
+          finished_at: string | null
+          high_count: number
+          id: string
+          low_count: number
+          medium_count: number
+          notes: string | null
+          started_at: string
+          status: string
+          total_count: number
+          trigger_type: string
+          triggered_by: string | null
+          triggered_by_email: string | null
+        }
+        Insert: {
+          created_at?: string
+          critical_count?: number
+          finished_at?: string | null
+          high_count?: number
+          id?: string
+          low_count?: number
+          medium_count?: number
+          notes?: string | null
+          started_at?: string
+          status?: string
+          total_count?: number
+          trigger_type?: string
+          triggered_by?: string | null
+          triggered_by_email?: string | null
+        }
+        Update: {
+          created_at?: string
+          critical_count?: number
+          finished_at?: string | null
+          high_count?: number
+          id?: string
+          low_count?: number
+          medium_count?: number
+          notes?: string | null
+          started_at?: string
+          status?: string
+          total_count?: number
+          trigger_type?: string
+          triggered_by?: string | null
+          triggered_by_email?: string | null
+        }
+        Relationships: []
+      }
       share_access_log: {
         Row: {
           created_at: string
