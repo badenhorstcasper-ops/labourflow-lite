@@ -66,7 +66,7 @@ function sanitizeWinAnsi(s: string): string {
 }
 
 function wrap(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
-  const words = text.split(/\s+/);
+  const words = sanitizeWinAnsi(text).split(/\s+/);
   const lines: string[] = [];
   let line = "";
   for (const w of words) {
