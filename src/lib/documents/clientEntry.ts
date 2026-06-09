@@ -197,7 +197,7 @@ async function buildContext(title: string, text: string) {
   const docNumber = await nextDocNumber(company.owner_user_id);
   const template: DocumentTemplate = {
     type: "wizard",
-    title,
+    title: killAsterisks(title),
     body: textToBlocks(text),
   };
   return { template, company, docNumber, generatedAt: new Date() };
