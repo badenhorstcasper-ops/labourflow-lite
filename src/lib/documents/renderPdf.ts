@@ -22,6 +22,49 @@ function hexToRgb(hex: string): RGB {
 
 const MARGIN = 50;
 
+// pdf-lib's standard fonts only support WinAnsi. Map common Unicode glyphs
+// pasted in from Word/web to safe ASCII equivalents, drop anything else
+// that's still outside the WinAnsi range so a stray char never crashes the
+// whole render.
+const WINANSI_MAP: Record<string, string> = {
+  "\u2010": "-", "\u2011": "-", "\u2012": "-", "\u2013": "-", "\u2014": "-", "\u2015": "-",
+  "\u2018": "'", "\u2019": "'", "\u201A": "'", "\u201B": "'", "\u2032": "'",
+  "\u201C": '"', "\u201D": '"', "\u201E": '"', "\u201F": '"', "\u2033": '"',
+  "\u2026": "...",
+  "\u00A0": " ", "\u2007": " ", "\u2009": " ", "\u200A": " ", "\u202F": " ",
+  "\u200B": "", "\u200C": "", "\u200D": "", "\uFEFF": "",
+  "\u2192": "->", "\u2190": "<-", "\u2194": "<->",
+  "\u21D2": "=>", "\u21D0": "<=", "\u21D4": "<=>",
+  "\u2713": "[x]", "\u2714": "[x]", "\u2717": "[ ]", "\u2718": "[ ]",
+  "\u2022": "\u2022", // bullet IS in WinAnsi (0x95), keep
+  "\u2023": "*", "\u25E6": "o", "\u25CF": "\u2022", "\u25AA": "*", "\u25AB": "*",
+  "\u00AD": "", // soft hyphen
+};
+
+function sanitizeWinAnsi(s: string): string {
+  if (!s) return "";
+  let out = "";
+  for (const ch of s) {
+    const code = ch.codePointAt(0) ?? 0;
+    // Box-drawing block U+2500..U+257F
+    if (code >= 0x2500 && code <= 0x257F) {
+      // Horizontal-ish vs vertical-ish
+      out += (code >= 0x2502 && code <= 0x2503) ? "|" : "-";
+      continue;
+    }
+    if (WINANSI_MAP[ch] !== undefined) {
+      out += WINANSI_MAP[ch];
+      continue;
+    }
+    if (code <= 0xFF) {
+      out += ch;
+      continue;
+    }
+    // Unknown high codepoint — drop rather than crash.
+  }
+  return out;
+}
+
 function wrap(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
   const words = text.split(/\s+/);
   const lines: string[] = [];
