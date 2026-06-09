@@ -20,30 +20,48 @@ function cleanText(raw: string): string {
     .trim();
 }
 
+// Match 1+ asterisks on each side (handles **bold**, ***bold***, stray *bold*).
+const BOLD_RE = /\*+([^*\n]+?)\*+/g;
+// Strip any leftover asterisks as a final safety net so nothing leaks through.
+function killAsterisks(s: string): string {
+  return s.replace(/\*+/g, "").replace(/\s{2,}/g, " ").trim();
+}
+
 function parseInline(s: string): InlineRun[] {
   const runs: InlineRun[] = [];
-  const re = /\*\*([^*]+)\*\*/g;
   let last = 0;
   let m: RegExpExecArray | null;
+  const re = new RegExp(BOLD_RE.source, "g");
   while ((m = re.exec(s)) !== null) {
-    if (m.index > last) runs.push({ text: s.slice(last, m.index) });
-    runs.push({ text: m[1], bold: true });
+    if (m.index > last) {
+      const plain = s.slice(last, m.index).replace(/\*+/g, "");
+      if (plain) runs.push({ text: plain });
+    }
+    runs.push({ text: m[1].trim(), bold: true });
     last = m.index + m[0].length;
   }
-  if (last < s.length) runs.push({ text: s.slice(last) });
-  return runs.length ? runs : [{ text: s }];
+  if (last < s.length) {
+    const tail = s.slice(last).replace(/\*+/g, "");
+    if (tail) runs.push({ text: tail });
+  }
+  return runs.length ? runs : [{ text: killAsterisks(s) }];
 }
 
 function stripBold(s: string): string {
-  return s.replace(/\*\*([^*]+)\*\*/g, "$1");
+  return killAsterisks(s.replace(new RegExp(BOLD_RE.source, "g"), "$1"));
 }
 
 function isHeadingLine(ln: string): boolean {
-  return /^\*\*[^*]+\*\*$/.test(ln.trim());
+  const t = ln.trim();
+  // A line entirely wrapped in asterisks: **X**, ***X***, *X*
+  if (/^\*+[^*][^*\n]*?\*+$/.test(t)) return true;
+  // Heading-style line with trailing colon, e.g. "**Background:**"
+  if (/^\*+[^*][^*\n]*?\*+\s*:?\s*$/.test(t)) return true;
+  return false;
 }
 
 function isHorizontalRule(ln: string): boolean {
-  return /^(-{3,}|_{3,})$/.test(ln.trim());
+  return /^(-{3,}|_{3,}|\*{3,})$/.test(ln.trim());
 }
 
 function textToBlocks(text: string): DocBlock[] {
