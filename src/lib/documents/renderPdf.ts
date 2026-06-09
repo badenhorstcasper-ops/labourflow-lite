@@ -359,8 +359,8 @@ export async function renderPdf(ctx: RenderContext): Promise<Uint8Array> {
   sigs.forEach((s, i) => {
     const x = MARGIN + i * (sigW + 30);
     page.drawRectangle({ x, y: cursorY, width: sigW, height: 0.7, color: ink });
-    page.drawText(s.label, { x, y: cursorY - 12, font, size: 9, color: muted });
-    if (s.name) page.drawText(s.name, { x, y: cursorY + 6, font, size: 10, color: ink });
+    page.drawText(sanitizeWinAnsi(s.label), { x, y: cursorY - 12, font, size: 9, color: muted });
+    if (s.name) page.drawText(sanitizeWinAnsi(s.name), { x, y: cursorY + 6, font, size: 10, color: ink });
   });
 
   // Footers w/ page counts
