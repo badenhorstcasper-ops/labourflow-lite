@@ -219,7 +219,7 @@ export async function renderPdf(ctx: RenderContext): Promise<Uint8Array> {
     const words: Word[] = [];
     for (const r of runs) {
       const f = r.bold ? bold : font;
-      const parts = r.text.split(/(\s+)/);
+      const parts = sanitizeWinAnsi(r.text).split(/(\s+)/);
       for (const p of parts) {
         if (!p) continue;
         if (/^\s+$/.test(p)) continue;
