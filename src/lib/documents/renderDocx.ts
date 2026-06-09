@@ -156,12 +156,29 @@ export async function renderDocx(ctx: RenderContext): Promise<Uint8Array> {
     );
   }
 
+  const runsToTextRuns = (
+    runs: { text: string; bold?: boolean }[] | undefined,
+    fallback: string,
+    extra: { size: number; bold?: boolean } = { size: 22 }
+  ): TextRun[] => {
+    const src = runs && runs.length ? runs : [{ text: fallback }];
+    return src.map(
+      (r) =>
+        new TextRun({
+          text: r.text,
+          size: extra.size,
+          bold: extra.bold || r.bold || false,
+        })
+    );
+  };
+
   for (const block of template.body) {
     if (block.kind === "p") {
       body.push(
         new Paragraph({
-          spacing: { after: 120 },
-          children: [new TextRun({ text: block.text, size: 22 })],
+          alignment: AlignmentType.JUSTIFIED,
+          spacing: { after: 120, line: 300 },
+          children: runsToTextRuns(block.runs, block.text, { size: 22 }),
         })
       );
     } else if (block.kind === "h") {
@@ -172,18 +189,19 @@ export async function renderDocx(ctx: RenderContext): Promise<Uint8Array> {
         })
       );
     } else if (block.kind === "list") {
-      for (const item of block.items) {
+      block.items.forEach((item, i) => {
         body.push(
           new Paragraph({
             numbering: { reference: "bullets", level: 0 },
-            children: [new TextRun({ text: item, size: 22 })],
+            children: runsToTextRuns(block.itemRuns?.[i], item, { size: 22 }),
           })
         );
-      }
+      });
     } else if (block.kind === "spacer") {
       body.push(new Paragraph({ children: [new TextRun("")] }));
     }
   }
+
 
   // Signatures
   const sigs = template.signatures || defaultSignatures(company);
