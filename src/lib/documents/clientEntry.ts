@@ -55,31 +55,60 @@ function textToBlocks(text: string): DocBlock[] {
 }
 
 async function loadCompanyProfile(): Promise<CompanyProfile> {
-  const { data: userData } = await supabase.auth.getUser();
-  const user = userData.user;
-  if (!user) throw new Error("not_signed_in");
-  const { data } = await supabase
-    .from("company_profiles")
-    .select("*")
-    .eq("owner_user_id", user.id)
-    .maybeSingle();
-  if (data && data.company_name) {
-    return data as unknown as CompanyProfile;
+  // Best-effort: the legacy vanilla app and the React app talk to DIFFERENT
+  // Supabase projects, so the user may have no session on the Cloud client
+  // even though they ARE signed in on the legacy side. Never block the
+  // download — fall through to safe defaults if anything fails.
+  let user: { id: string; email?: string | null } | null = null;
+  try {
+    const { data: userData } = await supabase.auth.getUser();
+    user = userData.user ?? null;
+  } catch {
+    /* ignore */
   }
-  // No profile yet — never block the download. Use safe defaults.
+
+  if (user) {
+    try {
+      const { data } = await supabase
+        .from("company_profiles")
+        .select("*")
+        .eq("owner_user_id", user.id)
+        .maybeSingle();
+      if (data && (data as { company_name?: string }).company_name) {
+        return data as unknown as CompanyProfile;
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  // Try to read company name the legacy app may have stashed on window.
+  const legacy = (typeof window !== "undefined"
+    ? (window as unknown as { iNRECO?: { companyName?: string } }).iNRECO
+    : undefined);
+  const fallbackName =
+    legacy?.companyName ||
+    (user?.email ? user.email.split("@")[0] : "Your company");
+
   return {
-    owner_user_id: user.id,
-    company_name: user.email ? user.email.split("@")[0] : "Your company",
+    owner_user_id: user?.id ?? "00000000-0000-0000-0000-000000000000",
+    company_name: fallbackName,
     accent_color: "#2563eb",
   } as CompanyProfile;
 }
 
 async function nextDocNumber(ownerId: string): Promise<string> {
+  // Only attempt the Cloud RPC when we actually have a Cloud session for
+  // this owner — otherwise it 401s and adds noise. Fall back to a local
+  // timestamp-based number so downloads are never blocked.
   try {
-    const { data } = await supabase.rpc("next_document_number", { _owner: ownerId });
-    if (data) return String(data);
+    const { data: userData } = await supabase.auth.getUser();
+    if (userData.user && userData.user.id === ownerId) {
+      const { data } = await supabase.rpc("next_document_number", { _owner: ownerId });
+      if (data) return String(data);
+    }
   } catch {
-    // fallthrough
+    /* fallthrough */
   }
   const ts = new Date();
   const stamp = `${ts.getFullYear()}${String(ts.getMonth() + 1).padStart(2, "0")}${String(ts.getDate()).padStart(2, "0")}${String(ts.getHours()).padStart(2, "0")}${String(ts.getMinutes()).padStart(2, "0")}`;
