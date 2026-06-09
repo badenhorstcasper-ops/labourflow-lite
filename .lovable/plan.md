@@ -1,89 +1,35 @@
-# iNRECO — Pre-launch checklist
+# Fix: "Sign in" error when generating PDF / Word from the legacy app
 
-Public launch, sandbox PayFast for now (will swap to live keys later).
+## What's actually going wrong
 
-## 1. Fix routing (blocker)
+You ARE signed in — but to the **old** backend. The app currently talks to two different databases:
 
-`src/App.tsx` only registers `/account-app/*`, `/d/:token`, `/contact`, `/terms`, `/privacy`, `/disclaimer`. Everything else falls through to `*` → `/` and loops. Add:
+- **Legacy app** (the main screens at `/`, including the wizard that builds the warning letter) signs you in to project `ckjevliuwlijfvdjxmmp`.
+- **New React document generator** (the shared house-style PDF/DOCX renderer wired into `window.iNRECO.generatePdf`) talks to the **Lovable Cloud** project `riqswihuzclbyjemynyd`, where you have no session.
 
-| Path | Component |
-|---|---|
-| `/` | `pages/Index` (marketing/landing for app.inreco.co.za) |
-| `/pricing` | `pages/Pricing` |
-| `/auth` | `pages/Auth` |
-| `/payment-success` | `pages/PaymentSuccess` |
-| `/payment-cancelled` | `pages/PaymentCancelled` |
-| `/dashboard` | `pages/Dashboard` |
-| `/settings` | `pages/Settings` |
-| `*` | `pages/NotFound` (instead of redirect-loop to `/`) |
+So when the legacy "Download PDF / Word" button calls into the new renderer, the renderer asks Cloud "who is signed in?", gets nothing back, and throws `not_signed_in` — which surfaces to you as "you should be signed in".
 
-## 2. Confirm Google sign-in is wired
+The network log confirms it: every `auth/v1/user` and `company_profiles` request goes to `ckje…`, never to `riqs…`.
 
-Project rule says Google auth should be available. I'll verify `pages/Auth.tsx` uses `lovable.auth.signInWithOAuth("google", ...)` and that the Google provider is enabled in Cloud auth settings. Add the button if missing.
+## The fix (one file)
 
-## 3. Verify auth hardening
+The legacy app already owns its own company profile, doc numbering, and storage on the old backend. The shared renderer should just **render and download** — it should not try to look anything up on Cloud, and it should not require a Cloud session.
 
-- Confirm **leaked-password (HIBP) check** is ON (security memory says it is — I'll confirm).
-- Confirm **anonymous sign-ups disabled**.
-- Confirm **auto-confirm email** is the setting you actually want (off = users must click confirm link; on = instant access). Tell me which.
+Change `src/lib/documents/clientEntry.ts` so that:
 
-## 4. PayFast — sandbox-safe launch banner
+1. `loadCompanyProfile()` no longer throws when there's no Cloud session. It tries Cloud best-effort, and on any miss falls back to safe defaults (company name from the legacy app if exposed on `window.iNRECO`, otherwise "Your company").
+2. `nextDocNumber()` skips the Cloud RPC entirely when there's no session and uses the existing local timestamp fallback (`DOC-YYYYMMDDhhmm`).
+3. No DB writes, no storage uploads from this path — the legacy app keeps owning its own "documents" list. The React `/account-app/documents` shelf is unaffected.
 
-Since we're going live with sandbox keys, real users will not be charged and accounts won't actually activate. To avoid confusion:
+Net effect: clicking **Download PDF** or **Download Word** on a final warning (or any wizard output) just produces the branded file and downloads it. No sign-in prompt, no error.
 
-- Add a visible **"Payments are in test mode — no charges yet"** banner on `/pricing` and on the post-checkout pages.
-- OR (recommended): hide the "Subscribe / Start trial" buttons behind an `import.meta.env.VITE_PAYFAST_LIVE` flag so you can flip them on the moment live keys arrive, without redeploying logic.
+## Out of scope (call out only)
 
-Tell me which you prefer.
+- Migrating the legacy app off `ckje…` onto Lovable Cloud is a much bigger job and not needed to unblock document downloads.
+- The new React `/account-app/documents` shelf already works correctly for users signed in to Cloud — it's not changed here.
 
-## 5. Landing page for `app.inreco.co.za` (`/`)
+## Files touched
 
-Right now `/` isn't even routed. We need to decide what loads at the root of `app.inreco.co.za`:
+- `src/lib/documents/clientEntry.ts` — remove the hard auth requirement; keep Cloud calls best-effort; always fall through to local defaults so the download always works.
 
-- **Option A** — A short marketing page (hero + "View plans" + "Sign in") using `pages/Index.tsx`. Best UX for users arriving from `inrecoapp.inreco.co.za`.
-- **Option B** — Auto-redirect `/` → `/pricing` for logged-out users and `/` → `/account-app/profile` for logged-in users.
-
-I'll ask which when we start.
-
-## 6. SEO + meta basics
-
-For `/`, `/pricing`, `/auth`:
-- Unique `<title>` (<60 chars) and meta description (<160 chars).
-- Single `<h1>`, semantic sections.
-- Open Graph image + canonical tag.
-- `robots.txt` already exists — confirm it isn't blocking. Add `sitemap.xml` listing public routes.
-
-## 7. PWA / install
-
-`InstallAppButton` and `sw.js` exist. Quick check:
-- Service worker excludes `/~oauth/*` (required for Google sign-in to work in installed PWA).
-- `manifest.json` has correct name "iNRECO", icons, theme color.
-
-## 8. Smoke-test pass before publish
-
-End-to-end on `app.inreco.co.za` after deploy:
-
-1. `/` loads
-2. Sign up with email → confirm flow works → land on profile
-3. Sign in with Google → land on profile
-4. Fill company profile → generate a PDF and a DOCX → branding shows correctly
-5. Open `/pricing`, click trial → PayFast sandbox page loads → return + cancel URLs work
-6. Share a document via `/d/<token>` in incognito → opens, expires correctly
-7. `/account-app/health` loads for you (admin) and is hidden/forbidden for a second test account
-8. Trigger a fake error → confirm it lands in `error_logs` and shows on Health page
-
-## 9. Post-launch (do NOT block launch, but track)
-
-- Switch PayFast to live (URL + merchant ID + key + passphrase, NOTIFY_URL stays the same)
-- Remove the "test mode" banner from step 4
-- Re-run the webhook with a real R1 transaction to confirm activation flow
-
----
-
-## What I need from you to start building
-
-1. **Auto-confirm email** — on or off?
-2. **PayFast sandbox UX** — banner, or hide subscribe buttons behind a flag?
-3. **What lives at `/`** — short marketing page (Option A) or smart redirect (Option B)?
-
-Once you answer those three, I'll switch to build mode and ship steps 1–7 in one pass, then walk the smoke test with you.
+Approve this and I'll make the change, then you can retry generating a final warning.
