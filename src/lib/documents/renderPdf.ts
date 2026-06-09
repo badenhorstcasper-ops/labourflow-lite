@@ -140,8 +140,9 @@ export async function renderPdf(ctx: RenderContext): Promise<Uint8Array> {
     const meta = companyHeaderMeta(company);
     let ry = y;
     const drawRight = (text: string, f: PDFFont, size: number, color: RGB) => {
-      const tw = f.widthOfTextAtSize(text, size);
-      p.drawText(text, { x: pageW - MARGIN - tw, y: ry - size, font: f, size, color });
+      const safe = sanitizeWinAnsi(text);
+      const tw = f.widthOfTextAtSize(safe, size);
+      p.drawText(safe, { x: pageW - MARGIN - tw, y: ry - size, font: f, size, color });
       ry -= size + 3;
     };
     drawRight(name, bold, 12, ink);
