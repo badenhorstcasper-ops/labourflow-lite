@@ -166,6 +166,119 @@ export async function renderPdf(ctx: RenderContext): Promise<Uint8Array> {
     }
   };
 
+  type Word = { text: string; bold: boolean; w: number };
+
+  const runsToWords = (
+    runs: { text: string; bold?: boolean }[],
+    size: number
+  ): Word[] => {
+    const words: Word[] = [];
+    for (const r of runs) {
+      const f = r.bold ? bold : font;
+      const parts = r.text.split(/(\s+)/);
+      for (const p of parts) {
+        if (!p) continue;
+        if (/^\s+$/.test(p)) continue;
+        words.push({ text: p, bold: !!r.bold, w: f.widthOfTextAtSize(p, size) });
+      }
+    }
+    return words;
+  };
+
+  const spaceW = (boldFont: boolean, size: number) =>
+    (boldFont ? bold : font).widthOfTextAtSize(" ", size);
+
+  const wrapWords = (words: Word[], size: number, maxWidth: number): Word[][] => {
+    const lines: Word[][] = [];
+    let cur: Word[] = [];
+    let curW = 0;
+    for (const w of words) {
+      const sp = cur.length ? spaceW(w.bold, size) : 0;
+      if (cur.length && curW + sp + w.w > maxWidth) {
+        lines.push(cur);
+        cur = [w];
+        curW = w.w;
+      } else {
+        cur.push(w);
+        curW += sp + w.w;
+      }
+    }
+    if (cur.length) lines.push(cur);
+    return lines;
+  };
+
+  const drawRunsJustified = (
+    runs: { text: string; bold?: boolean }[],
+    size: number,
+    color: RGB,
+    gap: number
+  ) => {
+    const words = runsToWords(runs, size);
+    if (!words.length) return;
+    const lines = wrapWords(words, size, contentW);
+    lines.forEach((lineWords, idx) => {
+      ensure(size + gap);
+      const isLast = idx === lines.length - 1;
+      const wordsW = lineWords.reduce((a, w) => a + w.w, 0);
+      const gaps = lineWords.length - 1;
+      const baseSpace = spaceW(false, size);
+      let spacing = baseSpace;
+      if (!isLast && gaps > 0) {
+        const remaining = contentW - wordsW;
+        spacing = remaining / gaps;
+        // sanity: don't blow out spacing absurdly on near-empty lines
+        if (spacing > baseSpace * 4) spacing = baseSpace;
+      }
+      let x = MARGIN;
+      lineWords.forEach((w, i) => {
+        page.drawText(w.text, {
+          x,
+          y: cursorY - size,
+          font: w.bold ? bold : font,
+          size,
+          color,
+        });
+        x += w.w + (i < gaps ? spacing : 0);
+      });
+      cursorY -= size + gap;
+    });
+  };
+
+  const drawRunsLeft = (
+    runs: { text: string; bold?: boolean }[],
+    size: number,
+    color: RGB,
+    gap: number,
+    leftIndent = 0,
+    firstPrefix = "",
+    contPrefix = ""
+  ) => {
+    const words = runsToWords(runs, size);
+    if (!words.length) return;
+    const maxW = contentW - leftIndent;
+    const lines = wrapWords(words, size, maxW);
+    lines.forEach((lineWords, idx) => {
+      ensure(size + gap);
+      const prefix = idx === 0 ? firstPrefix : contPrefix;
+      let x = MARGIN + leftIndent;
+      if (prefix) {
+        page.drawText(prefix, { x, y: cursorY - size, font, size, color });
+        x += font.widthOfTextAtSize(prefix, size);
+      }
+      lineWords.forEach((w, i) => {
+        page.drawText(w.text, {
+          x,
+          y: cursorY - size,
+          font: w.bold ? bold : font,
+          size,
+          color,
+        });
+        x += w.w + (i < lineWords.length - 1 ? spaceW(w.bold, size) : 0);
+      });
+      cursorY -= size + gap;
+    });
+  };
+
   // Title
   drawText(template.title, bold, 18, ink, 6);
   if (template.subtitle) drawText(template.subtitle, font, 11, muted, 8);
@@ -174,32 +287,25 @@ export async function renderPdf(ctx: RenderContext): Promise<Uint8Array> {
   // Body
   for (const block of template.body) {
     if (block.kind === "p") {
-      drawText(block.text, font, 11, ink, 4);
+      const runs = block.runs && block.runs.length ? block.runs : [{ text: block.text }];
+      drawRunsJustified(runs, 11, ink, 4);
       cursorY -= 6;
     } else if (block.kind === "h") {
       cursorY -= 4;
       drawText(block.text, bold, 13, ink, 5);
     } else if (block.kind === "list") {
-      for (const item of block.items) {
-        const lines = wrap(item, font, 11, contentW - 16);
-        lines.forEach((ln, i) => {
-          ensure(15);
-          const prefix = i === 0 ? "•  " : "   ";
-          page.drawText(prefix + ln, {
-            x: MARGIN,
-            y: cursorY - 11,
-            font,
-            size: 11,
-            color: ink,
-          });
-          cursorY -= 15;
-        });
-      }
+      block.items.forEach((item, i) => {
+        const runs = block.itemRuns?.[i] && block.itemRuns[i].length
+          ? block.itemRuns[i]
+          : [{ text: item }];
+        drawRunsLeft(runs, 11, ink, 4, 16, "•  ", "   ");
+      });
       cursorY -= 4;
     } else if (block.kind === "spacer") {
       cursorY -= 12;
     }
   }
+
 
   // Signatures
   const sigs = template.signatures || defaultSignatures(company);

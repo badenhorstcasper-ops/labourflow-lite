@@ -24,10 +24,12 @@ export type CompanyProfile = {
 
 export type SignatureBlock = { label: string; name?: string };
 
+export type InlineRun = { text: string; bold?: boolean };
+
 export type DocBlock =
-  | { kind: "p"; text: string }
+  | { kind: "p"; text: string; runs?: InlineRun[] }
   | { kind: "h"; text: string }
-  | { kind: "list"; items: string[] }
+  | { kind: "list"; items: string[]; itemRuns?: InlineRun[][] }
   | { kind: "spacer" };
 
 export type DocumentTemplate = {

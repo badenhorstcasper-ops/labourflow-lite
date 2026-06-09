@@ -8,7 +8,7 @@
 import { renderPdf } from "./renderPdf";
 import { renderDocx } from "./renderDocx";
 import { supabase } from "@/integrations/supabase/client";
-import type { CompanyProfile, DocBlock, DocumentTemplate } from "./types";
+import type { CompanyProfile, DocBlock, DocumentTemplate, InlineRun } from "./types";
 
 const FORBIDDEN = new RegExp(["labour" + "flow", "inreco\\s+consulting", "powered\\s+by"].join("|"), "i");
 
@@ -20,19 +20,54 @@ function cleanText(raw: string): string {
     .trim();
 }
 
+function parseInline(s: string): InlineRun[] {
+  const runs: InlineRun[] = [];
+  const re = /\*\*([^*]+)\*\*/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(s)) !== null) {
+    if (m.index > last) runs.push({ text: s.slice(last, m.index) });
+    runs.push({ text: m[1], bold: true });
+    last = m.index + m[0].length;
+  }
+  if (last < s.length) runs.push({ text: s.slice(last) });
+  return runs.length ? runs : [{ text: s }];
+}
+
+function stripBold(s: string): string {
+  return s.replace(/\*\*([^*]+)\*\*/g, "$1");
+}
+
+function isHeadingLine(ln: string): boolean {
+  return /^\*\*[^*]+\*\*$/.test(ln.trim());
+}
+
+function isHorizontalRule(ln: string): boolean {
+  return /^(-{3,}|_{3,})$/.test(ln.trim());
+}
+
 function textToBlocks(text: string): DocBlock[] {
   const blocks: DocBlock[] = [];
   const paragraphs = cleanText(text).split(/\n\s*\n/);
   let pendingList: string[] | null = null;
   const flushList = () => {
     if (pendingList && pendingList.length) {
-      blocks.push({ kind: "list", items: pendingList });
+      blocks.push({
+        kind: "list",
+        items: pendingList.map(stripBold),
+        itemRuns: pendingList.map(parseInline),
+      });
     }
     pendingList = null;
   };
   for (const para of paragraphs) {
     const lines = para.split(/\n/).map((l) => l.trim()).filter(Boolean);
     if (!lines.length) continue;
+    if (lines.every(isHorizontalRule)) {
+      flushList();
+      blocks.push({ kind: "spacer" });
+      continue;
+    }
     const allBullets = lines.every((l) => /^([-*•]|\d+[.)])\s+/.test(l));
     if (allBullets) {
       flushList();
@@ -42,17 +77,25 @@ function textToBlocks(text: string): DocBlock[] {
     }
     flushList();
     for (const ln of lines) {
-      // Treat ALL CAPS short lines as headings.
+      if (isHorizontalRule(ln)) {
+        blocks.push({ kind: "spacer" });
+        continue;
+      }
+      if (isHeadingLine(ln)) {
+        blocks.push({ kind: "h", text: stripBold(ln) });
+        continue;
+      }
       if (ln.length <= 80 && ln === ln.toUpperCase() && /[A-Z]/.test(ln)) {
-        blocks.push({ kind: "h", text: ln });
+        blocks.push({ kind: "h", text: stripBold(ln) });
       } else {
-        blocks.push({ kind: "p", text: ln });
+        blocks.push({ kind: "p", text: stripBold(ln), runs: parseInline(ln) });
       }
     }
   }
   flushList();
   return blocks;
 }
+
 
 async function loadCompanyProfile(): Promise<CompanyProfile> {
   // Best-effort: the legacy vanilla app and the React app talk to DIFFERENT

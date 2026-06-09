@@ -1,35 +1,39 @@
-# Fix: "Sign in" error when generating PDF / Word from the legacy app
+## Problem
 
-## What's actually going wrong
+The legacy app passes markdown-style text (`**bold**`, `---` rules, `**HEADING**` lines) into the document renderer. Today the renderer treats it as plain text, so `**` literally prints around every heading and emphasised phrase, and `---` shows as three dashes. Paragraphs are also only left-aligned, which looks less formal than the warning letter calls for.
 
-You ARE signed in — but to the **old** backend. The app currently talks to two different databases:
+## Fix
 
-- **Legacy app** (the main screens at `/`, including the wizard that builds the warning letter) signs you in to project `ckjevliuwlijfvdjxmmp`.
-- **New React document generator** (the shared house-style PDF/DOCX renderer wired into `window.iNRECO.generatePdf`) talks to the **Lovable Cloud** project `riqswihuzclbyjemynyd`, where you have no session.
+Three small changes, all in the document pipeline. No behaviour changes elsewhere.
 
-So when the legacy "Download PDF / Word" button calls into the new renderer, the renderer asks Cloud "who is signed in?", gets nothing back, and throws `not_signed_in` — which surfaces to you as "you should be signed in".
+### 1. Parse markdown markers — `src/lib/documents/clientEntry.ts`
 
-The network log confirms it: every `auth/v1/user` and `company_profiles` request goes to `ckje…`, never to `riqs…`.
+In `textToBlocks`:
+- Treat a line that is entirely wrapped in `**...**` (optionally with a leading number like `**1. NATURE OF MISCONDUCT**`) as a **heading** block, with the `**` stripped.
+- Treat a line that is just `---` or `___` as a **spacer** block (currently it prints literally).
+- For paragraph and list text, split on `**...**` into inline segments tagged `{ text, bold }`. Store as a richer block shape: `{ kind: "p", runs: Run[] }` and `{ kind: "list", items: Run[][] }`. Keep the old `text`/`items: string[]` shapes too so any other caller keeps working — renderers will prefer `runs` when present.
 
-## The fix (one file)
+### 2. Inline bold + justified paragraphs — `src/lib/documents/renderDocx.ts`
 
-The legacy app already owns its own company profile, doc numbering, and storage on the old backend. The shared renderer should just **render and download** — it should not try to look anything up on Cloud, and it should not require a Cloud session.
+- For `kind: "p"` paragraphs: add `alignment: AlignmentType.JUSTIFIED` and emit one `TextRun` per segment (`bold: true` when the segment was wrapped in `**`).
+- For `kind: "list"` items: same per-segment runs (no justification — bullets read better left-aligned).
+- Headings: unchanged styling, just use the cleaned text.
 
-Change `src/lib/documents/clientEntry.ts` so that:
+### 3. Inline bold + justified paragraphs — `src/lib/documents/renderPdf.ts`
 
-1. `loadCompanyProfile()` no longer throws when there's no Cloud session. It tries Cloud best-effort, and on any miss falls back to safe defaults (company name from the legacy app if exposed on `window.iNRECO`, otherwise "Your company").
-2. `nextDocNumber()` skips the Cloud RPC entirely when there's no session and uses the existing local timestamp fallback (`DOC-YYYYMMDDhhmm`).
-3. No DB writes, no storage uploads from this path — the legacy app keeps owning its own "documents" list. The React `/account-app/documents` shelf is unaffected.
+- Extend the line-wrapper so it accepts `Run[]` and lays out words while tracking which font (regular vs bold) each word uses.
+- For body paragraphs, after wrapping into lines, render each non-last line **justified**: compute leftover width and distribute it evenly across the gaps between words (skip lines with only one word, and skip the final line of each paragraph — standard print justification).
+- Lists and headings stay left-aligned; only `kind: "p"` body paragraphs are justified.
 
-Net effect: clicking **Download PDF** or **Download Word** on a final warning (or any wizard output) just produces the branded file and downloads it. No sign-in prompt, no error.
+## Out of scope
 
-## Out of scope (call out only)
-
-- Migrating the legacy app off `ckje…` onto Lovable Cloud is a much bigger job and not needed to unblock document downloads.
-- The new React `/account-app/documents` shelf already works correctly for users signed in to Cloud — it's not changed here.
+- No change to the legacy app's input format — it can keep sending markdown-flavoured text.
+- No change to colours, layout, header/footer, or signature blocks.
+- No DB / storage / auth changes.
 
 ## Files touched
 
-- `src/lib/documents/clientEntry.ts` — remove the hard auth requirement; keep Cloud calls best-effort; always fall through to local defaults so the download always works.
-
-Approve this and I'll make the change, then you can retry generating a final warning.
+- `src/lib/documents/clientEntry.ts` — parser
+- `src/lib/documents/types.ts` — extend `DocBlock` with optional `runs`
+- `src/lib/documents/renderPdf.ts` — inline bold + justification
+- `src/lib/documents/renderDocx.ts` — inline bold + justification
