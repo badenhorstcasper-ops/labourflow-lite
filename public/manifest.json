@@ -1,7 +1,7 @@
 {
   "name": "iNRECO",
   "short_name": "iNRECO",
-  "description": "SA labour compliance guidance from iNRECO",
+  "description": "Pocket Labour compliance guidance from iNRECO",
   "start_url": "/?app=1",
   "display": "standalone",
   "background_color": "#0a1628",

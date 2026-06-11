@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { readdirSync, readFileSync, statSync } from "fs";
 import { join } from "path";
 
-const FORBIDDEN = [/labourflow/i, /inreco\s+consulting/i];
+const FORBIDDEN = [/pocketlabour/i, /inreco\s+consulting/i];
 
 function walk(dir: string): string[] {
   const out: string[] = [];
