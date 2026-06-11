@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import AppShell from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -53,6 +54,8 @@ export default function CompanyProfilePage() {
   const [ownerId, setOwnerId] = useState<string | null>(null);
   const [form, setForm] = useState<typeof empty>(empty);
   const [authed, setAuthed] = useState(false);
+  const wasNewProfile = useRef(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     (async () => {
@@ -70,8 +73,11 @@ export default function CompanyProfilePage() {
         .select("*")
         .eq("owner_user_id", owner)
         .maybeSingle();
-      if (data) {
+      if (data && (data as unknown as Profile).company_name) {
         setForm({ ...empty, ...(data as unknown as Profile) });
+        wasNewProfile.current = false;
+      } else {
+        wasNewProfile.current = true;
       }
       setLoading(false);
     })();
@@ -118,8 +124,15 @@ export default function CompanyProfilePage() {
       .from("company_profiles")
       .upsert(payload, { onConflict: "owner_user_id" });
     setSaving(false);
-    if (error) toast.error("Save failed: " + error.message);
-    else toast.success("Saved — your branding will appear on all new documents.");
+    if (error) {
+      toast.error("Save failed: " + error.message);
+    } else {
+      toast.success("Saved — your branding will appear on all new documents.");
+      if (wasNewProfile.current) {
+        wasNewProfile.current = false;
+        navigate("/account-app/documents");
+      }
+    }
   }
 
   async function generateSample() {
@@ -248,6 +261,7 @@ export default function CompanyProfilePage() {
         <div className="flex gap-3">
           <Button onClick={save} disabled={saving}>{saving ? "Saving…" : "Save profile"}</Button>
           <Button variant="outline" onClick={generateSample}>Generate sample document</Button>
+          <Button variant="secondary" onClick={() => navigate("/account-app/documents")}>Continue to documents →</Button>
         </div>
       </div>
     </AppShell>

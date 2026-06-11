@@ -1,37 +1,32 @@
-# Fix "Start 7-day free trial" buttons going back to landing
+# Fix dead-end after saving company profile
 
-## Root cause
-The landing page buttons navigate to `/pricing` via `window.location.href='/pricing'`. The SPA fallback serves `index.html`, but the legacy inline bootstrap in `index.html` only hands off to React for a small allow-list of paths. `/pricing` is not in that list, so the legacy landing page renders again — making it look like the button "links back to the landing page".
+## Problem
+After PayFast sandbox checkout, the user lands on `/account-app/profile`, fills in the form and clicks **Save profile**. The page just shows a toast — there's no forward navigation, and the only nav options are:
+- `AppShell` header **Back** button → goes back to PayFast / landing
+- `AppShell` header **Back to app** link → goes to `/`, which `Index.tsx` immediately redirects signed-in users back to `/account-app/profile` (an infinite loop on itself)
+- Header nav has **Company profile** and **Documents**, but they look like tabs, not a "you're done, start here" call to action
 
-The same problem affects every React-only route except the ones already listed: `/auth`, `/contact`, `/payment-success`, `/payment-cancelled`, `/dashboard`, `/settings`.
+So the user feels stranded.
 
 ## Fix
 
-Two parallel allow-lists must stay in sync:
+Two small, presentation-only changes:
 
-1. `src/main.tsx` — `REACT_ROUTES` controls whether `main.tsx` mounts React.
-2. `index.html` — `window.__IS_REACT_ROUTE__` controls whether the legacy IIFE short-circuits so React can take over.
+### 1. `src/pages/CompanyProfile.tsx` — forward the user after first save
+- After a successful `save()`:
+  - Show the existing success toast.
+  - If this was the **first** save (i.e. the profile was empty when the page loaded, tracked with a `wasNewProfile` ref/state set in the initial `useEffect`), navigate to `/account-app/documents` so they land in the actual working area of the app.
+  - On subsequent saves (editing an existing profile) keep current behaviour — just the toast, no redirect — so editing your details later doesn't yank you away.
+- Also add a visible **"Continue to documents →"** button next to **Save profile** / **Generate sample document** that always works, for users who already saved once and want an obvious way forward.
 
-Add these routes to BOTH lists:
-- `/pricing`
-- `/auth`
-- `/contact`
-- `/payment-success`
-- `/payment-cancelled`
-- `/dashboard`
-- `/settings`
+### 2. `src/components/AppShell.tsx` — fix the misleading "Back to app" link
+- Change the header **Back to app** button so it links to `/account-app/documents` instead of `/`. On signed-in users `/` just bounces back to `/account-app/profile`, making the button look broken.
+- Keep the **Back** (history) button as is.
 
-`/` stays excluded — that's the legacy landing page and must continue to render the existing HTML.
-
-## Changes
-
-**`src/main.tsx` (line 21)**
-Extend `REACT_ROUTES` to include the new paths (using exact match for the leaf ones and `startsWith` semantics already handled by the existing helper).
-
-**`index.html` (line 834)**
-Extend the `__IS_REACT_ROUTE__` expression with the same paths so the legacy bootstrap returns early and `main.tsx` replaces `document.body` with the React tree.
-
-No backend, no router, no pricing-page logic changes. The existing PayFast form in `src/pages/Pricing.tsx` already works — it just never gets a chance to render on the live site today.
+No backend, routing, PayFast, or auth changes. No new routes. Pure UX wiring on pages that already exist and already render correctly on the live site.
 
 ## Verification
-After deploying, visiting `https://app.inreco.co.za/pricing` should show the React pricing grid (with the test-mode banner) instead of the marketing landing page, and clicking any "Start 7-day free trial" plan card should POST to `sandbox.payfast.co.za`.
+1. Sign in fresh, complete PayFast sandbox → land on `/account-app/profile`.
+2. Fill company name + logo → click **Save profile** → toast appears and the app navigates to `/account-app/documents`.
+3. Go back to `/account-app/profile`, change a field, save again → stays on the profile page (no surprise redirect), toast only.
+4. From anywhere in `AppShell`, click **Back to app** in the header → lands on `/account-app/documents`, not back on the profile page.

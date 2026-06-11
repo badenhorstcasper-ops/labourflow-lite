@@ -36,7 +36,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             </Link>
           </nav>
           <Button asChild variant="outline" size="sm">
-            <a href="/">Back to app</a>
+            <Link to="/account-app/documents">Back to app</Link>
           </Button>
         </div>
       </header>
