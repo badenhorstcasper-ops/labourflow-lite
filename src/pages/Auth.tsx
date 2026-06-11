@@ -26,7 +26,7 @@ const Auth = () => {
 
     // If already signed in, bounce to dashboard
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate("/", { replace: true });
+      if (data.session) navigate("/app", { replace: true });
     });
   }, [navigate]);
 
@@ -54,13 +54,13 @@ const Auth = () => {
         if (signInErr) throw signInErr;
         localStorage.removeItem("inreco.pendingEmail");
         localStorage.removeItem("inreco.pendingPlan");
-        navigate("/", { replace: true });
+        navigate("/app", { replace: true });
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         localStorage.removeItem("inreco.pendingEmail");
         localStorage.removeItem("inreco.pendingPlan");
-        navigate("/", { replace: true });
+        navigate("/app", { replace: true });
       }
     } catch (err) {
       toast({
@@ -96,7 +96,7 @@ const Auth = () => {
       // Got tokens directly; go to dashboard
       localStorage.removeItem("inreco.pendingEmail");
       localStorage.removeItem("inreco.pendingPlan");
-      navigate("/", { replace: true });
+      navigate("/app", { replace: true });
     }
   }
 
