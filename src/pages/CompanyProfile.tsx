@@ -278,7 +278,7 @@ export default function CompanyProfilePage() {
             <Button onClick={save} disabled={saving}>{saving ? "Saving…" : "Save profile"}</Button>
             <Button variant="outline" onClick={generateSample}>Generate sample document</Button>
           </div>
-          <Button size="lg" className="w-full sm:w-auto" onClick={() => navigate("/account-app/documents")}>
+          <Button size="lg" className="w-full sm:w-auto" onClick={() => navigate("/dashboard")}>
             Start using the app →
           </Button>
         </div>
