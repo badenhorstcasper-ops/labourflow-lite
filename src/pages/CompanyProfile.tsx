@@ -132,7 +132,7 @@ export default function CompanyProfilePage() {
       setJustSaved(true);
       if (wasNewProfile.current) {
         wasNewProfile.current = false;
-        navigate("/account-app/documents");
+        navigate("/dashboard");
       }
     }
   }
@@ -193,7 +193,7 @@ export default function CompanyProfilePage() {
               <p className="text-sm">
                 Profile saved. You can now start using the app.
               </p>
-              <Button onClick={() => navigate("/account-app/documents")}>
+              <Button onClick={() => navigate("/dashboard")}>
                 Start using the app →
               </Button>
             </CardContent>
@@ -278,7 +278,7 @@ export default function CompanyProfilePage() {
             <Button onClick={save} disabled={saving}>{saving ? "Saving…" : "Save profile"}</Button>
             <Button variant="outline" onClick={generateSample}>Generate sample document</Button>
           </div>
-          <Button size="lg" className="w-full sm:w-auto" onClick={() => navigate("/account-app/documents")}>
+          <Button size="lg" className="w-full sm:w-auto" onClick={() => navigate("/dashboard")}>
             Start using the app →
           </Button>
         </div>
