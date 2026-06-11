@@ -141,7 +141,7 @@ const Pricing = () => {
       <TestModeBanner />
       <div className="container mx-auto max-w-7xl px-4 py-12">
         <header className="mb-10 text-center">
-          <h1 className="text-3xl font-bold tracking-tight">Choose your plan</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Start Free</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Every paid plan starts with a <strong>7-day free trial</strong> — no
             charge during the trial, cancel anytime.

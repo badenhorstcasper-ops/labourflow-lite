@@ -36,7 +36,28 @@
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    padding-top: 32px; /* For the test banner */
   }
+
+  .test-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 32px;
+    background: #fef3c7;
+    border-bottom: 1px solid #fcd34d;
+    color: #92400e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    z-index: 9999;
+    padding: 0 10px;
+  }
+  @media (min-width: 640px) { .test-banner { font-size: 13px; } }
+
 
   /* Screens */
   .screen { display: none; flex: 1; flex-direction: column; }
@@ -416,6 +437,10 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
 <link rel="apple-touch-icon" href="/favicon.png">
 </head>
 <body>
+<div class="test-banner">
+  <strong>Test mode:</strong> payments run through PayFast sandbox — no real charge will be made and no plan will activate yet.
+</div>
+
 
 <!-- WELCOME -->
 <div class="screen" id="screen-welcome">
@@ -524,7 +549,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
 <section id="pricing" class="features-bg">
   <div class="section-inner">
     <p class="section-label" style="text-align:center">Pricing</p>
-    <h2 style="text-align:center">Start free. <span class="blue-text">Scale as you grow.</span></h2>
+    <h2 style="text-align:center">Start Free</h2>
     <p class="section-desc" style="text-align:center;margin:0 auto 8px">Every paid plan starts with a 7-day free trial — no charge during the trial, cancel anytime.</p>
     <p style="text-align:center;font-size:.8rem;color:rgba(148,163,184,.5)">Enterprise: pay 10 months, get 12 — save 17% annually.</p>
     <div class="pricing-grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-top:48px">
@@ -2377,13 +2402,16 @@ function copyText(t) { navigator.clipboard?.writeText(t).then(() => toast('Link 
 window.copyText = copyText;
 
 async function addInvite() {
+  if (!currentUser) { toast('Please sign in first.', 'warn'); return; }
   const email = (prompt('Teammate email:') || '').trim().toLowerCase();
   if (!email) return;
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { toast('Please enter a valid email.', 'warn'); return; }
-  const { error } = await supabase.from('team_members').insert({
-    owner_user_id: currentUser.id, member_email: email, status: 'pending'
+  const { data, error } = await supabase.functions.invoke('invite-team-member', {
+    body: { email }
   });
   if (error) { toast('Could not add invite: ' + error.message, 'error'); return; }
+  if (data && data.error) { toast(data.error, 'error'); return; }
+  toast('Invite sent to ' + email, 'success');
   await refreshAccountModal();
 }
 window.addInvite = addInvite;
