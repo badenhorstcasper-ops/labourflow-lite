@@ -824,13 +824,16 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
 <footer class="app-footer"><a href="/terms" style="color:inherit;text-decoration:underline">Terms</a> · <a href="/privacy" style="color:inherit;text-decoration:underline">Privacy</a> · <a href="/disclaimer" style="color:inherit;text-decoration:underline">Disclaimer</a></footer>
 
 <script type="module">
-// React owns these routes — skip the legacy bootstrap entirely.
-{
+// React owns these routes — skip the legacy bootstrap entry below.
+// NOTE: we intentionally do NOT `throw` here. In Vite's production build all
+// inline `<script type="module">` tags + `/src/main.tsx` are bundled into a
+// single chunk; a top-level throw halts the chunk before main.tsx can mount
+// React, leaving /terms /privacy /disclaimer blank on the live site.
+window.__IS_REACT_ROUTE__ = (() => {
   const p = window.location.pathname;
-  if (p.startsWith('/d/') || p.startsWith('/account-app') || p.startsWith('/share/') || p === '/terms' || p === '/privacy' || p === '/disclaimer') {
-    throw new Error('react-route');
-  }
-}
+  return p.startsWith('/d/') || p.startsWith('/account-app') || p.startsWith('/share/') || p === '/terms' || p === '/privacy' || p === '/disclaimer';
+})();
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const SUPABASE_URL = 'https://ckjevliuwlijfvdjxmmp.supabase.co';
