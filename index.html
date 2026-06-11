@@ -831,7 +831,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
 // React, leaving /terms /privacy /disclaimer blank on the live site.
 window.__IS_REACT_ROUTE__ = (() => {
   const p = window.location.pathname;
-  return p.startsWith('/d/') || p.startsWith('/account-app') || p.startsWith('/share/') || p === '/terms' || p === '/privacy' || p === '/disclaimer';
+  return p.startsWith('/d/') || p.startsWith('/account-app') || p.startsWith('/share/') || p === '/terms' || p === '/privacy' || p === '/disclaimer' || p === '/pricing' || p === '/auth' || p === '/contact' || p === '/payment-success' || p === '/payment-cancelled' || p === '/dashboard' || p === '/settings';
 })();
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
