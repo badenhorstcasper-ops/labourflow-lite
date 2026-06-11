@@ -11,6 +11,7 @@ import PaymentCancelled from "@/pages/PaymentCancelled";
 import NotFound from "@/pages/NotFound";
 import CompanyProfilePage from "@/pages/CompanyProfile";
 import DocumentsPage from "@/pages/Documents";
+import GeneratePage from "@/pages/Generate";
 import SharePage from "@/pages/Share";
 import ContactPage from "@/pages/Contact";
 import HealthPage from "@/pages/Health";
@@ -38,6 +39,7 @@ export default function App() {
             <Route path="/account-app" element={<CompanyProfilePage />} />
             <Route path="/account-app/profile" element={<CompanyProfilePage />} />
             <Route path="/account-app/documents" element={<DocumentsPage />} />
+            <Route path="/account-app/generate" element={<GeneratePage />} />
             <Route path="/account-app/health" element={<HealthPage />} />
             <Route path="/d/:token" element={<SharePage />} />
             <Route path="/contact" element={<ContactPage />} />

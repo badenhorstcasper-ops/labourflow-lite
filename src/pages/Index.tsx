@@ -7,7 +7,7 @@ const Index = () => {
   const navigate = useNavigate();
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      navigate(data.session ? "/account-app/profile" : "/pricing", { replace: true });
+      navigate(data.session ? "/dashboard" : "/pricing", { replace: true });
     });
   }, [navigate]);
   return (
