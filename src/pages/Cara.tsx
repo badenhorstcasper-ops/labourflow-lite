@@ -8,7 +8,7 @@ import { Send, Lightbulb, Sparkles } from "lucide-react";
 import { TOPICS } from "@/lib/cara/knowledge";
 import { routeMessage } from "@/lib/cara/router";
 import { TEMPLATE_REGISTRY } from "@/lib/documents/templates";
-import logoUrl from "/logo.png";
+const logoUrl = "/logo.png";
 import { toast } from "sonner";
 
 type ChatMsg = {
