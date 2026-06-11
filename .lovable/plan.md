@@ -1,72 +1,58 @@
+
 ## Goal
-Get iNRECO ready to launch — close the two functional gaps blocking real use, verify every flow works end‑to‑end with your test account, then publish.
+Replace the current `/dashboard` landing experience with the CARA chat hub shown in your screenshot. CARA becomes the place every signed-in user lands on, and Dashboard + Generate Docs become simple links from CARA's header. After saving the company profile, "Start using the app" goes straight to CARA.
 
-## What's blocking launch today
-1. **No way to actually generate documents.** `src/lib/documents/generateDocument` exists, but the only place that calls it is a "Generate sample" button on Company profile. Users can't pick a template (warning, contract, etc.).
-2. **`/dashboard` is a placeholder** ("Your app will live here"). All the "Open app" / "Start using the app" buttons now land on a blank page.
-3. **`/` redirects logged‑in users to `/account-app/profile`** instead of an app hub.
+## How CARA will answer (per your instructions)
 
-## Plan
+For every topic chip AND every free-text question, CARA goes through this order and stops at the first hit:
 
-### 1. Build a real `/dashboard` hub (`src/pages/Dashboard.tsx`)
-A logged‑in landing page inside `AppShell` showing:
-- Greeting + current plan/status (from `subscriptions`)
-- **Profile completeness** card — banner + "Complete your company profile" CTA if `company_profiles.company_name` is empty
-- **Quick actions**: Generate document, View documents, Edit company profile, Manage subscription
-- **Recent documents** (latest 5 from `generated_documents`) with PDF/DOCX/Copy‑link buttons
-- Link to Health, Settings, Contact in footer of the card grid
+1. **Built-in knowledge base** — a local JSON of South African labour-law snippets (LRA, BCEA, CCMA rules, Code of Good Practice) keyed to the 10 topics in the screenshot. Instant answer, no AI cost.
+2. **Built-in document templates** — if the question is "give me a warning letter / contract / dismissal letter…", CARA hands off directly to the existing generator (the 6 templates already built).
+3. **AI fallback** — only if neither of the above matches, call Lovable AI (`google/gemini-3-flash-preview`) with a tight SA-labour-law system prompt that explicitly tells the model to keep answers short and route the user to a document/wizard when relevant.
 
-If not signed in → redirect to `/auth`.
+Topic chips don't run long step-by-step questionnaires. Each chip drops a short pre-written question into the chat that triggers the knowledge-base answer plus a "Create the document" button when relevant — so the user reaches an answer in one tap.
 
-### 2. Build the document generator (`src/pages/Generate.tsx`, route `/account-app/generate`)
-Template picker for the core HR document types iNRECO needs at launch:
-- Written warning (verbal/written/final variants)
-- Employment contract
-- Dismissal letter
-- Performance improvement plan (PIP)
-- Leave approval / refusal letter
-- Confidentiality / NDA
+## What I'll build / change
 
-Each template = a small form (recipient name, dates, reason, custom paragraphs) → builds a `DocumentTemplate` (existing type) → calls `generateDocument()` → on success shows PDF/DOCX download buttons + share link, and a "View all documents" link.
+### 1. New CARA hub page (`src/pages/Cara.tsx`, route `/app`)
+- Header (in `AppShell`): **CARA**, **Dashboard**, **Generate Docs**, **Documents**, **Profile**, Account, Sign out. Home icon top-left goes to CARA.
+- Body: exactly the screenshot — iNRECO logo, greeting using company name, 10 topic chips (No-show/AWOL, Issue warning, Disciplinary hearing, CCMA referral, Grievance, Suspension, Retrenchment, Poor performance, Union/attorney, Incapacity), starter cards ("Tap a topic above…", "Try an example", tip card), and a sticky composer at the bottom.
+- Chat state lives in memory for now (no DB persistence) — keeps it simple and free. We can add history later.
 
-New file: `src/lib/documents/templates/index.ts` exporting the six template builders so the same definitions can be reused later (server, email, etc.).
+### 2. CARA brain (`src/lib/cara/`)
+- `knowledge.ts` — 10 topic entries, each with a short plain-English answer, a checklist of legally-required steps, and pointers to the matching document template(s).
+- `router.ts` — given the user's text, runs keyword match against knowledge first, then template names, then returns `"ai"` to fall back.
+- `useCara.ts` — React hook that owns messages, calls `router.ts`, and only invokes the edge function when needed.
+- Edge function `supabase/functions/cara-chat/index.ts` — Lovable AI call, SA-labour system prompt, streamed via AI SDK.
 
-### 3. Wire navigation correctly
-- `src/pages/Index.tsx`: signed‑in → `/dashboard`, signed‑out → `/` static landing (keep current `/pricing` fallback if no landing route exists — confirm by reading the router).
-- `src/pages/Auth.tsx` (3 redirects on lines 29, 57, 63, 99): all → `/dashboard`.
-- `src/pages/CompanyProfile.tsx`: "Start using the app" buttons → `/dashboard` (already done in last turn — verify).
-- `src/components/AppShell.tsx`: "Open app" header button → `/dashboard`. Add "Generate" tab to the section nav alongside Documents / Profile / Health.
-- Register `/account-app/generate` and confirm `/dashboard` route in `src/App.tsx`.
+### 3. Navigation rewire
+- `src/pages/Index.tsx`: signed-in → `/app` (was `/dashboard`).
+- `src/pages/Auth.tsx`: post-login redirects → `/app`.
+- `src/pages/CompanyProfile.tsx`: "Start using the app" → `/app`.
+- `src/components/AppShell.tsx`: replace current nav with **CARA / Dashboard / Generate Docs / Documents / Profile**. "Open app" button → `/app`. Add a visible Home icon that goes to `/app`.
+- `src/App.tsx`: add `/app` route; keep `/dashboard` route working (still linked from CARA header).
+- Existing Dashboard page stays as-is — it remains useful (subscription, recent docs, profile completeness) but is no longer the landing page.
 
-### 4. End‑to‑end verification in the preview browser
-Using `casper@inreco.co.za` / `Casper@771103`:
-1. Static landing → `/pricing` → pick a plan → PayFast **sandbox** → complete payment → `/payment-success` → verify `subscriptions` row updated.
-2. Sign out, sign in, wrong password, forgot password → `/reset-password` flow loads.
-3. `/dashboard` renders with plan + completeness + recents.
-4. Company profile: edit name + upload logo + save → toast + confirmation panel → "Start using the app" → lands on `/dashboard`.
-5. Generate: pick each of the six templates, fill the form, generate → PDF + DOCX download with iNRECO branding and user's company branding → share link opens `/d/:token` in incognito tab → revoke link → confirm 410/blocked.
-6. Documents list: download, copy link, revoke, delete all work.
-7. Settings: subscription shows + cancel works.
-8. `/account-app/health`, `/contact`, `/terms`, `/privacy`, `/disclaimer` render with no console errors.
+### 4. Profile-completeness nudge on CARA
+If `company_profiles.company_name` is empty, show a small inline banner above the chat: "Add your company details so they appear on every document → Profile". Non-blocking.
 
-Each step: capture pass/fail. Fix bugs found inline before moving on. Report at the end.
-
-### 5. Pre‑publish hygiene
-- Run security scan; address criticals (or surface them) before publishing.
-- Verify SEO basics on `index.html`: iNRECO title, meta description, OG/Twitter tags, favicon.
-- Confirm no references to "Labourflow" or "iNRECO Consulting" anywhere in code or generated docs.
-
-### 6. Publish
-Publish to `app.inreco.co.za`.
+### 5. Verification (preview browser, test account `casper@inreco.co.za`)
+1. Sign in → lands on `/app` (CARA), not `/dashboard`.
+2. Tap each of the 10 topic chips → instant knowledge-base answer + correct "Create document" button where applicable.
+3. Type a question covered by knowledge base → no AI call (check network tab).
+4. Type an off-topic labour question → AI fallback streams an answer.
+5. Click "Generate Docs" in header → generator. Click "Dashboard" → existing dashboard. Click Home icon → back to CARA.
+6. Save company profile → returns to `/app`.
+7. Run security scan, confirm no new criticals.
 
 ## Out of scope
-- Redesign of marketing landing or pricing page copy.
-- New backend tables/RLS changes (existing schema already supports all of the above).
-- Team invites UX changes, additional auth providers, new payment provider, or new languages.
-- Adding more than the six launch templates (more can be added later via `templates/index.ts`).
+- Persisting chat history to the database (in-memory only for v1).
+- Redesigning the existing Dashboard or Generate pages.
+- Adding new document templates beyond the existing six.
+- Multi-language CARA.
 
 ## Technical notes
-- All templates go through `generateDocument()` per project memory — shared house style + user branding.
-- No schema changes needed: `generated_documents`, `company_profiles`, `subscriptions`, `next_document_number` RPC all already exist.
-- Storage bucket `documents` is private with signed URLs — keep as is.
-- New routes are client‑only React Router routes; no hosting config needed.
+- CARA uses the existing `AppShell` so the back button, footer legal links, and report-problem button stay.
+- Knowledge base lives in source (TypeScript) — no DB needed, ships with the app, free to query.
+- AI edge function uses Lovable AI Gateway (no user-provided key required) and `stepCountIs(50)` per AI SDK guidance.
+- "Look in the app brain first" is enforced in `router.ts` — the AI call is literally unreachable unless knowledge + templates both miss.

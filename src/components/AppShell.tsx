@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Home } from "lucide-react";
 import ReportProblemButton from "@/components/ReportProblemButton";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
@@ -14,39 +14,32 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     }`;
   const goBack = () => {
     if (window.history.length > 1) navigate(-1);
-    else navigate("/");
+    else navigate("/app");
   };
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <header className="border-b">
-        <div className="container mx-auto max-w-5xl px-4 py-3 flex items-center justify-between gap-4">
+        <div className="container mx-auto max-w-5xl px-4 py-3 flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" onClick={goBack} aria-label="Go back">
               <ArrowLeft className="h-4 w-4" />
               <span className="hidden sm:inline">Back</span>
             </Button>
-            <a href="/" className="font-bold tracking-tight text-lg">iNRECO</a>
+            <Link to="/app" aria-label="CARA home" className="p-1.5 rounded hover:bg-muted">
+              <Home className="h-4 w-4" />
+            </Link>
+            <Link to="/app" className="font-bold tracking-tight text-lg">iNRECO</Link>
           </div>
-          <nav className="flex items-center gap-1">
-            <Link className={linkCls("/dashboard")} to="/dashboard">
-              Dashboard
-            </Link>
-            <Link className={linkCls("/account-app/generate")} to="/account-app/generate">
-              Generate
-            </Link>
-            <Link className={linkCls("/account-app/documents")} to="/account-app/documents">
-              Documents
-            </Link>
-            <Link className={linkCls("/account-app/profile")} to="/account-app/profile">
-              Profile
-            </Link>
+          <nav className="flex items-center gap-1 flex-wrap">
+            <Link className={linkCls("/app")} to="/app">CARA</Link>
+            <Link className={linkCls("/dashboard")} to="/dashboard">Dashboard</Link>
+            <Link className={linkCls("/account-app/generate")} to="/account-app/generate">Generate Docs</Link>
+            <Link className={linkCls("/account-app/documents")} to="/account-app/documents">Documents</Link>
+            <Link className={linkCls("/account-app/profile")} to="/account-app/profile">Profile</Link>
           </nav>
-          <Button asChild size="sm">
-            <Link to="/dashboard">Open app →</Link>
-          </Button>
         </div>
       </header>
-      <main className="container mx-auto max-w-5xl px-4 py-8 flex-1 pb-10">{children}</main>
+      <main className="container mx-auto max-w-5xl px-4 py-6 flex-1 pb-10">{children}</main>
       <div className="fixed bottom-10 right-3 z-50">
         <ReportProblemButton />
       </div>

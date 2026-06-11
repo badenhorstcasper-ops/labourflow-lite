@@ -12,6 +12,7 @@ import NotFound from "@/pages/NotFound";
 import CompanyProfilePage from "@/pages/CompanyProfile";
 import DocumentsPage from "@/pages/Documents";
 import GeneratePage from "@/pages/Generate";
+import CaraPage from "@/pages/Cara";
 import SharePage from "@/pages/Share";
 import ContactPage from "@/pages/Contact";
 import HealthPage from "@/pages/Health";
@@ -34,6 +35,7 @@ export default function App() {
             <Route path="/auth" element={<Auth />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/payment-cancelled" element={<PaymentCancelled />} />
+            <Route path="/app" element={<CaraPage />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/account-app" element={<CompanyProfilePage />} />
