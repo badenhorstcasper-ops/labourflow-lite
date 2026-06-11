@@ -193,7 +193,7 @@ export default function CompanyProfilePage() {
               <p className="text-sm">
                 Profile saved. You can now start using the app.
               </p>
-              <Button onClick={() => navigate("/account-app/documents")}>
+              <Button onClick={() => navigate("/dashboard")}>
                 Start using the app →
               </Button>
             </CardContent>
