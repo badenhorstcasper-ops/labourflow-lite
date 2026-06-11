@@ -155,7 +155,7 @@ const dismissal: TemplateDefinition = {
     subtitle: v.employee ? `Issued to: ${v.employee}${v.position ? ` (${v.position})` : ""}` : undefined,
     body: [
       ...(v.hearing_date ? [{ kind: "p" as const, text: `Following the disciplinary hearing held on ${fmtDate(v.hearing_date)}, the Employer has decided to terminate your employment.` }] : [
-        { kind: "p", text: "The Employer has decided to terminate your employment after a fair disciplinary process." },
+        { kind: "p" as const, text: "The Employer has decided to terminate your employment after a fair disciplinary process." },
       ]),
       { kind: "h", text: "Reason" },
       ...paragraphs(v.reason),
