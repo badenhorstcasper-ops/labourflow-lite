@@ -2402,13 +2402,16 @@ function copyText(t) { navigator.clipboard?.writeText(t).then(() => toast('Link 
 window.copyText = copyText;
 
 async function addInvite() {
+  if (!currentUser) { toast('Please sign in first.', 'warn'); return; }
   const email = (prompt('Teammate email:') || '').trim().toLowerCase();
   if (!email) return;
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { toast('Please enter a valid email.', 'warn'); return; }
-  const { error } = await supabase.from('team_members').insert({
-    owner_user_id: currentUser.id, member_email: email, status: 'pending'
+  const { data, error } = await supabase.functions.invoke('invite-team-member', {
+    body: { email }
   });
   if (error) { toast('Could not add invite: ' + error.message, 'error'); return; }
+  if (data && data.error) { toast(data.error, 'error'); return; }
+  toast('Invite sent to ' + email, 'success');
   await refreshAccountModal();
 }
 window.addInvite = addInvite;
