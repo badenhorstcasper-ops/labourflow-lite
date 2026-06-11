@@ -1,58 +1,85 @@
-
 ## Goal
-Replace the current `/dashboard` landing experience with the CARA chat hub shown in your screenshot. CARA becomes the place every signed-in user lands on, and Dashboard + Generate Docs become simple links from CARA's header. After saving the company profile, "Start using the app" goes straight to CARA.
 
-## How CARA will answer (per your instructions)
+Make CARA genuinely useful end-to-end: she should be able to advise on any common SA labour issue, and for every issue there should be a matching document the user can generate in one click — without ever needing outside help for the routine stuff.
 
-For every topic chip AND every free-text question, CARA goes through this order and stops at the first hit:
+Two gaps today:
+1. **CARA's knowledge** is thin — 10 topics, no follow-up questions, no "what next" suggestions, and the AI fallback has no grounding so it sometimes contradicts the in-app guidance.
+2. **The document library** only covers 6 templates. Six of CARA's 10 topics (CCMA, grievance, suspension, retrenchment, union, incapacity) have no document to hand off to.
 
-1. **Built-in knowledge base** — a local JSON of South African labour-law snippets (LRA, BCEA, CCMA rules, Code of Good Practice) keyed to the 10 topics in the screenshot. Instant answer, no AI cost.
-2. **Built-in document templates** — if the question is "give me a warning letter / contract / dismissal letter…", CARA hands off directly to the existing generator (the 6 templates already built).
-3. **AI fallback** — only if neither of the above matches, call Lovable AI (`google/gemini-3-flash-preview`) with a tight SA-labour-law system prompt that explicitly tells the model to keep answers short and route the user to a document/wizard when relevant.
+This plan closes both gaps.
 
-Topic chips don't run long step-by-step questionnaires. Each chip drops a short pre-written question into the chat that triggers the knowledge-base answer plus a "Create the document" button when relevant — so the user reaches an answer in one tap.
+---
 
-## What I'll build / change
+## 1. Expand the document library (6 → 14 templates)
 
-### 1. New CARA hub page (`src/pages/Cara.tsx`, route `/app`)
-- Header (in `AppShell`): **CARA**, **Dashboard**, **Generate Docs**, **Documents**, **Profile**, Account, Sign out. Home icon top-left goes to CARA.
-- Body: exactly the screenshot — iNRECO logo, greeting using company name, 10 topic chips (No-show/AWOL, Issue warning, Disciplinary hearing, CCMA referral, Grievance, Suspension, Retrenchment, Poor performance, Union/attorney, Incapacity), starter cards ("Tap a topic above…", "Try an example", tip card), and a sticky composer at the bottom.
-- Chat state lives in memory for now (no DB persistence) — keeps it simple and free. We can add history later.
+Add the following to `src/lib/documents/templates/index.ts` (same `TemplateDefinition` pattern, same `generateDocument` pipeline — house style and branding come for free):
 
-### 2. CARA brain (`src/lib/cara/`)
-- `knowledge.ts` — 10 topic entries, each with a short plain-English answer, a checklist of legally-required steps, and pointers to the matching document template(s).
-- `router.ts` — given the user's text, runs keyword match against knowledge first, then template names, then returns `"ai"` to fall back.
-- `useCara.ts` — React hook that owns messages, calls `router.ts`, and only invokes the edge function when needed.
-- Edge function `supabase/functions/cara-chat/index.ts` — Lovable AI call, SA-labour system prompt, streamed via AI SDK.
+| Key | Name | Used by CARA topic |
+|---|---|---|
+| `notice_hearing` | Notice of disciplinary hearing | Hearing, AWOL, Misconduct |
+| `suspension` | Precautionary suspension letter | Suspension |
+| `return_to_work` | AWOL / return-to-work letter | AWOL |
+| `grievance_ack` | Grievance acknowledgement & outcome | Grievance |
+| `retrenchment_s189` | s189(3) consultation notice | Retrenchment |
+| `retrenchment_letter` | Retrenchment notice (post-consultation) | Retrenchment |
+| `incapacity_notice` | Notice of incapacity enquiry | Incapacity |
+| `counselling` | Counselling / coaching record | Performance, Misconduct |
 
-### 3. Navigation rewire
-- `src/pages/Index.tsx`: signed-in → `/app` (was `/dashboard`).
-- `src/pages/Auth.tsx`: post-login redirects → `/app`.
-- `src/pages/CompanyProfile.tsx`: "Start using the app" → `/app`.
-- `src/components/AppShell.tsx`: replace current nav with **CARA / Dashboard / Generate Docs / Documents / Profile**. "Open app" button → `/app`. Add a visible Home icon that goes to `/app`.
-- `src/App.tsx`: add `/app` route; keep `/dashboard` route working (still linked from CARA header).
-- Existing Dashboard page stays as-is — it remains useful (subscription, recent docs, profile completeness) but is no longer the landing page.
+Each template uses the same field/build shape the existing templates use, so they slot into Generate Docs and the CARA "Create the document" button automatically.
 
-### 4. Profile-completeness nudge on CARA
-If `company_profiles.company_name` is empty, show a small inline banner above the chat: "Add your company details so they appear on every document → Profile". Non-blocking.
+## 2. Deepen CARA's built-in knowledge
 
-### 5. Verification (preview browser, test account `casper@inreco.co.za`)
-1. Sign in → lands on `/app` (CARA), not `/dashboard`.
-2. Tap each of the 10 topic chips → instant knowledge-base answer + correct "Create document" button where applicable.
-3. Type a question covered by knowledge base → no AI call (check network tab).
-4. Type an off-topic labour question → AI fallback streams an answer.
-5. Click "Generate Docs" in header → generator. Click "Dashboard" → existing dashboard. Click Home icon → back to CARA.
-6. Save company profile → returns to `/app`.
-7. Run security scan, confirm no new criticals.
+In `src/lib/cara/knowledge.ts`:
+
+- Add a `followUps: string[]` field to each topic — 2–3 likely next questions ("How long does the CCMA process take?", "What if the employee doesn't pitch?"). The CARA hub renders them as tappable suggestion chips under the answer.
+- Add a `relatedTemplates: string[]` field (multiple doc options per topic, not just one). e.g. AWOL → `return_to_work`, `notice_hearing`, `dismissal`.
+- Add 5 new topics: **Probation**, **Resignation**, **Sick leave abuse**, **Working hours & overtime**, **Sexual harassment**.
+- Expand keyword lists so plain-English phrasing matches ("he didn't come in", "she quit by SMS", etc.).
+
+## 3. Smarter router
+
+In `src/lib/cara/router.ts`:
+
+- When a topic matches, return the topic AND its related templates (router currently returns only one).
+- When the user's message contains a question word ("how long", "can I", "what if") on a known topic, prefer answering from knowledge first, but mark the answer as "expandable" so a "Ask CARA for more detail" button shows that triggers the AI fallback grounded with that topic's full text.
+- Document-intent matcher recognises more phrasings ("send him a warning", "I want to fire her", "draft her contract").
+
+## 4. Ground the AI fallback in the app brain
+
+Update `supabase/functions/cara-chat/index.ts`:
+
+- The client sends, alongside the messages, the matched topic key (if any) and the list of available template names.
+- Edge function injects the topic's summary + steps into the system prompt as **authoritative context**, and lists the exact template keys CARA may suggest. This stops the AI inventing different processes or recommending documents that don't exist.
+- Keep `google/gemini-3-flash-preview`. Add a hard 600-token cap so answers stay short.
+- Parse the AI response for any `[[create:<template_key>]]` hint and surface it as a "Create the document" button on the AI message too (today only knowledge/template answers get a button).
+
+## 5. CARA hub UX polish
+
+In `src/pages/Cara.tsx`:
+
+- Show follow-up suggestion chips under each assistant message.
+- Render multiple "Create the …" buttons when a topic maps to multiple templates.
+- Add a small "Start a guided wizard" link on heavy topics (retrenchment, hearing, incapacity) that opens Generate with the right template pre-selected and a 1-line context note in the form.
+- Keep everything else as-is (composer, topic chips, profile-missing banner, in-memory chat — no persistence).
+
+## 6. Verification
+
+- Tap every one of the 15 topic chips → built-in answer renders, follow-up chips appear, "Create the …" buttons match the topic.
+- Type "I need to retrench 3 people" → retrenchment topic → buttons for s189 notice + retrenchment letter.
+- Type "what's the maximum overtime per week" → AI fallback grounded with the working-hours topic, no template button.
+- Open Generate Docs → all 14 templates listed, each one generates a PDF + DOCX through the existing `generateDocument` pipeline (so iNRECO house style + company branding are automatic — per project memory).
+- Existing flow (sign in → profile → `/app`) untouched.
 
 ## Out of scope
-- Persisting chat history to the database (in-memory only for v1).
-- Redesigning the existing Dashboard or Generate pages.
-- Adding new document templates beyond the existing six.
+
+- Persisting chat history (still in-memory per session).
 - Multi-language CARA.
+- Redesigning Dashboard / Documents / Profile pages.
+- Adding a separate "wizard engine" — guided flows are just the existing Generate form pre-filled.
 
 ## Technical notes
-- CARA uses the existing `AppShell` so the back button, footer legal links, and report-problem button stay.
-- Knowledge base lives in source (TypeScript) — no DB needed, ships with the app, free to query.
-- AI edge function uses Lovable AI Gateway (no user-provided key required) and `stepCountIs(50)` per AI SDK guidance.
-- "Look in the app brain first" is enforced in `router.ts` — the AI call is literally unreachable unless knowledge + templates both miss.
+
+- All new templates are pure additions to `TEMPLATE_REGISTRY`; nothing existing changes.
+- `knowledge.ts` gets two new optional fields (`followUps`, `relatedTemplates`); old `templateKey` stays for back-compat.
+- Edge function change is backwards-compatible — old client calls still work; new client calls send extra context.
+- No database/schema changes. No new secrets. No new dependencies.

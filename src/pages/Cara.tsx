@@ -4,8 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import AppShell from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Send, Lightbulb, Sparkles } from "lucide-react";
-import { TOPICS } from "@/lib/cara/knowledge";
+import { Send, Lightbulb, Sparkles, MessageCircleMore } from "lucide-react";
+import { TOPICS, getTopicByKey } from "@/lib/cara/knowledge";
 import { routeMessage } from "@/lib/cara/router";
 import { TEMPLATE_REGISTRY } from "@/lib/documents/templates";
 const logoUrl = "/logo.png";
@@ -15,7 +15,10 @@ type ChatMsg = {
   id: string;
   role: "user" | "assistant";
   text: string;
-  templateKey?: string;
+  templateKeys?: string[];
+  followUps?: string[];
+  groundingTopicKey?: string; // set on user msgs that hit knowledge; reused for "ask for more detail"
+  canExpand?: boolean;        // assistant msg has an "ask CARA for more detail" button
 };
 
 export default function CaraPage() {
@@ -58,11 +61,58 @@ export default function CaraPage() {
     return `Hello, ${who}. I'm CARA, your Compliance and Relations Adviser. Ask me anything about South African labour compliance for your business.`;
   }, [companyName]);
 
+  async function callAi(history: ChatMsg[], groundingTopicKey?: string) {
+    const topic = groundingTopicKey ? getTopicByKey(groundingTopicKey) : undefined;
+    const grounding = topic
+      ? {
+          topicKey: topic.key,
+          topicLabel: topic.label,
+          topicSummary: topic.summary,
+          topicSteps: topic.steps,
+          templateKeys: TEMPLATE_REGISTRY.map((t) => t.key),
+        }
+      : {
+          templateKeys: TEMPLATE_REGISTRY.map((t) => t.key),
+        };
+    const payload = {
+      messages: history.map((m) => ({ role: m.role, content: m.text })),
+      grounding,
+    };
+    const { data, error } = await supabase.functions.invoke("cara-chat", { body: payload });
+    if (error) throw error;
+    const d = data as { text?: string; suggestedTemplate?: string } | null;
+    return {
+      text: d?.text || "Sorry — I couldn't generate an answer just now. Please try again.",
+      suggestedTemplate: d?.suggestedTemplate || undefined,
+    };
+  }
+
+  async function expandWithAi(groundingTopicKey: string) {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const { text, suggestedTemplate } = await callAi(messages, groundingTopicKey);
+      const templateKeys = suggestedTemplate
+        ? [suggestedTemplate]
+        : getTopicByKey(groundingTopicKey)?.relatedTemplates ?? [];
+      setMessages((m) => [
+        ...m,
+        { id: crypto.randomUUID(), role: "assistant", text, templateKeys },
+      ]);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error("CARA had a problem: " + msg);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function send(text: string) {
     const clean = text.trim();
     if (!clean || busy) return;
     const userMsg: ChatMsg = { id: crypto.randomUUID(), role: "user", text: clean };
-    setMessages((m) => [...m, userMsg]);
+    const next = [...messages, userMsg];
+    setMessages(next);
     setInput("");
     setBusy(true);
 
@@ -75,7 +125,10 @@ export default function CaraPage() {
           id: crypto.randomUUID(),
           role: "assistant",
           text: decision.text,
-          templateKey: decision.topic.templateKey,
+          templateKeys: decision.templateKeys,
+          followUps: decision.followUps,
+          groundingTopicKey: decision.topic.key,
+          canExpand: true,
         },
       ]);
       setBusy(false);
@@ -89,26 +142,24 @@ export default function CaraPage() {
           id: crypto.randomUUID(),
           role: "assistant",
           text: decision.text,
-          templateKey: decision.templateKey,
+          templateKeys: [decision.templateKey],
         },
       ]);
       setBusy(false);
       return;
     }
 
-    // AI fallback
+    // AI fallback (no grounding topic — unknown query)
     try {
-      const history = [...messages, userMsg].map((m) => ({ role: m.role, content: m.text }));
-      const { data, error } = await supabase.functions.invoke("cara-chat", {
-        body: { messages: history },
-      });
-      if (error) throw error;
-      const aiText =
-        (data as { text?: string } | null)?.text ||
-        "Sorry — I couldn't generate an answer just now. Please try again.";
+      const { text: aiText, suggestedTemplate } = await callAi(next);
       setMessages((m) => [
         ...m,
-        { id: crypto.randomUUID(), role: "assistant", text: aiText },
+        {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          text: aiText,
+          templateKeys: suggestedTemplate ? [suggestedTemplate] : undefined,
+        },
       ]);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -174,7 +225,14 @@ export default function CaraPage() {
           ) : (
             <div className="space-y-4">
               {messages.map((m) => (
-                <MessageBubble key={m.id} msg={m} navigate={navigate} />
+                <MessageBubble
+                  key={m.id}
+                  msg={m}
+                  navigate={navigate}
+                  onFollowUp={(q) => send(q)}
+                  onExpand={(topicKey) => expandWithAi(topicKey)}
+                  busy={busy}
+                />
               ))}
               {busy && (
                 <div className="text-sm text-muted-foreground italic">CARA is thinking…</div>
@@ -241,14 +299,20 @@ function EmptyState({ greeting, onExample }: { greeting: string; onExample: () =
 function MessageBubble({
   msg,
   navigate,
+  onFollowUp,
+  onExpand,
+  busy,
 }: {
   msg: ChatMsg;
   navigate: (to: string) => void;
+  onFollowUp: (q: string) => void;
+  onExpand: (topicKey: string) => void;
+  busy: boolean;
 }) {
   const isUser = msg.role === "user";
-  const template = msg.templateKey
-    ? TEMPLATE_REGISTRY.find((t) => t.key === msg.templateKey)
-    : undefined;
+  const templates = (msg.templateKeys ?? [])
+    .map((k) => TEMPLATE_REGISTRY.find((t) => t.key === k))
+    .filter((t): t is NonNullable<typeof t> => Boolean(t));
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
       <div
@@ -259,15 +323,48 @@ function MessageBubble({
         }`}
       >
         {renderMarkdownLite(msg.text)}
-        {template && !isUser && (
-          <div className="mt-3">
+
+        {!isUser && templates.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {templates.map((template) => (
+              <Button
+                key={template.key}
+                size="sm"
+                onClick={() => navigate(`/account-app/generate?template=${template.key}`)}
+              >
+                <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                Create the {template.name.toLowerCase()}
+              </Button>
+            ))}
+          </div>
+        )}
+
+        {!isUser && msg.canExpand && msg.groundingTopicKey && (
+          <div className="mt-2">
             <Button
               size="sm"
-              onClick={() => navigate(`/account-app/generate?template=${template.key}`)}
+              variant="outline"
+              disabled={busy}
+              onClick={() => onExpand(msg.groundingTopicKey!)}
             >
-              <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-              Create the {template.name.toLowerCase()}
+              <MessageCircleMore className="h-3.5 w-3.5 mr-1.5" />
+              Ask CARA for more detail
             </Button>
+          </div>
+        )}
+
+        {!isUser && msg.followUps && msg.followUps.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {msg.followUps.map((q) => (
+              <button
+                key={q}
+                onClick={() => onFollowUp(q)}
+                disabled={busy}
+                className="text-xs px-2 py-1 rounded-full border bg-background hover:bg-muted transition disabled:opacity-50"
+              >
+                {q}
+              </button>
+            ))}
           </div>
         )}
       </div>

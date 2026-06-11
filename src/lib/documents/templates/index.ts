@@ -285,6 +285,307 @@ const nda: TemplateDefinition = {
   }),
 };
 
+// ---------- 7. Notice of disciplinary hearing ----------
+const notice_hearing: TemplateDefinition = {
+  key: "notice_hearing",
+  name: "Notice of disciplinary hearing",
+  description: "Formally notify an employee of a disciplinary hearing and the charges.",
+  fields: [
+    { key: "employee", label: "Employee full name", type: "text", required: true },
+    { key: "position", label: "Position", type: "text" },
+    { key: "hearing_date", label: "Hearing date", type: "date", required: true },
+    { key: "hearing_time", label: "Hearing time", type: "text", placeholder: "e.g. 10:00", required: true },
+    { key: "venue", label: "Venue", type: "text", required: true },
+    { key: "chair", label: "Chairperson", type: "text" },
+    { key: "charges", label: "Charge(s)", type: "textarea", required: true,
+      placeholder: "List each charge with date, place and the rule allegedly broken. Use a blank line between charges." },
+  ],
+  build: (v) => ({
+    type: "notice_hearing",
+    title: "Notice of Disciplinary Hearing",
+    subtitle: v.employee ? `To: ${v.employee}${v.position ? ` (${v.position})` : ""}` : undefined,
+    body: [
+      { kind: "p", text: `You are required to attend a disciplinary hearing on ${fmtDate(v.hearing_date)} at ${v.hearing_time || "____________"}, to be held at ${v.venue || "____________"}.` },
+      ...(v.chair ? [{ kind: "p" as const, text: `The hearing will be chaired by ${v.chair}.` }] : []),
+      { kind: "h", text: "Charges" },
+      ...paragraphs(v.charges),
+      { kind: "h", text: "Your rights" },
+      { kind: "list", items: [
+        "You may be represented by a fellow employee or a recognised shop steward.",
+        "You may call witnesses and present documentary evidence.",
+        "You may cross-examine the employer's witnesses.",
+        "You may use a translator if required.",
+        "You are entitled to a written outcome with reasons.",
+      ]},
+      { kind: "p", text: "Failure to attend without good reason may result in the hearing proceeding in your absence." },
+    ],
+    signatures: sigs(v.employee),
+  }),
+};
+
+// ---------- 8. Precautionary suspension letter ----------
+const suspension: TemplateDefinition = {
+  key: "suspension",
+  name: "Precautionary suspension letter",
+  description: "Suspend an employee on full pay pending investigation.",
+  fields: [
+    { key: "employee", label: "Employee full name", type: "text", required: true },
+    { key: "position", label: "Position", type: "text" },
+    { key: "start_date", label: "Suspension start date", type: "date", required: true },
+    { key: "expected_duration", label: "Expected duration", type: "text", placeholder: "e.g. up to 10 working days" },
+    { key: "allegations", label: "Allegations being investigated", type: "textarea", required: true },
+    { key: "contact", label: "Contact person during suspension", type: "text", placeholder: "Name + phone / email" },
+  ],
+  build: (v) => ({
+    type: "suspension",
+    title: "Notice of Precautionary Suspension",
+    subtitle: v.employee ? `To: ${v.employee}${v.position ? ` (${v.position})` : ""}` : undefined,
+    body: [
+      { kind: "p", text: `You are hereby placed on precautionary suspension with effect from ${fmtDate(v.start_date)}, pending the outcome of an investigation into the allegations set out below.` },
+      { kind: "h", text: "Allegations under investigation" },
+      ...paragraphs(v.allegations),
+      { kind: "h", text: "Terms of suspension" },
+      { kind: "list", items: [
+        "This suspension is precautionary and is not a sanction or finding of guilt.",
+        "You will remain on full pay and benefits for the duration of the suspension.",
+        `Expected duration: ${v.expected_duration || "as short as reasonably possible"}. You will be kept informed of any extension.`,
+        "You may not enter the workplace or contact witnesses without prior written approval.",
+        v.contact ? `For any work-related matters during your suspension, please contact ${v.contact}.` : "A contact person will be communicated to you separately.",
+      ]},
+      { kind: "p", text: "You will be invited to a disciplinary hearing in writing should the investigation lead to formal charges." },
+    ],
+    signatures: sigs(v.employee),
+  }),
+};
+
+// ---------- 9. AWOL / return-to-work letter ----------
+const return_to_work: TemplateDefinition = {
+  key: "return_to_work",
+  name: "AWOL / return-to-work letter",
+  description: "Instruct an absent employee to return or explain, before disciplinary action.",
+  fields: [
+    { key: "employee", label: "Employee full name", type: "text", required: true },
+    { key: "position", label: "Position", type: "text" },
+    { key: "absent_from", label: "Absent from (date)", type: "date", required: true },
+    { key: "deadline", label: "Return / response deadline", type: "date", required: true },
+    { key: "contact_attempts", label: "Contact attempts made", type: "textarea",
+      placeholder: "List the dates and methods you tried (phone, WhatsApp, email)." },
+  ],
+  build: (v) => ({
+    type: "return_to_work",
+    title: "Notice to Return to Work",
+    subtitle: v.employee ? `To: ${v.employee}${v.position ? ` (${v.position})` : ""}` : undefined,
+    body: [
+      { kind: "p", text: `Our records show that you have been absent from work without authorisation since ${fmtDate(v.absent_from)}. As at the date of this letter, we have not received any explanation for your absence.` },
+      ...(v.contact_attempts ? [{ kind: "h" as const, text: "Contact attempts" }, ...paragraphs(v.contact_attempts)] : []),
+      { kind: "h", text: "Required action" },
+      { kind: "p", text: `You are instructed to return to work, or to provide a written explanation (with supporting documentation if applicable), by no later than ${fmtDate(v.deadline)}.` },
+      { kind: "h", text: "Consequences" },
+      { kind: "p", text: "Failure to respond by the deadline will be treated as desertion. The Employer will then proceed to convene a disciplinary hearing in your absence, which may result in your dismissal." },
+    ],
+    signatures: sigs(v.employee),
+  }),
+};
+
+// ---------- 10. Grievance acknowledgement & outcome ----------
+const grievance_ack: TemplateDefinition = {
+  key: "grievance_ack",
+  name: "Grievance acknowledgement & outcome",
+  description: "Acknowledge a formal grievance and record the outcome.",
+  fields: [
+    { key: "employee", label: "Employee full name", type: "text", required: true },
+    { key: "received_date", label: "Date grievance received", type: "date", required: true },
+    { key: "summary", label: "Summary of grievance", type: "textarea", required: true },
+    { key: "investigation", label: "Investigation steps taken", type: "textarea" },
+    { key: "outcome", label: "Outcome / decision", type: "textarea", required: true },
+    { key: "next_step", label: "Next step / escalation rights", type: "textarea",
+      placeholder: "e.g. The employee may escalate to senior management within 5 working days." },
+  ],
+  build: (v) => ({
+    type: "grievance_ack",
+    title: "Grievance Outcome",
+    subtitle: v.employee ? `For: ${v.employee}` : undefined,
+    body: [
+      { kind: "p", text: `We confirm receipt of your formal grievance on ${fmtDate(v.received_date)}. Following our internal grievance procedure, we have considered the matter and provide our response below.` },
+      { kind: "h", text: "Summary of grievance" },
+      ...paragraphs(v.summary),
+      ...(v.investigation ? [{ kind: "h" as const, text: "Investigation" }, ...paragraphs(v.investigation)] : []),
+      { kind: "h", text: "Outcome" },
+      ...paragraphs(v.outcome),
+      { kind: "h", text: "Next steps" },
+      { kind: "p", text: v.next_step || "Should you remain dissatisfied, you may escalate this grievance to the next level of management within five (5) working days of receipt of this letter." },
+    ],
+    signatures: [{ label: "Authorised Signatory" }],
+  }),
+};
+
+// ---------- 11. s189(3) consultation notice ----------
+const retrenchment_s189: TemplateDefinition = {
+  key: "retrenchment_s189",
+  name: "s189(3) consultation notice",
+  description: "Open retrenchment consultations in line with section 189 of the LRA.",
+  fields: [
+    { key: "issued_to", label: "Issued to", type: "text", required: true,
+      placeholder: "e.g. All affected employees / Recognised trade union" },
+    { key: "reasons", label: "Reasons for contemplated retrenchments", type: "textarea", required: true },
+    { key: "alternatives", label: "Alternatives considered", type: "textarea", required: true,
+      placeholder: "e.g. short time, redeployment, voluntary separation packages, freezing posts." },
+    { key: "number_affected", label: "Number of employees potentially affected", type: "text", required: true },
+    { key: "categories", label: "Categories of employees affected", type: "textarea" },
+    { key: "selection", label: "Proposed selection criteria", type: "textarea", required: true,
+      placeholder: "e.g. LIFO, skills required going forward, performance, disciplinary record." },
+    { key: "timing", label: "Proposed timing", type: "text", required: true,
+      placeholder: "e.g. Consultations to commence on … and conclude no earlier than …" },
+    { key: "severance", label: "Severance proposed", type: "text", required: true,
+      placeholder: "e.g. 1 week per completed year of service, plus notice pay and accrued leave." },
+    { key: "consult_with", label: "Whom we propose to consult with", type: "text",
+      placeholder: "e.g. the affected employees themselves / shop stewards of …" },
+  ],
+  build: (v) => ({
+    type: "retrenchment_s189",
+    title: "Notice in terms of Section 189(3) of the Labour Relations Act",
+    subtitle: v.issued_to ? `Issued to: ${v.issued_to}` : undefined,
+    body: [
+      { kind: "p", text: "The Employer contemplates dismissals based on its operational requirements and hereby invites consultations in terms of section 189(3) of the Labour Relations Act, 1995. The information required by section 189(3) is set out below." },
+      { kind: "h", text: "1. Reasons for the proposed dismissals" },
+      ...paragraphs(v.reasons),
+      { kind: "h", text: "2. Alternatives considered" },
+      ...paragraphs(v.alternatives),
+      { kind: "h", text: "3. Number and categories of employees affected" },
+      { kind: "p", text: `Number of employees potentially affected: ${v.number_affected}.` },
+      ...(v.categories ? paragraphs(v.categories) : []),
+      { kind: "h", text: "4. Proposed selection criteria" },
+      ...paragraphs(v.selection),
+      { kind: "h", text: "5. Timing" },
+      { kind: "p", text: v.timing },
+      { kind: "h", text: "6. Severance pay proposed" },
+      { kind: "p", text: v.severance },
+      ...(v.consult_with ? [{ kind: "h" as const, text: "7. Consulting parties" }, { kind: "p" as const, text: v.consult_with }] : []),
+      { kind: "h", text: "Invitation to consult" },
+      { kind: "p", text: "The Employer invites the consulting party to engage meaningfully on all of the above, including any further information reasonably required to consult effectively. Written representations may be submitted, and the Employer undertakes to respond in writing and to give reasons for disagreement." },
+    ],
+    signatures: [{ label: "Authorised Signatory" }],
+  }),
+};
+
+// ---------- 12. Retrenchment notice (post-consultation) ----------
+const retrenchment_letter: TemplateDefinition = {
+  key: "retrenchment_letter",
+  name: "Retrenchment notice (post-consultation)",
+  description: "Final retrenchment letter issued after meaningful consultation.",
+  fields: [
+    { key: "employee", label: "Employee full name", type: "text", required: true },
+    { key: "position", label: "Position", type: "text" },
+    { key: "consultation_summary", label: "Summary of consultations", type: "textarea", required: true,
+      placeholder: "Dates of meetings, parties consulted, alternatives explored." },
+    { key: "last_day", label: "Last day of employment", type: "date", required: true },
+    { key: "severance", label: "Severance amount", type: "text", required: true,
+      placeholder: "e.g. R XX XXX, being 1 week per completed year of service." },
+    { key: "notice_pay", label: "Notice pay", type: "text", placeholder: "e.g. One calendar month" },
+    { key: "leave_pay", label: "Accrued leave pay", type: "text", placeholder: "e.g. X days payable" },
+    { key: "reference", label: "Reference / assistance offered", type: "textarea",
+      placeholder: "e.g. Letter of reference, UIF documents, outplacement support." },
+  ],
+  build: (v) => ({
+    type: "retrenchment_letter",
+    title: "Notice of Retrenchment",
+    subtitle: v.employee ? `Issued to: ${v.employee}${v.position ? ` (${v.position})` : ""}` : undefined,
+    body: [
+      { kind: "p", text: "Following meaningful consultations in terms of section 189 of the Labour Relations Act, the Employer regrets to inform you that your position has been identified for retrenchment based on the operational requirements of the business." },
+      { kind: "h", text: "Consultation process" },
+      ...paragraphs(v.consultation_summary),
+      { kind: "h", text: "Effective date" },
+      { kind: "p", text: `Your last day of employment will be ${fmtDate(v.last_day)}.` },
+      { kind: "h", text: "Severance and final pay" },
+      { kind: "list", items: [
+        `Severance: ${v.severance}`,
+        ...(v.notice_pay ? [`Notice pay: ${v.notice_pay}`] : []),
+        ...(v.leave_pay ? [`Accrued leave pay: ${v.leave_pay}`] : []),
+        "These amounts will be paid into your nominated bank account on the next payroll run.",
+      ]},
+      ...(v.reference ? [{ kind: "h" as const, text: "Assistance" }, ...paragraphs(v.reference)] : []),
+      { kind: "h", text: "Your rights" },
+      { kind: "p", text: "You may refer a dispute about the fairness of this retrenchment to the CCMA within 30 days, or to the Labour Court where section 189A applies." },
+    ],
+    signatures: sigs(v.employee),
+  }),
+};
+
+// ---------- 13. Notice of incapacity enquiry ----------
+const incapacity_notice: TemplateDefinition = {
+  key: "incapacity_notice",
+  name: "Notice of incapacity enquiry",
+  description: "Convene an incapacity enquiry for ill-health or poor performance.",
+  fields: [
+    { key: "employee", label: "Employee full name", type: "text", required: true },
+    { key: "position", label: "Position", type: "text" },
+    { key: "type", label: "Type of incapacity", type: "select", required: true, options: [
+      { value: "Ill-health / injury", label: "Ill-health / injury" },
+      { value: "Poor performance", label: "Poor performance" },
+    ]},
+    { key: "enquiry_date", label: "Enquiry date", type: "date", required: true },
+    { key: "enquiry_time", label: "Enquiry time", type: "text", required: true, placeholder: "e.g. 10:00" },
+    { key: "venue", label: "Venue", type: "text", required: true },
+    { key: "background", label: "Background", type: "textarea", required: true,
+      placeholder: "Summarise the medical / performance facts and what has already been tried." },
+  ],
+  build: (v) => ({
+    type: "incapacity_notice",
+    title: "Notice of Incapacity Enquiry",
+    subtitle: v.employee ? `To: ${v.employee}${v.position ? ` (${v.position})` : ""}` : undefined,
+    body: [
+      { kind: "p", text: `You are invited to attend an incapacity enquiry in respect of ${v.type ? v.type.toLowerCase() : "your incapacity"}, to be held on ${fmtDate(v.enquiry_date)} at ${v.enquiry_time} at ${v.venue}.` },
+      { kind: "h", text: "Background" },
+      ...paragraphs(v.background),
+      { kind: "h", text: "Purpose of the enquiry" },
+      { kind: "list", items: [
+        "To consider the nature and extent of the incapacity.",
+        "To consider whether you are capable of performing your duties.",
+        "To consider reasonable alternatives, such as adapted duties, reduced hours, redeployment, or further training.",
+        "To consider whether termination of employment is appropriate as a last resort.",
+      ]},
+      { kind: "h", text: "Your rights" },
+      { kind: "list", items: [
+        "You may be represented by a fellow employee or shop steward.",
+        "You may present medical reports, evidence and witnesses.",
+        "You may make representations on alternatives to dismissal.",
+      ]},
+    ],
+    signatures: sigs(v.employee),
+  }),
+};
+
+// ---------- 14. Counselling / coaching record ----------
+const counselling: TemplateDefinition = {
+  key: "counselling",
+  name: "Counselling record",
+  description: "Informal counselling discussion — the step before a formal warning.",
+  fields: [
+    { key: "employee", label: "Employee full name", type: "text", required: true },
+    { key: "position", label: "Position", type: "text" },
+    { key: "date", label: "Date of discussion", type: "date", required: true },
+    { key: "issue", label: "Issue discussed", type: "textarea", required: true },
+    { key: "agreed_actions", label: "Agreed actions", type: "textarea", required: true,
+      placeholder: "What the employee will do, what the employer will do, and by when." },
+    { key: "review_date", label: "Review date", type: "date" },
+  ],
+  build: (v) => ({
+    type: "counselling",
+    title: "Counselling Record",
+    subtitle: v.employee ? `Employee: ${v.employee}${v.position ? ` (${v.position})` : ""}` : undefined,
+    body: [
+      { kind: "p", text: `Date of discussion: ${fmtDate(v.date)}` },
+      { kind: "h", text: "Issue discussed" },
+      ...paragraphs(v.issue),
+      { kind: "h", text: "Agreed actions" },
+      ...paragraphs(v.agreed_actions),
+      ...(v.review_date ? [{ kind: "h" as const, text: "Review" }, { kind: "p" as const, text: `Progress will be reviewed on ${fmtDate(v.review_date)}.` }] : []),
+      { kind: "p", text: "This is an informal counselling discussion and does not constitute a disciplinary warning. The record is kept on file for reference." },
+    ],
+    signatures: sigs(v.employee),
+  }),
+};
+
 export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
   warning,
   contract,
@@ -292,6 +593,14 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
   pip,
   leave,
   nda,
+  notice_hearing,
+  suspension,
+  return_to_work,
+  grievance_ack,
+  retrenchment_s189,
+  retrenchment_letter,
+  incapacity_notice,
+  counselling,
 ];
 
 export function getTemplate(key: string): TemplateDefinition | undefined {
