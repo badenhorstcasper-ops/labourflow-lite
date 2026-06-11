@@ -51,6 +51,7 @@ const empty: Omit<Profile, "owner_user_id"> = {
 export default function CompanyProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [justSaved, setJustSaved] = useState(false);
   const [ownerId, setOwnerId] = useState<string | null>(null);
   const [form, setForm] = useState<typeof empty>(empty);
   const [authed, setAuthed] = useState(false);
@@ -128,6 +129,7 @@ export default function CompanyProfilePage() {
       toast.error("Save failed: " + error.message);
     } else {
       toast.success("Saved — your branding will appear on all new documents.");
+      setJustSaved(true);
       if (wasNewProfile.current) {
         wasNewProfile.current = false;
         navigate("/account-app/documents");
@@ -184,6 +186,19 @@ export default function CompanyProfilePage() {
             share the same layout so they look like they come from the same employer.
           </p>
         </div>
+
+        {justSaved && (
+          <Card className="border-primary/40 bg-primary/10">
+            <CardContent className="p-4 flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm">
+                Profile saved. You can now start using the app.
+              </p>
+              <Button onClick={() => navigate("/account-app/documents")}>
+                Start using the app →
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader><CardTitle>Identity</CardTitle></CardHeader>
@@ -258,10 +273,14 @@ export default function CompanyProfilePage() {
           </CardContent>
         </Card>
 
-        <div className="flex gap-3">
-          <Button onClick={save} disabled={saving}>{saving ? "Saving…" : "Save profile"}</Button>
-          <Button variant="outline" onClick={generateSample}>Generate sample document</Button>
-          <Button variant="secondary" onClick={() => navigate("/account-app/documents")}>Continue to documents →</Button>
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-3">
+            <Button onClick={save} disabled={saving}>{saving ? "Saving…" : "Save profile"}</Button>
+            <Button variant="outline" onClick={generateSample}>Generate sample document</Button>
+          </div>
+          <Button size="lg" className="w-full sm:w-auto" onClick={() => navigate("/account-app/documents")}>
+            Start using the app →
+          </Button>
         </div>
       </div>
     </AppShell>
