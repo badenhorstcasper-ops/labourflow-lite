@@ -10,7 +10,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     `px-3 py-1.5 rounded-md text-sm transition ${
       pathname === p
         ? "bg-primary text-primary-foreground"
-        : "text-foreground hover:bg-muted"
+        : "text-muted-foreground hover:text-foreground hover:bg-muted"
     }`;
   const goBack = () => {
     if (window.history.length > 1) navigate(-1);
@@ -35,8 +35,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               Documents
             </Link>
           </nav>
-          <Button asChild variant="outline" size="sm">
-            <Link to="/account-app/documents">Back to app</Link>
+          <Button asChild size="sm">
+            <Link to="/account-app/documents">Open app →</Link>
           </Button>
         </div>
       </header>

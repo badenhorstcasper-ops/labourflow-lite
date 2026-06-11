@@ -1,32 +1,51 @@
-# Fix dead-end after saving company profile
+## What's wrong now
 
-## Problem
-After PayFast sandbox checkout, the user lands on `/account-app/profile`, fills in the form and clicks **Save profile**. The page just shows a toast — there's no forward navigation, and the only nav options are:
-- `AppShell` header **Back** button → goes back to PayFast / landing
-- `AppShell` header **Back to app** link → goes to `/`, which `Index.tsx` immediately redirects signed-in users back to `/account-app/profile` (an infinite loop on itself)
-- Header nav has **Company profile** and **Documents**, but they look like tabs, not a "you're done, start here" call to action
+The landing site (`app.inreco.co.za/`) uses a dark navy / blue brand (`#0a1f44` → `#0f172a` background, `#2563eb` primary, light text). The account-app pages (`/account-app/profile`, `/account-app/documents`) render with the default light shadcn theme, so they come out white with black text — that's why "the rest of the app is blue but these pages are suddenly white".
 
-So the user feels stranded.
+In that white header:
+- The inactive nav tab is black on white, and on the active blue pill the text contrast reads as "black on blue".
+- The small outline "Back to app" button blends in and is easy to miss.
+- After saving the Company Profile there is no clear, obvious link that says "now go and start using the app" — only a small secondary "Continue to documents →" button mixed in with Save.
 
 ## Fix
 
-Two small, presentation-only changes:
+Pure visual / shell changes. No backend, no routing, no auth.
 
-### 1. `src/pages/CompanyProfile.tsx` — forward the user after first save
-- After a successful `save()`:
-  - Show the existing success toast.
-  - If this was the **first** save (i.e. the profile was empty when the page loaded, tracked with a `wasNewProfile` ref/state set in the initial `useEffect`), navigate to `/account-app/documents` so they land in the actual working area of the app.
-  - On subsequent saves (editing an existing profile) keep current behaviour — just the toast, no redirect — so editing your details later doesn't yank you away.
-- Also add a visible **"Continue to documents →"** button next to **Save profile** / **Generate sample document** that always works, for users who already saved once and want an obvious way forward.
+### 1. Re-skin the React app to match the landing's navy + blue brand
+Update the light-mode tokens in `src/index.css` so every account-app page (profile, documents, share, settings, dashboard, etc.) inherits the same palette as the landing:
 
-### 2. `src/components/AppShell.tsx` — fix the misleading "Back to app" link
-- Change the header **Back to app** button so it links to `/account-app/documents` instead of `/`. On signed-in users `/` just bounces back to `/account-app/profile`, making the button look broken.
-- Keep the **Back** (history) button as is.
+- `--background` → navy `#0f172a`
+- `--foreground` → near-white `#f1f5f9`
+- `--card` / `--popover` → surface `#1e293b`
+- `--muted` → `#273449`, `--muted-foreground` → `#94a3b8`
+- `--border` / `--input` → `#334155`
+- `--primary` → blue `#2563eb`, `--primary-foreground` → white
+- `--secondary` / `--accent` → `#273449` with light foreground
+- `--ring` → `#3b82f6`
+- Keep `--destructive` red.
 
-No backend, routing, PayFast, or auth changes. No new routes. Pure UX wiring on pages that already exist and already render correctly on the live site.
+All values written as HSL per the existing token convention. No component code changes needed — shadcn components and the existing `bg-background` / `text-foreground` classes will instantly match the landing.
 
-## Verification
-1. Sign in fresh, complete PayFast sandbox → land on `/account-app/profile`.
-2. Fill company name + logo → click **Save profile** → toast appears and the app navigates to `/account-app/documents`.
-3. Go back to `/account-app/profile`, change a field, save again → stays on the profile page (no surprise redirect), toast only.
-4. From anywhere in `AppShell`, click **Back to app** in the header → lands on `/account-app/documents`, not back on the profile page.
+### 2. Fix the header in `src/components/AppShell.tsx`
+- Inactive nav links: change to `text-muted-foreground hover:text-foreground hover:bg-muted` so they're legible against the navy header.
+- Active nav link: blue pill with white text (already correct after the token change — just verify).
+- Replace the small outline "Back to app" button with a prominent **primary** button labelled **"Open app →"** that links to `/account-app/documents`, so it's the obvious call to action and impossible to miss.
+- Keep the "Back" (history) button as a subtle ghost style that stays visible on navy.
+
+### 3. Make "start using the app" obvious on Company Profile
+In `src/pages/CompanyProfile.tsx`:
+- Promote the existing "Continue to documents →" button to a **large primary "Start using the app →"** button, placed on its own line below the Save row so it's the clear next step.
+- After a successful save show a small inline confirmation panel at the top of the page with the same **"Start using the app →"** button (in addition to the toast) so the user always has a one-click way forward without scrolling.
+- Both buttons navigate to `/account-app/documents` (the main working area).
+
+### 4. Quick visual check
+After the changes, load `/account-app/profile` and `/account-app/documents` in the preview and confirm:
+- Background matches the landing's navy.
+- Both "Company profile" and "Documents" tabs are readable in active and inactive states.
+- The "Open app →" button in the header is obvious.
+- After saving the Company Profile, the "Start using the app →" button is clearly visible.
+
+## Out of scope
+- No changes to the landing page (`index.html`).
+- No changes to PayFast, auth, or any data.
+- Dark-mode tokens left untouched.
