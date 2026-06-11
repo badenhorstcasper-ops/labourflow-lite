@@ -1,64 +1,72 @@
 ## Goal
+Get iNRECO ready to launch — close the two functional gaps blocking real use, verify every flow works end‑to‑end with your test account, then publish.
 
-1. Make "Start using the app" / "Open app" land on `/dashboard` instead of `/account-app/documents`.
-2. Drive the live preview with the test account `casper@inreco.co.za` and verify every key flow end-to-end, fixing bugs found along the way.
+## What's blocking launch today
+1. **No way to actually generate documents.** `src/lib/documents/generateDocument` exists, but the only place that calls it is a "Generate sample" button on Company profile. Users can't pick a template (warning, contract, etc.).
+2. **`/dashboard` is a placeholder** ("Your app will live here"). All the "Open app" / "Start using the app" buttons now land on a blank page.
+3. **`/` redirects logged‑in users to `/account-app/profile`** instead of an app hub.
 
-## Part 1 — Code change (small)
+## Plan
 
-Update three call sites so the main entry into the app is `/dashboard`:
+### 1. Build a real `/dashboard` hub (`src/pages/Dashboard.tsx`)
+A logged‑in landing page inside `AppShell` showing:
+- Greeting + current plan/status (from `subscriptions`)
+- **Profile completeness** card — banner + "Complete your company profile" CTA if `company_profiles.company_name` is empty
+- **Quick actions**: Generate document, View documents, Edit company profile, Manage subscription
+- **Recent documents** (latest 5 from `generated_documents`) with PDF/DOCX/Copy‑link buttons
+- Link to Health, Settings, Contact in footer of the card grid
 
-- `src/pages/CompanyProfile.tsx`
-  - line 135: `navigate("/account-app/documents")` → `navigate("/dashboard")` (post-save redirect for new profiles).
-  - line 196: post-save confirmation panel button → `/dashboard`.
-  - line 281: large "Start using the app →" button → `/dashboard`.
-- `src/components/AppShell.tsx`
-  - line 39: header "Open app →" button → `/dashboard`.
-  - line 34: leave the "Documents" tab link pointing at `/account-app/documents` (it's a section tab, not the app entry).
+If not signed in → redirect to `/auth`.
 
-Button label stays "Start using the app →" / "Open app →".
+### 2. Build the document generator (`src/pages/Generate.tsx`, route `/account-app/generate`)
+Template picker for the core HR document types iNRECO needs at launch:
+- Written warning (verbal/written/final variants)
+- Employment contract
+- Dismissal letter
+- Performance improvement plan (PIP)
+- Leave approval / refusal letter
+- Confidentiality / NDA
 
-## Part 2 — End-to-end test run
+Each template = a small form (recipient name, dates, reason, custom paragraphs) → builds a `DocumentTemplate` (existing type) → calls `generateDocument()` → on success shows PDF/DOCX download buttons + share link, and a "View all documents" link.
 
-I'll use `browser--view_preview` against the preview URL and sign in as `casper@inreco.co.za`. Each step below will be observed/acted on, with screenshots at key checkpoints and console + network logs checked for errors.
+New file: `src/lib/documents/templates/index.ts` exporting the six template builders so the same definitions can be reused later (server, email, etc.).
 
-### 1. Marketing → Checkout → PayFast
-1. Land on `/`, verify hero, nav, footer, links.
-2. Navigate to `/pricing`, pick a paid plan, follow PayFast sandbox redirect.
-3. Complete sandbox payment, confirm return to `/payment-success`.
-4. Confirm `subscriptions` row updated for the user (via `supabase--read_query`).
-5. Also visit `/payment-cancelled` path to confirm graceful copy.
+### 3. Wire navigation correctly
+- `src/pages/Index.tsx`: signed‑in → `/dashboard`, signed‑out → `/` static landing (keep current `/pricing` fallback if no landing route exists — confirm by reading the router).
+- `src/pages/Auth.tsx` (3 redirects on lines 29, 57, 63, 99): all → `/dashboard`.
+- `src/pages/CompanyProfile.tsx`: "Start using the app" buttons → `/dashboard` (already done in last turn — verify).
+- `src/components/AppShell.tsx`: "Open app" header button → `/dashboard`. Add "Generate" tab to the section nav alongside Documents / Profile / Health.
+- Register `/account-app/generate` and confirm `/dashboard` route in `src/App.tsx`.
 
-### 2. Auth
-1. Sign out, then sign back in with the test credentials at `/auth`.
-2. Try a deliberately wrong password → expect inline error, no crash.
-3. Trigger "forgot password" flow if present — verify it doesn't auto-log-in.
-4. Confirm protected routes (`/dashboard`, `/account-app/*`, `/settings`) redirect to `/auth` when signed out.
+### 4. End‑to‑end verification in the preview browser
+Using `casper@inreco.co.za` / `Casper@771103`:
+1. Static landing → `/pricing` → pick a plan → PayFast **sandbox** → complete payment → `/payment-success` → verify `subscriptions` row updated.
+2. Sign out, sign in, wrong password, forgot password → `/reset-password` flow loads.
+3. `/dashboard` renders with plan + completeness + recents.
+4. Company profile: edit name + upload logo + save → toast + confirmation panel → "Start using the app" → lands on `/dashboard`.
+5. Generate: pick each of the six templates, fill the form, generate → PDF + DOCX download with iNRECO branding and user's company branding → share link opens `/d/:token` in incognito tab → revoke link → confirm 410/blocked.
+6. Documents list: download, copy link, revoke, delete all work.
+7. Settings: subscription shows + cancel works.
+8. `/account-app/health`, `/contact`, `/terms`, `/privacy`, `/disclaimer` render with no console errors.
 
-### 3. Company profile save + navigation
-1. Go to `/account-app/profile`, edit company name, upload a logo to the `company-logos` bucket, save.
-2. Verify toast + post-save confirmation panel appear.
-3. Click "Start using the app →" → expect `/dashboard` (after fix).
-4. Reload `/account-app/profile` and confirm saved values + logo persist.
+Each step: capture pass/fail. Fix bugs found inline before moving on. Report at the end.
 
-### 4. Documents (core feature)
-1. From `/account-app/documents`, generate at least one document of each available template.
-2. Verify each PDF + DOCX downloads, opens, and uses iNRECO branding (never "Labourflow" / "iNRECO Consulting"), per the project memory.
-3. Verify `next_document_number` increments and `generated_documents` row is created.
-4. Create a share link (`/d/:token`), open it in a fresh tab, confirm it renders and logs to `share_access_log`.
-5. Revoke / regenerate share link if the UI supports it; confirm old token 404s.
+### 5. Pre‑publish hygiene
+- Run security scan; address criticals (or surface them) before publishing.
+- Verify SEO basics on `index.html`: iNRECO title, meta description, OG/Twitter tags, favicon.
+- Confirm no references to "Labourflow" or "iNRECO Consulting" anywhere in code or generated docs.
 
-### 5. Health + misc
-1. Hit `/account-app/health` and confirm it loads cleanly.
-2. Spot-check `/settings`, `/contact`, `/terms`, `/privacy`, `/disclaimer`.
+### 6. Publish
+Publish to `app.inreco.co.za`.
 
-### Reporting
-At the end I'll produce a single report with:
-- Pass / Fail per step (with screenshots for failures).
-- Console + network errors seen.
-- Any bugs I fixed inline (with file + line summary).
-- Anything that needs your decision before I touch it (e.g. destructive actions, real payments).
+## Out of scope
+- Redesign of marketing landing or pricing page copy.
+- New backend tables/RLS changes (existing schema already supports all of the above).
+- Team invites UX changes, additional auth providers, new payment provider, or new languages.
+- Adding more than the six launch templates (more can be added later via `templates/index.ts`).
 
-### Out of scope
-- No backend schema or RLS changes unless a test uncovers a blocker.
-- No landing/marketing copy redesign.
-- No new templates or features.
+## Technical notes
+- All templates go through `generateDocument()` per project memory — shared house style + user branding.
+- No schema changes needed: `generated_documents`, `company_profiles`, `subscriptions`, `next_document_number` RPC all already exist.
+- Storage bucket `documents` is private with signed URLs — keep as is.
+- New routes are client‑only React Router routes; no hosting config needed.

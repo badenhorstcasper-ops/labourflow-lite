@@ -28,11 +28,17 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <a href="/" className="font-bold tracking-tight text-lg">iNRECO</a>
           </div>
           <nav className="flex items-center gap-1">
-            <Link className={linkCls("/account-app/profile")} to="/account-app/profile">
-              Company profile
+            <Link className={linkCls("/dashboard")} to="/dashboard">
+              Dashboard
+            </Link>
+            <Link className={linkCls("/account-app/generate")} to="/account-app/generate">
+              Generate
             </Link>
             <Link className={linkCls("/account-app/documents")} to="/account-app/documents">
               Documents
+            </Link>
+            <Link className={linkCls("/account-app/profile")} to="/account-app/profile">
+              Profile
             </Link>
           </nav>
           <Button asChild size="sm">
