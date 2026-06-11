@@ -132,7 +132,7 @@ export default function CompanyProfilePage() {
       setJustSaved(true);
       if (wasNewProfile.current) {
         wasNewProfile.current = false;
-        navigate("/account-app/documents");
+        navigate("/dashboard");
       }
     }
   }
