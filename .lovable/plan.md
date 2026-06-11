@@ -1,49 +1,45 @@
-## Problem
+## Root cause
 
-PDF generation crashes with `WinAnsi cannot encode "_" (0x2500)`. Despite the label "_", `0x2500` is actually the Unicode **box-drawing horizontal line** character `─`. The standard Helvetica font in `pdf-lib` only supports the WinAnsi character set, so any box-drawing glyph, smart quote, em-dash, non-breaking space, bullet variant, etc. that sneaks in from the source text (or from a copy/paste in the legacy app) blows up the whole render.
+On the live site, navigating to `/terms`, `/privacy` or `/disclaimer` shows only the yellow test banner and the footer — the React legal page never mounts (confirmed by browser screenshot + console error `Uncaught Error: react-route`).
 
-DOCX has no such restriction, which is why Word output works fine.
+The legacy app's inline `<script type="module">` in `index.html` (around line 826) currently does:
+
+```js
+const p = window.location.pathname;
+if (p.startsWith('/d/') || p.startsWith('/account-app') || ... || p === '/disclaimer') {
+  throw new Error('react-route');
+}
+```
+
+…to skip the legacy bootstrap on React routes. This works in the Vite dev server (preview) because each inline module is served as its own ES module. But Vite's **production build bundles every `<script type="module">` (the inline legacy bootstrap + `/src/main.tsx`) into a single chunk**. Confirmed by grepping the deployed bundle — the `throw new Error("react-route")` and the React mount code live in the same chunk. The top-level throw halts the entire chunk before `main.tsx` runs `shouldMountReact()` / `body.innerHTML = '<div id="root"></div>'`, so React never mounts on live.
 
 ## Fix
 
-One small, contained change in `src/lib/documents/renderPdf.ts`: sanitize every string the moment before it's handed to `page.drawText` / `font.widthOfTextAtSize`, mapping known troublemakers to safe WinAnsi equivalents and stripping anything else that's still out of range.
+Replace the throw-to-bail pattern with a non-throwing guard so the chunk keeps evaluating and `main.tsx` can mount React.
 
-### Mapping table (common offenders)
+1. In `index.html`, in the legacy inline `<script type="module">`, remove the `throw new Error('react-route')`. Instead, set a window flag and gate the legacy bootstrap's actual side-effects on it:
 
-| Char(s) | Code | Replacement |
-|---|---|---|
-| `─ ━ │ ┃` and other box-drawing | U+2500–U+257F | `-` (horizontal) / `|` (vertical) |
-| `– —` en/em dash | U+2013/2014 | `-` |
-| `' ' ‚ ‛` smart single quotes | U+2018/2019/etc | `'` |
-| `" " „ ‟` smart double quotes | U+201C/201D/etc | `"` |
-| `… ` ellipsis | U+2026 | `...` |
-| `• ‣ ◦` bullets | U+2022/etc | `•` is actually in WinAnsi (0x95), keep; map the rest to `*` |
-| ` ` non-breaking space | U+00A0 | regular space |
-| `→ ← ↔` arrows | U+2190+ | `->` `<-` `<->` |
-| `✓ ✗` checks | U+2713/2717 | `[x]` / `[ ]` |
-| Anything else > U+00FF still unsupported | — | drop with empty string (last-resort) |
+   ```js
+   const __p = window.location.pathname;
+   window.__IS_REACT_ROUTE__ =
+     __p.startsWith('/d/') ||
+     __p.startsWith('/account-app') ||
+     __p.startsWith('/share/') ||
+     __p === '/terms' || __p === '/privacy' || __p === '/disclaimer';
+   ```
 
-### Where it applies
+2. Find the legacy bootstrap's entry call (the `DOMContentLoaded` handler / `init()` invocation near the bottom of the inline module in `index.html`) and short-circuit it:
 
-A single `sanitizeWinAnsi(s: string)` helper added at the top of `renderPdf.ts`, then called in exactly these spots so nothing slips past:
+   ```js
+   if (!window.__IS_REACT_ROUTE__) {
+     // existing init / event wiring
+   }
+   ```
 
-1. `wrap()` — incoming `text`
-2. `drawText()` — incoming `text` (covers title, subtitle, headings, footer page label)
-3. `runsToWords()` — `r.text` for every inline run (covers justified paragraphs + bulleted lists)
-4. `drawRunsLeft()` prefix strings (`"•  "`, `"   "`) — already safe, no change needed
-5. Header text: `name`, `trading`, `meta`, `Doc #`, `Date`
-6. Footer: `companyFooterLine(company)`
-7. Signature labels and names
+   Top-level `import` statements and pure function definitions stay as-is — they have no visible side-effects, so leaving them to evaluate on React routes is harmless.
 
-Doing it inside the low-level draw helpers (1–3) catches the vast majority automatically; 5–7 are belt-and-braces for company/signature fields that bypass those helpers.
+3. Leave `src/main.tsx` unchanged — its `shouldMountReact()` check already covers `/terms`, `/privacy`, `/disclaimer`, and once the chunk stops throwing it will run normally and replace `document.body` with the React tree.
 
-### Out of scope
+4. Verify after deploy: load `https://app.inreco.co.za/terms` — React legal page renders, no `react-route` error in console, and the in-app footer links navigate correctly.
 
-- No change to `clientEntry.ts` (parser stays as is — DOCX should keep the original Unicode).
-- No change to `renderDocx.ts` (Word handles Unicode natively).
-- No embedded custom Unicode font — that would balloon the PDF size for what is, in practice, a handful of stray glyphs from pasted text.
-- No change to the legacy input format or to the markdown parsing fix from the previous round.
-
-## Files touched
-
-- `src/lib/documents/renderPdf.ts` — add `sanitizeWinAnsi()` helper and call it from the draw helpers + header/footer/signature spots listed above.
+No backend, schema, or React route changes are needed.
