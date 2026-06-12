@@ -4,8 +4,24 @@ import TeamManagement from "@/components/TeamManagement";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
-type Sub = { id: string; plan_name: string; status: string };
+type Sub = {
+  id: string;
+  plan_name: string;
+  status: string;
+  trial_ends_at: string | null;
+};
 
 const Settings = () => {
   const [sub, setSub] = useState<Sub | null>(null);
@@ -13,9 +29,10 @@ const Settings = () => {
   const [cancelling, setCancelling] = useState(false);
 
   async function refresh() {
+    setLoading(true);
     const { data } = await supabase
       .from("subscriptions")
-      .select("id, plan_name, status")
+      .select("id, plan_name, status, trial_ends_at")
       .order("updated_at", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -28,21 +45,27 @@ const Settings = () => {
   }, []);
 
   async function onCancel() {
-    if (!sub) return;
-    if (!confirm("Cancel your subscription? You'll keep access until the end of your billing period.")) return;
     setCancelling(true);
-    const { error } = await supabase
-      .from("subscriptions")
-      .update({ status: "cancelled" })
-      .eq("id", sub.id);
-    setCancelling(false);
-    if (error) {
-      toast.error(error.message);
-      return;
+    try {
+      const { data, error } = await supabase.functions.invoke("payfast-cancel", {
+        body: {},
+      });
+      if (error) throw error;
+      if (data && (data as { ok?: boolean }).ok) {
+        toast.success("Subscription cancelled.");
+      } else {
+        toast.success("Subscription marked cancelled.");
+      }
+      await refresh();
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Could not cancel subscription.";
+      toast.error(msg);
+    } finally {
+      setCancelling(false);
     }
-    toast.success("Subscription cancelled.");
-    refresh();
   }
+
+  const canCancel = !!sub && (sub.status === "active" || sub.status === "trialing");
 
   return (
     <div className="min-h-screen bg-background">
@@ -56,20 +79,51 @@ const Settings = () => {
         <section className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Subscription</CardTitle>
+              <CardTitle>Billing</CardTitle>
               <CardDescription>
                 {loading
                   ? "Loading…"
                   : sub
-                    ? `${sub.plan_name} — ${sub.status}`
+                    ? (
+                        <>
+                          <strong>{sub.plan_name}</strong> — {sub.status}
+                          {sub.trial_ends_at && sub.status === "trialing" && (
+                            <>
+                              {" "}
+                              · first debit on{" "}
+                              {new Date(sub.trial_ends_at).toLocaleDateString("en-ZA")}
+                            </>
+                          )}
+                        </>
+                      )
                     : "No active subscription."}
               </CardDescription>
             </CardHeader>
-            {sub && sub.status === "active" && (
+            {canCancel && (
               <CardContent>
-                <Button variant="destructive" onClick={onCancel} disabled={cancelling}>
-                  {cancelling ? "Cancelling…" : "Cancel subscription"}
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" disabled={cancelling}>
+                      {cancelling ? "Cancelling…" : "Cancel subscription"}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Cancel your subscription?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Future debits will stop immediately. You'll lose access to CARA,
+                        the document generator and your dashboard. You can re-subscribe
+                        at any time.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Keep my plan</AlertDialogCancel>
+                      <AlertDialogAction onClick={onCancel}>
+                        Yes, cancel
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </CardContent>
             )}
           </Card>

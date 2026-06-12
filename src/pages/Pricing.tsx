@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -14,10 +14,16 @@ import {
 } from "@/components/ui/card";
 import TestModeBanner from "@/components/TestModeBanner";
 
-// SANDBOX endpoint — switch to https://www.payfast.co.za/eng/process for live
-const PAYFAST_URL = "https://sandbox.payfast.co.za/eng/process";
-const MERCHANT_ID = "10000100";
-const MERCHANT_KEY = "46f0cd694581a";
+// Live vs sandbox is controlled by VITE_PAYFAST_LIVE in project env.
+const IS_LIVE = import.meta.env.VITE_PAYFAST_LIVE === "true";
+const PAYFAST_URL = IS_LIVE
+  ? "https://www.payfast.co.za/eng/process"
+  : "https://sandbox.payfast.co.za/eng/process";
+const MERCHANT_ID = IS_LIVE ? "12090292" : "10000100";
+// Merchant key is public (it travels in the form). Live key comes from env.
+const MERCHANT_KEY = IS_LIVE
+  ? (import.meta.env.VITE_PAYFAST_MERCHANT_KEY as string | undefined) || ""
+  : "46f0cd694581a";
 const RETURN_URL = "https://app.inreco.co.za/payment-success";
 const CANCEL_URL = "https://app.inreco.co.za/payment-cancelled";
 const NOTIFY_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/payfast-webhook`;
@@ -120,10 +126,19 @@ function trialBillingDate(): string {
   return d.toISOString().slice(0, 10);
 }
 
+const REASON_MESSAGES: Record<string, string> = {
+  trial_ended: "Your 7-day free trial has ended. Pick a plan to keep using iNRECO.",
+  subscription_cancelled: "Your subscription is cancelled. Re-subscribe to keep using iNRECO.",
+  no_subscription: "You need an active plan to use iNRECO. Start your 7-day free trial below.",
+};
+
 const Pricing = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string>("");
   const [guestEmail, setGuestEmail] = useState<string>("");
+  const [searchParams] = useSearchParams();
+  const reason = searchParams.get("reason");
+  const reasonMessage = reason ? REASON_MESSAGES[reason] : null;
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -140,6 +155,11 @@ const Pricing = () => {
     <div className="min-h-screen bg-background">
       <TestModeBanner />
       <div className="container mx-auto max-w-7xl px-4 py-12">
+        {reasonMessage && (
+          <div className="mx-auto mb-6 max-w-2xl rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            {reasonMessage}
+          </div>
+        )}
         <header className="mb-10 text-center">
           <h1 className="text-3xl font-bold tracking-tight">Start Free</h1>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -147,7 +167,7 @@ const Pricing = () => {
             charge during the trial, cancel anytime.
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Secure recurring billing via PayFast (sandbox mode — no real charges).
+            Secure recurring billing via PayFast{IS_LIVE ? "" : " (sandbox mode — no real charges)"}.
             By subscribing you agree to our{" "}
             <Link to="/terms" className="underline">Terms of Use</Link>,{" "}
             <Link to="/privacy" className="underline">Privacy Policy</Link> and{" "}

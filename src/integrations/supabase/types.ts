@@ -449,6 +449,8 @@ export type Database = {
           created_at: string
           email: string | null
           id: string
+          payfast_token: string | null
+          pf_payment_id: string | null
           plan_name: string
           status: string
           trial_ends_at: string | null
@@ -459,6 +461,8 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          payfast_token?: string | null
+          pf_payment_id?: string | null
           plan_name: string
           status?: string
           trial_ends_at?: string | null
@@ -469,6 +473,8 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          payfast_token?: string | null
+          pf_payment_id?: string | null
           plan_name?: string
           status?: string
           trial_ends_at?: string | null

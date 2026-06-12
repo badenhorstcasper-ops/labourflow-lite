@@ -1,12 +1,16 @@
 // PayFast ITN (Instant Transaction Notification) webhook — hardened
-// Defenses applied (Option B, no passphrase required):
+// Defenses applied:
 //   1. Reject unknown merchant IDs
 //   2. Validate source IP against PayFast's published hostnames
-//   3. Server-to-server verification callback to PayFast /eng/query/validate
-//   4. Idempotency via UNIQUE(m_payment_id) in payfast_webhook_log
-//   5. Amount must match the expected plan price (prevents tier-jumping)
-//   6. Every accepted / rejected ITN is logged for auditing
+//   3. Optional MD5 signature verification when PAYFAST_PASSPHRASE is set
+//   4. Server-to-server verification callback to PayFast /eng/query/validate
+//   5. Idempotency via UNIQUE(m_payment_id) in payfast_webhook_log
+//   6. Amount must match the expected plan price (prevents tier-jumping)
+//   7. Every accepted / rejected ITN is logged for auditing
+//   8. Captures subscription token + pf_payment_id for later cancel API calls
+//   9. Handles CANCELLED status to flip subscriptions.status
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { crypto } from "https://deno.land/std@0.224.0/crypto/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,10 +20,9 @@ const corsHeaders = {
 
 // Public PayFast merchant credentials — not secret.
 const MERCHANT_ID = "12090292";
-// Mode: "sandbox" or "live". Set PAYFAST_MODE secret to "live" before launch.
-// Defaults to "sandbox" so dev/preview never accidentally hits real PayFast.
 const PAYFAST_MODE: "sandbox" | "live" =
   (Deno.env.get("PAYFAST_MODE")?.toLowerCase() === "live" ? "live" : "sandbox");
+const PAYFAST_PASSPHRASE = Deno.env.get("PAYFAST_PASSPHRASE") || "";
 const SANDBOX_TEST_MERCHANT = "10000100";
 
 const PAYFAST_HOST = PAYFAST_MODE === "live" ? "www.payfast.co.za" : "sandbox.payfast.co.za";
@@ -66,6 +69,40 @@ function clientIp(req: Request): string | null {
   return req.headers.get("x-real-ip");
 }
 
+// PayFast signature: md5 of urlencoded(sortedFields) + &passphrase=...
+// Fields are taken in the order they appear in the POST body, EXCLUDING `signature`.
+async function md5Hex(input: string): Promise<string> {
+  const buf = new TextEncoder().encode(input);
+  const hash = await crypto.subtle.digest("MD5", buf);
+  return Array.from(new Uint8Array(hash))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function pfEncode(v: string): string {
+  // PayFast uses +-style encoding (application/x-www-form-urlencoded)
+  return encodeURIComponent(v).replace(/%20/g, "+");
+}
+
+async function verifySignature(raw: string, providedSig: string): Promise<boolean> {
+  if (!PAYFAST_PASSPHRASE) return true; // not enforced when passphrase unset
+  if (!providedSig) return false;
+  // Rebuild from raw body preserving order, drop `signature`.
+  const pairs: [string, string][] = [];
+  for (const part of raw.split("&")) {
+    if (!part) continue;
+    const eq = part.indexOf("=");
+    const k = decodeURIComponent(eq === -1 ? part : part.slice(0, eq));
+    const v = decodeURIComponent(eq === -1 ? "" : part.slice(eq + 1).replace(/\+/g, " "));
+    if (k === "signature") continue;
+    pairs.push([k, v]);
+  }
+  const base = pairs.map(([k, v]) => `${k}=${pfEncode(v)}`).join("&");
+  const withPass = `${base}&passphrase=${pfEncode(PAYFAST_PASSPHRASE)}`;
+  const expected = await md5Hex(withPass);
+  return expected.toLowerCase() === providedSig.toLowerCase();
+}
+
 async function logAttempt(
   supabase: ReturnType<typeof createClient>,
   fields: Record<string, unknown>,
@@ -97,6 +134,8 @@ Deno.serve(async (req) => {
   const paymentStatus = data["payment_status"] || null;
   const amountGross = parseFloat(data["amount_gross"] || "0") || null;
   const planName = data["custom_str2"] || (mPaymentId || "").split("|")[1] || null;
+  const subToken = data["token"] || null;
+  const signature = data["signature"] || "";
 
   const baseLog = {
     m_payment_id: mPaymentId,
@@ -109,7 +148,6 @@ Deno.serve(async (req) => {
     payload: data,
   };
 
-  // PayFast expects a 200 OK on every ITN; we always return 200 but only mutate on success.
   const ok = () => new Response("OK", { status: 200, headers: corsHeaders });
 
   try {
@@ -130,7 +168,16 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 3. Server-to-server validation callback
+    // 3. Optional signature check (only when PAYFAST_PASSPHRASE is set)
+    if (PAYFAST_PASSPHRASE) {
+      const sigOk = await verifySignature(raw, signature);
+      if (!sigOk) {
+        await logAttempt(supabase, { ...baseLog, outcome: "rejected", reason: "bad_signature" });
+        return ok();
+      }
+    }
+
+    // 4. Server-to-server validation callback
     try {
       const verifyRes = await fetch(VALIDATE_URL, {
         method: "POST",
@@ -155,6 +202,42 @@ Deno.serve(async (req) => {
       return ok();
     }
 
+    // 4b. Handle CANCELLED ITN — flip status without amount/plan check.
+    if (paymentStatus === "CANCELLED") {
+      // Try locate by token first, then by m_payment_id user/email.
+      let row: { id: string } | null = null;
+      if (subToken) {
+        const { data: r } = await supabase
+          .from("subscriptions")
+          .select("id")
+          .eq("payfast_token", subToken)
+          .maybeSingle();
+        row = r ?? null;
+      }
+      if (!row) {
+        const mParts = (mPaymentId || "").split("|");
+        const userIdRaw = data["custom_str1"] || mParts[0] || "";
+        const userId = userIdRaw && userIdRaw !== "guest" && userIdRaw !== "anon" ? userIdRaw : null;
+        if (userId) {
+          const { data: r } = await supabase
+            .from("subscriptions")
+            .select("id")
+            .eq("user_id", userId)
+            .limit(1)
+            .maybeSingle();
+          row = r ?? null;
+        }
+      }
+      if (row) {
+        await supabase
+          .from("subscriptions")
+          .update({ status: "cancelled", updated_at: new Date().toISOString() })
+          .eq("id", row.id);
+      }
+      await logAttempt(supabase, { ...baseLog, outcome: "accepted", reason: "cancelled" });
+      return ok();
+    }
+
     if (paymentStatus !== "COMPLETE") {
       await logAttempt(supabase, { ...baseLog, outcome: "ignored", reason: `status:${paymentStatus}` });
       return ok();
@@ -165,8 +248,7 @@ Deno.serve(async (req) => {
       return ok();
     }
 
-    // 4. Idempotency — UNIQUE(m_payment_id) makes the insert below conflict on replay.
-    //    We use the insert itself as our claim; on conflict we short-circuit.
+    // 5. Idempotency
     if (mPaymentId) {
       const { data: existing } = await supabase
         .from("payfast_webhook_log")
@@ -180,10 +262,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 5. Amount / plan cross-check.
-    //    Special case: a "trial signup" ITN has amount_gross = 0 because we
-    //    set amount=0 on the PayFast form and the first real debit only
-    //    happens on billing_date. We accept that and store status='trialing'.
+    // 6. Amount / plan cross-check (trial signup = 0).
     const expected = PLAN_PRICES[planName];
     if (expected === undefined) {
       await logAttempt(supabase, { ...baseLog, outcome: "rejected", reason: "unknown_plan" });
@@ -214,7 +293,6 @@ Deno.serve(async (req) => {
 
     const now = new Date().toISOString();
     const newStatus = isTrialSignup ? "trialing" : "active";
-    // billing_date arrives back from PayFast on the trial signup ITN.
     const trialEndsAt = isTrialSignup
       ? (data["billing_date"] ? new Date(data["billing_date"]).toISOString() : null)
       : null;
@@ -240,6 +318,14 @@ Deno.serve(async (req) => {
       existingId = row?.id ?? null;
     }
 
+    const writeExtras = {
+      ...(trialEndsAt ? { trial_ends_at: trialEndsAt } : {}),
+      ...(userId ? { user_id: userId } : {}),
+      ...(email ? { email } : {}),
+      ...(subToken ? { payfast_token: subToken } : {}),
+      ...(pfPaymentId ? { pf_payment_id: pfPaymentId } : {}),
+    };
+
     if (existingId) {
       await supabase
         .from("subscriptions")
@@ -247,9 +333,7 @@ Deno.serve(async (req) => {
           plan_name: planName,
           status: newStatus,
           updated_at: now,
-          ...(trialEndsAt ? { trial_ends_at: trialEndsAt } : {}),
-          ...(userId ? { user_id: userId } : {}),
-          ...(email ? { email } : {}),
+          ...writeExtras,
         })
         .eq("id", existingId);
     } else {
@@ -260,6 +344,8 @@ Deno.serve(async (req) => {
         status: newStatus,
         trial_ends_at: trialEndsAt,
         updated_at: now,
+        ...(subToken ? { payfast_token: subToken } : {}),
+        ...(pfPaymentId ? { pf_payment_id: pfPaymentId } : {}),
       });
     }
 
