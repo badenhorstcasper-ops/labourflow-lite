@@ -167,7 +167,7 @@ const Pricing = () => {
             charge during the trial, cancel anytime.
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Secure recurring billing via PayFast (sandbox mode — no real charges).
+            Secure recurring billing via PayFast{IS_LIVE ? "" : " (sandbox mode — no real charges)"}.
             By subscribing you agree to our{" "}
             <Link to="/terms" className="underline">Terms of Use</Link>,{" "}
             <Link to="/privacy" className="underline">Privacy Policy</Link> and{" "}
