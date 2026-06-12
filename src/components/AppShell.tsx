@@ -2,10 +2,12 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Home } from "lucide-react";
 import ReportProblemButton from "@/components/ReportProblemButton";
+import { useSubscription } from "@/hooks/useSubscription";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  const { status, daysLeft } = useSubscription();
   const linkCls = (p: string) =>
     `px-3 py-1.5 rounded-md text-sm transition ${
       pathname === p
@@ -29,6 +31,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               <Home className="h-4 w-4" />
             </Link>
             <Link to="/app" className="font-bold tracking-tight text-lg">iNRECO</Link>
+            {status === "trialing" && daysLeft !== null && (
+              <Link
+                to="/pricing"
+                className="ml-1 inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary hover:bg-primary/20"
+                title="Trial in progress"
+              >
+                Trial: {daysLeft} {daysLeft === 1 ? "day" : "days"} left
+              </Link>
+            )}
           </div>
           <nav className="flex items-center gap-1 flex-wrap">
             <Link className={linkCls("/app")} to="/app">CARA</Link>

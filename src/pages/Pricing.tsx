@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -14,10 +14,16 @@ import {
 } from "@/components/ui/card";
 import TestModeBanner from "@/components/TestModeBanner";
 
-// SANDBOX endpoint — switch to https://www.payfast.co.za/eng/process for live
-const PAYFAST_URL = "https://sandbox.payfast.co.za/eng/process";
-const MERCHANT_ID = "10000100";
-const MERCHANT_KEY = "46f0cd694581a";
+// Live vs sandbox is controlled by VITE_PAYFAST_LIVE in project env.
+const IS_LIVE = import.meta.env.VITE_PAYFAST_LIVE === "true";
+const PAYFAST_URL = IS_LIVE
+  ? "https://www.payfast.co.za/eng/process"
+  : "https://sandbox.payfast.co.za/eng/process";
+const MERCHANT_ID = IS_LIVE ? "12090292" : "10000100";
+// Merchant key is public (it travels in the form). Live key comes from env.
+const MERCHANT_KEY = IS_LIVE
+  ? (import.meta.env.VITE_PAYFAST_MERCHANT_KEY as string | undefined) || ""
+  : "46f0cd694581a";
 const RETURN_URL = "https://app.inreco.co.za/payment-success";
 const CANCEL_URL = "https://app.inreco.co.za/payment-cancelled";
 const NOTIFY_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/payfast-webhook`;

@@ -21,8 +21,11 @@ import Privacy from "@/pages/Privacy";
 import Disclaimer from "@/pages/Disclaimer";
 import ContrastAudit from "@/components/dev/ContrastAudit";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import RequireSubscription from "@/components/RequireSubscription";
 
 const queryClient = new QueryClient();
+
+const gated = (el: React.ReactNode) => <RequireSubscription>{el}</RequireSubscription>;
 
 export default function App() {
   return (
@@ -30,24 +33,28 @@ export default function App() {
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <Routes>
+            {/* Open routes */}
             <Route path="/" element={<Index />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/payment-cancelled" element={<PaymentCancelled />} />
-            <Route path="/app" element={<CaraPage />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/account-app" element={<CompanyProfilePage />} />
-            <Route path="/account-app/profile" element={<CompanyProfilePage />} />
-            <Route path="/account-app/documents" element={<DocumentsPage />} />
-            <Route path="/account-app/generate" element={<GeneratePage />} />
-            <Route path="/account-app/health" element={<HealthPage />} />
             <Route path="/d/:token" element={<SharePage />} />
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/disclaimer" element={<Disclaimer />} />
+
+            {/* Subscription-gated routes */}
+            <Route path="/app" element={gated(<CaraPage />)} />
+            <Route path="/dashboard" element={gated(<Dashboard />)} />
+            <Route path="/settings" element={gated(<Settings />)} />
+            <Route path="/account-app" element={gated(<CompanyProfilePage />)} />
+            <Route path="/account-app/profile" element={gated(<CompanyProfilePage />)} />
+            <Route path="/account-app/documents" element={gated(<DocumentsPage />)} />
+            <Route path="/account-app/generate" element={gated(<GeneratePage />)} />
+            <Route path="/account-app/health" element={gated(<HealthPage />)} />
+
             <Route path="*" element={<NotFound />} />
           </Routes>
           <Toaster />
