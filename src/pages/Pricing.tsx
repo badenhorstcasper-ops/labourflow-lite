@@ -126,10 +126,19 @@ function trialBillingDate(): string {
   return d.toISOString().slice(0, 10);
 }
 
+const REASON_MESSAGES: Record<string, string> = {
+  trial_ended: "Your 7-day free trial has ended. Pick a plan to keep using iNRECO.",
+  subscription_cancelled: "Your subscription is cancelled. Re-subscribe to keep using iNRECO.",
+  no_subscription: "You need an active plan to use iNRECO. Start your 7-day free trial below.",
+};
+
 const Pricing = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string>("");
   const [guestEmail, setGuestEmail] = useState<string>("");
+  const [searchParams] = useSearchParams();
+  const reason = searchParams.get("reason");
+  const reasonMessage = reason ? REASON_MESSAGES[reason] : null;
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -146,6 +155,11 @@ const Pricing = () => {
     <div className="min-h-screen bg-background">
       <TestModeBanner />
       <div className="container mx-auto max-w-7xl px-4 py-12">
+        {reasonMessage && (
+          <div className="mx-auto mb-6 max-w-2xl rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            {reasonMessage}
+          </div>
+        )}
         <header className="mb-10 text-center">
           <h1 className="text-3xl font-bold tracking-tight">Start Free</h1>
           <p className="mt-2 text-sm text-muted-foreground">
