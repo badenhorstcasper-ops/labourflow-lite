@@ -1,85 +1,81 @@
-## Goal
+# Launch hardening plan
 
-Make CARA genuinely useful end-to-end: she should be able to advise on any common SA labour issue, and for every issue there should be a matching document the user can generate in one click — without ever needing outside help for the routine stuff.
+Three parallel workstreams, each independently shippable.
 
-Two gaps today:
-1. **CARA's knowledge** is thin — 10 topics, no follow-up questions, no "what next" suggestions, and the AI fallback has no grounding so it sometimes contradicts the in-app guidance.
-2. **The document library** only covers 6 templates. Six of CARA's 10 topics (CCMA, grievance, suspension, retrenchment, union, incapacity) have no document to hand off to.
+## 1. PayFast go-live
 
-This plan closes both gaps.
+**Goal:** flip from sandbox to real money safely.
 
----
+- Add a single source of truth in `src/pages/Pricing.tsx`:
+  - Read `import.meta.env.VITE_PAYFAST_LIVE` ("true" / "false").
+  - When live: `PAYFAST_URL = https://www.payfast.co.za/eng/process`, `MERCHANT_ID = 12090292`, `MERCHANT_KEY` from a new public env var `VITE_PAYFAST_MERCHANT_KEY` (the merchant key is not secret, it goes in the form).
+  - When not live: keep current sandbox values.
+- Remove `<TestModeBanner />` from `Pricing.tsx` and `PaymentCancelled.tsx` (and delete the component) when `VITE_PAYFAST_LIVE === "true"` — render conditionally so preview still shows it.
+- Add edge-function secret `PAYFAST_MODE=live` (webhook already branches on this for host, IP allowlist, and validate URL — no code change).
+- Add optional signature verification in `supabase/functions/payfast-webhook/index.ts`:
+  - Read new secret `PAYFAST_PASSPHRASE` (only if user sets one in PayFast dashboard).
+  - If present, compute MD5 of sorted POST fields + `&passphrase=...` and compare to `data.signature`; reject on mismatch.
+  - Also send the same signature on the form by computing it client-side is not possible (passphrase is secret) — so signature on outbound form stays empty; passphrase is only used for ITN verification.
+- Capture the PayFast subscription token from the ITN so we can cancel later:
+  - Migration: `ALTER TABLE public.subscriptions ADD COLUMN payfast_token text, ADD COLUMN pf_payment_id text;`
+  - Webhook writes `data["token"]` and `data["pf_payment_id"]` on accepted ITNs.
+- Verify schema on the live project matches what the webhook writes (`email`, `trial_ends_at`, `payfast_token`, `pf_payment_id`, plus `payfast_webhook_log` with `UNIQUE(m_payment_id)`). If anything is missing, ship a migration in the same change.
+- Align `supabase/config.toml` `project_id` with `.env` (`riqswihuzclbyjemynyd`) and update `docs/subscriptions.sql` to the current shape.
 
-## 1. Expand the document library (6 → 14 templates)
+**User action required (cannot be automated):**
+1. Activate live recurring billing on the PayFast merchant account.
+2. Set `VITE_PAYFAST_LIVE=true` and `VITE_PAYFAST_MERCHANT_KEY=<live key>` in project env.
+3. Add secret `PAYFAST_MODE=live` (and optional `PAYFAST_PASSPHRASE`).
+4. Do one real R259 Solo transaction end-to-end as smoke test.
 
-Add the following to `src/lib/documents/templates/index.ts` (same `TemplateDefinition` pattern, same `generateDocument` pipeline — house style and branding come for free):
+## 2. Subscription gating
 
-| Key | Name | Used by CARA topic |
-|---|---|---|
-| `notice_hearing` | Notice of disciplinary hearing | Hearing, AWOL, Misconduct |
-| `suspension` | Precautionary suspension letter | Suspension |
-| `return_to_work` | AWOL / return-to-work letter | AWOL |
-| `grievance_ack` | Grievance acknowledgement & outcome | Grievance |
-| `retrenchment_s189` | s189(3) consultation notice | Retrenchment |
-| `retrenchment_letter` | Retrenchment notice (post-consultation) | Retrenchment |
-| `incapacity_notice` | Notice of incapacity enquiry | Incapacity |
-| `counselling` | Counselling / coaching record | Performance, Misconduct |
+**Goal:** only `trialing` or `active` subscribers can use CARA / Generate Docs.
 
-Each template uses the same field/build shape the existing templates use, so they slot into Generate Docs and the CARA "Create the document" button automatically.
+- New hook `src/hooks/useSubscription.ts`: reads the current user's row from `subscriptions` (or the owner's row if the user is a team member via `current_account_owner()`), returns `{ status, planName, trialEndsAt, loading }`.
+- New route guard `src/components/RequireSubscription.tsx`:
+  - If `loading` → spinner.
+  - If `status` is `trialing` or `active` → render children.
+  - Otherwise → redirect to `/pricing` with a banner "Your trial has ended — pick a plan to keep using iNRECO."
+- Wrap `/`, `/account-app/dashboard`, `/account-app/generate`, `/account-app/documents` in `RequireSubscription` inside `src/App.tsx`. Leave `/auth`, `/pricing`, `/contact`, `/payment-success`, `/payment-cancelled`, `/legal/*`, `/share/*` open.
+- Show a small "Trial: X days left" pill in `AppShell` header when `status==='trialing'`.
 
-## 2. Deepen CARA's built-in knowledge
+## 3. Cancel-from-app flow
 
-In `src/lib/cara/knowledge.ts`:
+**Goal:** user can cancel their subscription without leaving the app.
 
-- Add a `followUps: string[]` field to each topic — 2–3 likely next questions ("How long does the CCMA process take?", "What if the employee doesn't pitch?"). The CARA hub renders them as tappable suggestion chips under the answer.
-- Add a `relatedTemplates: string[]` field (multiple doc options per topic, not just one). e.g. AWOL → `return_to_work`, `notice_hearing`, `dismissal`.
-- Add 5 new topics: **Probation**, **Resignation**, **Sick leave abuse**, **Working hours & overtime**, **Sexual harassment**.
-- Expand keyword lists so plain-English phrasing matches ("he didn't come in", "she quit by SMS", etc.).
+- New edge function `supabase/functions/payfast-cancel/index.ts`:
+  - Verify JWT in code (signing-keys pattern).
+  - Look up caller's `subscriptions` row, read `payfast_token`.
+  - POST to PayFast `https://api.payfast.co.za/subscriptions/{token}/cancel` with the documented auth headers (`merchant-id`, `version`, `timestamp`, `signature` built from merchant key + passphrase).
+  - On success, update `subscriptions.status = 'cancelled'`, `updated_at = now()`.
+  - Return JSON `{ ok: true }`. CORS + zod-validated empty body.
+- Add a "Cancel subscription" button in `src/pages/Settings.tsx` under a "Billing" card showing current plan, status, next billing date. Confirms via AlertDialog, then calls the function.
+- Webhook already handles PayFast's cancel ITN by status — extend it: when `data.payment_status === 'CANCELLED'` (or token-cancel ITN), set `subscriptions.status='cancelled'` without requiring a plan/amount match.
 
-## 3. Smarter router
+## Technical details (for reference)
 
-In `src/lib/cara/router.ts`:
+```text
+Pricing.tsx ─► PayFast (live host) ─► ITN ─► payfast-webhook ─► subscriptions row
+                                                                       │
+Settings.tsx ─► payfast-cancel fn ─► PayFast API ──cancel──────────────┘
+                                                                       │
+App routes ◄── RequireSubscription ◄── useSubscription ◄───────────────┘
+```
 
-- When a topic matches, return the topic AND its related templates (router currently returns only one).
-- When the user's message contains a question word ("how long", "can I", "what if") on a known topic, prefer answering from knowledge first, but mark the answer as "expandable" so a "Ask CARA for more detail" button shows that triggers the AI fallback grounded with that topic's full text.
-- Document-intent matcher recognises more phrasings ("send him a warning", "I want to fire her", "draft her contract").
+Migration shape:
 
-## 4. Ground the AI fallback in the app brain
+```sql
+ALTER TABLE public.subscriptions
+  ADD COLUMN IF NOT EXISTS payfast_token text,
+  ADD COLUMN IF NOT EXISTS pf_payment_id text;
+```
 
-Update `supabase/functions/cara-chat/index.ts`:
-
-- The client sends, alongside the messages, the matched topic key (if any) and the list of available template names.
-- Edge function injects the topic's summary + steps into the system prompt as **authoritative context**, and lists the exact template keys CARA may suggest. This stops the AI inventing different processes or recommending documents that don't exist.
-- Keep `google/gemini-3-flash-preview`. Add a hard 600-token cap so answers stay short.
-- Parse the AI response for any `[[create:<template_key>]]` hint and surface it as a "Create the document" button on the AI message too (today only knowledge/template answers get a button).
-
-## 5. CARA hub UX polish
-
-In `src/pages/Cara.tsx`:
-
-- Show follow-up suggestion chips under each assistant message.
-- Render multiple "Create the …" buttons when a topic maps to multiple templates.
-- Add a small "Start a guided wizard" link on heavy topics (retrenchment, hearing, incapacity) that opens Generate with the right template pre-selected and a 1-line context note in the form.
-- Keep everything else as-is (composer, topic chips, profile-missing banner, in-memory chat — no persistence).
-
-## 6. Verification
-
-- Tap every one of the 15 topic chips → built-in answer renders, follow-up chips appear, "Create the …" buttons match the topic.
-- Type "I need to retrench 3 people" → retrenchment topic → buttons for s189 notice + retrenchment letter.
-- Type "what's the maximum overtime per week" → AI fallback grounded with the working-hours topic, no template button.
-- Open Generate Docs → all 14 templates listed, each one generates a PDF + DOCX through the existing `generateDocument` pipeline (so iNRECO house style + company branding are automatic — per project memory).
-- Existing flow (sign in → profile → `/app`) untouched.
+No new tables, no new RLS policies (existing `subscriptions` policies already scope by `auth.uid()`).
 
 ## Out of scope
 
-- Persisting chat history (still in-memory per session).
-- Multi-language CARA.
-- Redesigning Dashboard / Documents / Profile pages.
-- Adding a separate "wizard engine" — guided flows are just the existing Generate form pre-filled.
-
-## Technical notes
-
-- All new templates are pure additions to `TEMPLATE_REGISTRY`; nothing existing changes.
-- `knowledge.ts` gets two new optional fields (`followUps`, `relatedTemplates`); old `templateKey` stays for back-compat.
-- Edge function change is backwards-compatible — old client calls still work; new client calls send extra context.
-- No database/schema changes. No new secrets. No new dependencies.
+- Switching projects / migrating data between Supabase projects.
+- Plan upgrade/downgrade mid-cycle (PayFast requires cancel + re-subscribe).
+- Proration, invoices, tax handling.
+- Replacing PayFast with Stripe/Paddle.
