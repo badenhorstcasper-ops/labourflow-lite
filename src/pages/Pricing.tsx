@@ -12,7 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import TestModeBanner from "@/components/TestModeBanner";
+
 
 // Live vs sandbox is controlled by VITE_PAYFAST_LIVE in project env.
 const IS_LIVE = import.meta.env.VITE_PAYFAST_LIVE === "true";
@@ -153,7 +153,7 @@ const Pricing = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <TestModeBanner />
+
       <div className="container mx-auto max-w-7xl px-4 py-12">
         {reasonMessage && (
           <div className="mx-auto mb-6 max-w-2xl rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
