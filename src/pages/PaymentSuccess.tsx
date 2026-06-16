@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import InstallAppButton from "@/components/InstallAppButton";
-import TestModeBanner from "@/components/TestModeBanner";
+
 
 const PaymentSuccess = () => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
@@ -17,7 +17,7 @@ const PaymentSuccess = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <TestModeBanner />
+
       <div className="flex min-h-[calc(100vh-2.5rem)] flex-col items-center justify-center gap-6 p-6 text-center">
       <h1 className="text-3xl font-bold">Payment successful!</h1>
 
