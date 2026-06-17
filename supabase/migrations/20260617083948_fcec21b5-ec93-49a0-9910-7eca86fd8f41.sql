@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Anyone can record a share access event" ON public.share_access_log;
