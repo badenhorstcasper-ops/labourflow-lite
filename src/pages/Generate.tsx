@@ -17,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { generateDocument, type GenerateResult } from "@/lib/documents";
 import { TEMPLATE_REGISTRY, getTemplate } from "@/lib/documents/templates";
+import ChairpersonOffer from "@/components/ChairpersonOffer";
 
 export default function GeneratePage() {
   const [params, setParams] = useSearchParams();
@@ -148,6 +149,32 @@ export default function GeneratePage() {
               </div>
             </CardContent>
           </Card>
+        ) && false ? null : null}
+
+        {result && tpl?.key === "notice_hearing" && (
+          <ChairpersonOffer documentId={result.id} employeeName={values.employee} />
+        )}
+        {false && (
+          <Card />
+        )}
+        {result === null && false ? null : null}
+        {result && false && (
+          <Card />
+        )}
+        {result && (
+          <></>
+        )}
+        {result && (
+          <></>
+        )}
+        {/* end success extras */}
+        {result && (
+          <></>
+        )}
+        {result && (<></>)}
+        {false && (
+          <Card />
+        )}
         ) : (
           <>
             <Card>
