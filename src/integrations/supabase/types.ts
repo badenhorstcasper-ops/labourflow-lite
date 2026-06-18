@@ -58,6 +58,65 @@ export type Database = {
           },
         ]
       }
+      chairperson_bookings: {
+        Row: {
+          account_owner_id: string
+          contact_email: string
+          contact_phone: string
+          created_at: string
+          document_id: string | null
+          employee_name: string
+          employer_name: string
+          id: string
+          notes: string | null
+          preferred_platform: string
+          preferred_slots: Json
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_owner_id: string
+          contact_email: string
+          contact_phone: string
+          created_at?: string
+          document_id?: string | null
+          employee_name: string
+          employer_name: string
+          id?: string
+          notes?: string | null
+          preferred_platform: string
+          preferred_slots: Json
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_owner_id?: string
+          contact_email?: string
+          contact_phone?: string
+          created_at?: string
+          document_id?: string | null
+          employee_name?: string
+          employer_name?: string
+          id?: string
+          notes?: string | null
+          preferred_platform?: string
+          preferred_slots?: Json
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chairperson_bookings_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "generated_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_profiles: {
         Row: {
           accent_color: string
