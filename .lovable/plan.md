@@ -1,38 +1,71 @@
-## PayFast status — ready for live, with one manual step
+## Goal
+After the user generates a **Notice of Disciplinary Hearing**, offer iNRECO's online chairperson service (R2,500 incl. chairing + outcome drafting, via Teams or Google Meet). If they want it, a **Book a Hearing** dialog collects their details and 3 preferred date/times, and emails the request to `info@inreco.co.za`. Payment is handled manually by iNRECO afterwards — no PayFast involvement.
 
-The integration is functionally complete and pointed at the live PayFast environment. Here's where each piece stands.
+## Where it appears
+Only on the Generate page's success state, immediately after a document of type `disciplinary_hearing_notice` (the existing hearing-notice template key) is generated. Nowhere else — no dashboard tile, no CARA chat entry, no banner on other templates.
 
-### What's in place
-- **Live mode active** — `VITE_PAYFAST_LIVE=true` and `PAYFAST_MODE=live` are set, so the checkout form posts to `www.payfast.co.za` and the webhook validates against the live host.
-- **Live merchant credentials** — Merchant ID `12090292` and live merchant key are wired into the Pricing page and both edge functions.
-- **Test-mode banners removed** — both the React banner and the static `index.html` banner are gone.
-- **Webhook hardened** (`payfast-webhook`):
-  1. Merchant ID allowlist
-  2. PayFast IP/hostname allowlist (DNS-resolved, cached 6h)
-  3. MD5 signature verification using `PAYFAST_PASSPHRASE`
-  4. Server-to-server `/eng/query/validate` callback
-  5. Idempotency via `m_payment_id`
-  6. Amount cross-check against the plan price catalogue
-  7. Handles `COMPLETE`, `CANCELLED`, and trial-signup (R0) ITNs
-  8. Captures `token` + `pf_payment_id` for future cancel API calls
-  9. Every attempt logged to `payfast_webhook_log`
-- **Cancel flow** (`payfast-cancel`) — verifies the caller's JWT, calls PayFast's live subscription cancel API when a token is on file, and flips `subscriptions.status` to `cancelled`.
-- **Return / cancel / notify URLs** point at `https://app.inreco.co.za/...` and the live Supabase functions endpoint.
-- **Security scan** — the one open finding (permissive RLS policy on `share_access_log`) was fixed; the connector/Wiz scan is clean.
+## UX flow
+1. User generates a hearing notice as today.
+2. Below the existing PDF/DOCX/Share actions, a new card appears:
+   - Title: **Need a chairperson for this hearing?**
+   - Body: "iNRECO can chair the hearing online (Teams or Google Meet) and draft the outcome for you. Flat fee R2,500 — invoiced after the hearing is scheduled."
+   - Primary button: **Book a Hearing**
+   - Secondary link: "No thanks"
+3. Clicking **Book a Hearing** opens a dialog (`BookHearingDialog`) with the form below. Company profile + employee name from the just-generated notice are pre-filled.
+4. On submit: insert a row into `chairperson_bookings`, then call edge function `request-chairperson` which emails iNRECO. Toast confirms: "Request sent — iNRECO will contact you within 1 business day."
 
-### The one thing you must do in the PayFast dashboard before launch
-In your PayFast merchant account (Settings → Integration):
-- Confirm the **Notify URL** is set to
-  `https://riqswihuzclbyjemynyd.supabase.co/functions/v1/payfast-webhook`
-- Confirm the **Passphrase** in PayFast matches the `PAYFAST_PASSPHRASE` secret stored here. If they differ, every live ITN will be rejected as `bad_signature`.
+## Booking form fields
+- Employer / contact name (pre-filled from profile, editable)
+- Contact email (pre-filled from auth user, editable)
+- Contact phone
+- Employee name (pre-filled from notice)
+- Preferred platform: Teams / Google Meet / No preference
+- **Three preferred date+time slots** (date picker + time, all required) — copy: "We'll try to fit as close as possible to these; otherwise we'll contact you directly."
+- Optional notes / brief summary (textarea, max 1000 chars)
+- Linked document: hidden, set to the generated notice's id so iNRECO email includes a share link to the notice PDF
 
-### Recommended smoke test before announcing launch
-1. Subscribe to the Solo plan with a real card (you can cancel right after).
-2. In Supabase `payfast_webhook_log`, confirm a row with `outcome = 'accepted'` and `reason` empty.
-3. Confirm a row appears in `subscriptions` with `status = 'trialing'` and your `trial_ends_at` 7 days out.
-4. Hit Cancel in the app; confirm the row flips to `status = 'cancelled'` and PayFast shows the subscription cancelled.
+Zod validation on both client and edge function. All fields trimmed; email validated; 3 distinct future date/times required.
 
-### Verdict
-Yes — assuming the PayFast dashboard Notify URL and Passphrase match what's configured here, you can launch. The smoke test above is the safest final gate.
+## Email to iNRECO
+Sent via Lovable Emails (`send-transactional-email`) from the verified iNRECO sender, To: `info@inreco.co.za`, Reply-To: the user's contact email. Plain, branded template containing:
+- Employer name, email, phone
+- Employee name
+- Preferred platform
+- 3 preferred date/time slots
+- Notes
+- Link to the hearing notice (signed share link from `generated_documents.share_token`)
+- Booking id
 
-No code changes are needed for this check. Approve the plan if you'd like me to walk through the smoke test together (e.g. tail the webhook logs after you make a test payment), or skip approval if you just wanted the status.
+If Lovable Emails isn't yet provisioned for this project the plan triggers the standard email-domain setup dialog before deploying the function.
+
+## Data model
+New table `public.chairperson_bookings`:
+- `user_id` (auth user, owner)
+- `account_owner_id` (from `current_account_owner` rpc, for team scoping consistency with other tables)
+- `document_id` (fk → `generated_documents.id`, nullable on delete set null)
+- `employer_name`, `contact_email`, `contact_phone`
+- `employee_name`
+- `preferred_platform` (`teams` | `meet` | `any`)
+- `preferred_slots` (`jsonb` — array of 3 ISO timestamps)
+- `notes` (text, nullable)
+- `status` (`requested` | `scheduled` | `completed` | `cancelled`, default `requested`)
+- standard `id`, `created_at`, `updated_at`
+
+RLS: owner (and account owner) can SELECT/INSERT their own rows; UPDATE/DELETE restricted to owner; service_role full access for the edge function. GRANT block included in the same migration.
+
+## Files
+**New**
+- `supabase/migrations/<ts>_chairperson_bookings.sql` — table + grants + RLS + updated_at trigger
+- `supabase/functions/request-chairperson/index.ts` — auth-checked, Zod-validated, inserts row (service role) and sends email
+- `src/components/ChairpersonOffer.tsx` — the "Need a chairperson?" card
+- `src/components/BookHearingDialog.tsx` — the booking form dialog
+
+**Edited**
+- `src/pages/Generate.tsx` — after a successful generation, if the template key is the hearing-notice one, render `<ChairpersonOffer documentId={…} employeeName={…} />` in the success area.
+
+No changes to PayFast, CARA, Dashboard, or any other template flow.
+
+## Out of scope
+- Payment collection (manual invoicing by iNRECO).
+- Admin UI for iNRECO to manage bookings (rows are visible in the backend; can be added later).
+- Calendar integration / auto-creating Teams/Meet links.
