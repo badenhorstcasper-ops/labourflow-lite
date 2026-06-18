@@ -17,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { generateDocument, type GenerateResult } from "@/lib/documents";
 import { TEMPLATE_REGISTRY, getTemplate } from "@/lib/documents/templates";
+import ChairpersonOffer from "@/components/ChairpersonOffer";
 
 export default function GeneratePage() {
   const [params, setParams] = useSearchParams();
@@ -130,24 +131,29 @@ export default function GeneratePage() {
         </div>
 
         {result ? (
-          <Card className="border-primary/40 bg-primary/10">
-            <CardContent className="p-5 space-y-3">
-              <div>
-                <p className="font-semibold">Document {result.doc_number} ready</p>
-                <p className="text-xs text-muted-foreground break-all">Share link: {result.share_url}</p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {result.pdf_url && <Button onClick={() => download(result.pdf_url)}>Download PDF</Button>}
-                {result.docx_url && <Button variant="outline" onClick={() => download(result.docx_url)}>Download DOCX</Button>}
-                <Button variant="outline" onClick={async () => {
-                  await navigator.clipboard.writeText(result.share_url);
-                  toast.success("Share link copied");
-                }}>Copy share link</Button>
-                <Button variant="outline" onClick={() => { setResult(null); setValues({}); }}>Generate another</Button>
-                <Button variant="ghost" onClick={() => navigate("/account-app/documents")}>View all documents →</Button>
-              </div>
-            </CardContent>
-          </Card>
+          <>
+            <Card className="border-primary/40 bg-primary/10">
+              <CardContent className="p-5 space-y-3">
+                <div>
+                  <p className="font-semibold">Document {result.doc_number} ready</p>
+                  <p className="text-xs text-muted-foreground break-all">Share link: {result.share_url}</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {result.pdf_url && <Button onClick={() => download(result.pdf_url)}>Download PDF</Button>}
+                  {result.docx_url && <Button variant="outline" onClick={() => download(result.docx_url)}>Download DOCX</Button>}
+                  <Button variant="outline" onClick={async () => {
+                    await navigator.clipboard.writeText(result.share_url);
+                    toast.success("Share link copied");
+                  }}>Copy share link</Button>
+                  <Button variant="outline" onClick={() => { setResult(null); setValues({}); }}>Generate another</Button>
+                  <Button variant="ghost" onClick={() => navigate("/account-app/documents")}>View all documents →</Button>
+                </div>
+              </CardContent>
+            </Card>
+            {tpl?.key === "notice_hearing" && (
+              <ChairpersonOffer documentId={result.id} employeeName={values.employee} />
+            )}
+          </>
         ) : (
           <>
             <Card>
