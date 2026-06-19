@@ -8,8 +8,12 @@ import { Send, Lightbulb, Sparkles, MessageCircleMore } from "lucide-react";
 import { TOPICS, getTopicByKey } from "@/lib/cara/knowledge";
 import { routeMessage } from "@/lib/cara/router";
 import { TEMPLATE_REGISTRY } from "@/lib/documents/templates";
+import MicButton from "@/components/cara/MicButton";
 const logoUrl = "/logo.png";
 import { toast } from "sonner";
+
+const AUTO_SEND_KEY = "cara.voice.autoSend";
+
 
 type ChatMsg = {
   id: string;
@@ -29,7 +33,18 @@ export default function CaraPage() {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
+  const [autoSend, setAutoSend] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem(AUTO_SEND_KEY) === "1";
+  });
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(AUTO_SEND_KEY, autoSend ? "1" : "0");
+    }
+  }, [autoSend]);
+
 
   useEffect(() => {
     (async () => {
@@ -247,26 +262,48 @@ export default function CaraPage() {
             e.preventDefault();
             send(input);
           }}
-          className="flex items-end gap-2"
+          className="flex flex-col gap-2"
         >
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                send(input);
-              }
-            }}
-            placeholder="Ask CARA about a labour issue…"
-            rows={2}
-            className="flex-1 resize-none rounded-md border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            disabled={busy}
-          />
-          <Button type="submit" size="icon" disabled={busy || !input.trim()} aria-label="Send">
-            <Send className="h-4 w-4" />
-          </Button>
+          <div className="flex items-end gap-2">
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  send(input);
+                }
+              }}
+              placeholder="Ask CARA — type or tap the mic to talk…"
+              rows={2}
+              className="flex-1 resize-none rounded-md border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              disabled={busy}
+            />
+            <MicButton
+              disabled={busy}
+              onTranscript={(text) => {
+                if (autoSend) {
+                  send(text);
+                } else {
+                  setInput((prev) => (prev.trim() ? `${prev.trim()} ${text}` : text));
+                }
+              }}
+            />
+            <Button type="submit" size="icon" disabled={busy || !input.trim()} aria-label="Send">
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
+          <label className="flex items-center gap-2 text-xs text-muted-foreground select-none">
+            <input
+              type="checkbox"
+              checked={autoSend}
+              onChange={(e) => setAutoSend(e.target.checked)}
+              className="h-3.5 w-3.5 rounded border-input"
+            />
+            Auto-send voice messages when I stop talking (hands-free)
+          </label>
         </form>
+
       </div>
     </AppShell>
   );

@@ -1,71 +1,66 @@
+
 ## Goal
-After the user generates a **Notice of Disciplinary Hearing**, offer iNRECO's online chairperson service (R2,500 incl. chairing + outcome drafting, via Teams or Google Meet). If they want it, a **Book a Hearing** dialog collects their details and 3 preferred date/times, and emails the request to `info@inreco.co.za`. Payment is handled manually by iNRECO afterwards — no PayFast involvement.
 
-## Where it appears
-Only on the Generate page's success state, immediately after a document of type `disciplinary_hearing_notice` (the existing hearing-notice template key) is generated. Nowhere else — no dashboard tile, no CARA chat entry, no banner on other templates.
+Let users **talk to CARA** instead of typing — useful when driving, on the shop floor, or just preferring voice. CARA's reply behavior stays exactly the same (knowledge answer, template wizard button, or AI fallback). No other part of the app changes.
 
-## UX flow
-1. User generates a hearing notice as today.
-2. Below the existing PDF/DOCX/Share actions, a new card appears:
-   - Title: **Need a chairperson for this hearing?**
-   - Body: "iNRECO can chair the hearing online (Teams or Google Meet) and draft the outcome for you. Flat fee R2,500 — invoiced after the hearing is scheduled."
-   - Primary button: **Book a Hearing**
-   - Secondary link: "No thanks"
-3. Clicking **Book a Hearing** opens a dialog (`BookHearingDialog`) with the form below. Company profile + employee name from the just-generated notice are pre-filled.
-4. On submit: insert a row into `chairperson_bookings`, then call edge function `request-chairperson` which emails iNRECO. Toast confirms: "Request sent — iNRECO will contact you within 1 business day."
+## Recommended UX (most user-friendly for the iNRECO audience)
 
-## Booking form fields
-- Employer / contact name (pre-filled from profile, editable)
-- Contact email (pre-filled from auth user, editable)
-- Contact phone
-- Employee name (pre-filled from notice)
-- Preferred platform: Teams / Google Meet / No preference
-- **Three preferred date+time slots** (date picker + time, all required) — copy: "We'll try to fit as close as possible to these; otherwise we'll contact you directly."
-- Optional notes / brief summary (textarea, max 1000 chars)
-- Linked document: hidden, set to the generated notice's id so iNRECO email includes a share link to the notice PDF
+After looking at `src/pages/Cara.tsx`, the cleanest, lowest-friction pattern is a **mic button next to the Send button**, with two modes:
 
-Zod validation on both client and edge function. All fields trimmed; email validated; 3 distinct future date/times required.
+1. **Tap to start, tap to stop** (primary) — large, obvious, works one-handed. While recording, the mic turns red and shows a live "● Recording 0:07" timer plus a small animated level bar so the user knows it's actually listening. Tap again (or tap a Stop button) to finalize.
+2. **Hold-to-talk** (secondary, mobile only) — press and hold the mic, release to send. Faster for quick questions but harder for users with shaky hands or thick gloves, so we keep tap-to-toggle as the default and only enable hold-to-talk on touch devices as a power-user shortcut.
 
-## Email to iNRECO
-Sent via Lovable Emails (`send-transactional-email`) from the verified iNRECO sender, To: `info@inreco.co.za`, Reply-To: the user's contact email. Plain, branded template containing:
-- Employer name, email, phone
-- Employee name
-- Preferred platform
-- 3 preferred date/time slots
-- Notes
-- Link to the hearing notice (signed share link from `generated_documents.share_token`)
-- Booking id
+Other recommended touches:
+- **Transcript lands in the textarea, not auto-sent.** The user sees what was heard, can fix a word ("UIF" vs "you I F"), then taps Send. This is critical for a labour-law app where one wrong word changes the meaning. A small "Auto-send when I stop talking" toggle (off by default, remembered in localStorage) is offered for true hands-free use in the car.
+- **Language defaults to auto-detect** so English / Afrikaans / isiZulu / Xhosa code-switching works without the user picking a language. (SA users mix languages constantly.)
+- **Permission handled gracefully** — first tap asks for mic permission with a one-line explainer toast ("CARA needs your mic to listen"). If denied, the mic button shows a tooltip telling them how to re-enable it.
+- **Visual + haptic feedback** — short vibration on start/stop (mobile), red pulsing dot while recording, "CARA is listening…" hint, then "Transcribing…" spinner while the audio uploads.
+- **Safety rails** — auto-stop at 60 seconds (prevents runaway uploads on a forgotten mic), reject empty/silent clips client-side before uploading (saves credits), and show a clear error if the network drops mid-upload.
+- **Unsupported browsers** — if the browser can't record (very old iOS Safari, etc.), the mic button is hidden entirely so nothing looks broken.
 
-If Lovable Emails isn't yet provisioned for this project the plan triggers the standard email-domain setup dialog before deploying the function.
+No wake-word ("Hey CARA"), no always-on listening — both are battery-hungry, privacy-unfriendly, and overkill for this use case.
 
-## Data model
-New table `public.chairperson_bookings`:
-- `user_id` (auth user, owner)
-- `account_owner_id` (from `current_account_owner` rpc, for team scoping consistency with other tables)
-- `document_id` (fk → `generated_documents.id`, nullable on delete set null)
-- `employer_name`, `contact_email`, `contact_phone`
-- `employee_name`
-- `preferred_platform` (`teams` | `meet` | `any`)
-- `preferred_slots` (`jsonb` — array of 3 ISO timestamps)
-- `notes` (text, nullable)
-- `status` (`requested` | `scheduled` | `completed` | `cancelled`, default `requested`)
-- standard `id`, `created_at`, `updated_at`
+## Technical approach
 
-RLS: owner (and account owner) can SELECT/INSERT their own rows; UPDATE/DELETE restricted to owner; service_role full access for the edge function. GRANT block included in the same migration.
+**Provider:** Lovable AI Gateway speech-to-text (`openai/gpt-4o-mini-transcribe`). It's already wired up via `LOVABLE_API_KEY`, no new secret or connector needed, billed per request from existing credits, and supports SA languages well.
+
+**New edge function `cara-transcribe`:**
+- Accepts `multipart/form-data` with the audio blob.
+- Forwards to `https://ai.gateway.lovable.dev/v1/audio/transcriptions` with `model=openai/gpt-4o-mini-transcribe`, no `language` (auto-detect), streaming **off** (we want the final text in the textarea — streaming adds complexity for no UX gain here).
+- Returns `{ text }` to the client. Surfaces 402/429/400 errors with friendly messages.
+- Validates: must be multipart, file present, size ≤ 5 MB (we cap recording at 60 s so this is plenty), audio MIME type only.
+
+**New component `src/components/cara/MicButton.tsx`:**
+- Uses `MediaRecorder` with `audio/webm` (Chrome/Firefox/Android) or `audio/mp4` (Safari/iOS) — picked via `MediaRecorder.isTypeSupported`.
+- Manages: permission request, recording state, elapsed timer, level meter (via `AnalyserNode`), 60 s auto-stop, blob size guard (reject < 1 KB), upload via `supabase.functions.invoke('cara-transcribe', { body: formData })`.
+- Emits `onTranscript(text)` to the parent.
+- Hidden when `MediaRecorder` or `getUserMedia` is unavailable.
+
+**Wire into `src/pages/Cara.tsx` (minimal change):**
+- Add `<MicButton />` between the textarea and the Send button.
+- On transcript, append (or replace) the text in the `input` state. If "Auto-send when I stop talking" is on, call `send(text)` directly.
+- Add a tiny "Auto-send" toggle (Switch) under the composer, persisted in localStorage.
+
+**No DB changes, no schema changes, no new dependencies** — `MediaRecorder` is browser-native and `supabase.functions.invoke` already handles multipart uploads.
 
 ## Files
-**New**
-- `supabase/migrations/<ts>_chairperson_bookings.sql` — table + grants + RLS + updated_at trigger
-- `supabase/functions/request-chairperson/index.ts` — auth-checked, Zod-validated, inserts row (service role) and sends email
-- `src/components/ChairpersonOffer.tsx` — the "Need a chairperson?" card
-- `src/components/BookHearingDialog.tsx` — the booking form dialog
 
-**Edited**
-- `src/pages/Generate.tsx` — after a successful generation, if the template key is the hearing-notice one, render `<ChairpersonOffer documentId={…} employeeName={…} />` in the success area.
+**Create**
+- `supabase/functions/cara-transcribe/index.ts` — audio → text edge function
+- `src/components/cara/MicButton.tsx` — recording UI + upload logic
+- `src/hooks/useVoiceRecorder.ts` — small hook wrapping `MediaRecorder` (timer, level meter, auto-stop, blob guard) so `MicButton` stays presentational
 
-No changes to PayFast, CARA, Dashboard, or any other template flow.
+**Edit**
+- `src/pages/Cara.tsx` — mount `<MicButton />` in the composer; add the optional auto-send toggle
+- `supabase/config.toml` — register the new function (verify_jwt default)
 
-## Out of scope
-- Payment collection (manual invoicing by iNRECO).
-- Admin UI for iNRECO to manage bookings (rows are visible in the backend; can be added later).
-- Calendar integration / auto-creating Teams/Meet links.
+## Out of scope (explicitly not doing)
+
+- Voice **replies** from CARA (text-to-speech). You said "CARA then replies with wizard or text", so we keep replies text/wizard only. Easy to add later if you want it.
+- Continuous / wake-word listening.
+- Changing any other page or any of CARA's reply logic.
+- Persisting audio files anywhere — the blob lives only in memory until the transcript comes back, then is discarded.
+
+## Cost note
+
+Lovable AI STT is billed per second of audio from existing credits. With a 60 s cap per recording and the mini model, a heavy user doing 50 voice questions a day costs cents, not dollars — well inside your "no extra spend until 10 users" rule.
