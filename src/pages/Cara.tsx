@@ -8,8 +8,12 @@ import { Send, Lightbulb, Sparkles, MessageCircleMore } from "lucide-react";
 import { TOPICS, getTopicByKey } from "@/lib/cara/knowledge";
 import { routeMessage } from "@/lib/cara/router";
 import { TEMPLATE_REGISTRY } from "@/lib/documents/templates";
+import MicButton from "@/components/cara/MicButton";
 const logoUrl = "/logo.png";
 import { toast } from "sonner";
+
+const AUTO_SEND_KEY = "cara.voice.autoSend";
+
 
 type ChatMsg = {
   id: string;
@@ -29,7 +33,18 @@ export default function CaraPage() {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
+  const [autoSend, setAutoSend] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem(AUTO_SEND_KEY) === "1";
+  });
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(AUTO_SEND_KEY, autoSend ? "1" : "0");
+    }
+  }, [autoSend]);
+
 
   useEffect(() => {
     (async () => {
