@@ -29,13 +29,11 @@ const queryClient = new QueryClient();
 
 const gated = (el: React.ReactNode) => <RequireSubscription>{el}</RequireSubscription>;
 
-export default function App() {
+function AppRoutes() {
+  usePageView();
   return (
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <Routes>
-            {/* Open routes */}
+    <Routes>
+      {/* Open routes */}
             <Route path="/" element={<Index />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/auth" element={<Auth />} />
