@@ -1,7 +1,9 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
 import Index from "@/pages/Index";
+import AdminPage from "@/pages/Admin";
+import { usePageView } from "@/hooks/usePageView";
 import Pricing from "@/pages/Pricing";
 import Auth from "@/pages/Auth";
 import Dashboard from "@/pages/Dashboard";
