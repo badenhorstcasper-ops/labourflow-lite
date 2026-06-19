@@ -1,0 +1,182 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Loader2, RefreshCw } from "lucide-react";
+
+type Stats = {
+  totals: {
+    signups: number;
+    documents: number;
+    payments: number;
+    bookings: number;
+    contacts: number;
+    activeSubscriptions: number;
+  };
+  pageViews: { day: number; week: number; month: number };
+  topPaths: { path: string; count: number }[];
+  recentSignups: { id: string; email: string; created_at: string }[];
+  recentDocuments: { id: string; doc_type: string; created_at: string }[];
+};
+
+export default function AdminPage() {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [authorized, setAuthorized] = useState(false);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  async function load() {
+    setRefreshing(true);
+    setError(null);
+    const { data, error } = await supabase.functions.invoke("admin-stats");
+    if (error || (data as any)?.error) {
+      setError(error?.message || (data as any)?.error || "Failed to load");
+    } else {
+      setStats(data as Stats);
+    }
+    setRefreshing(false);
+  }
+
+  useEffect(() => {
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { navigate("/auth"); return; }
+      const { data: isAdmin } = await supabase.rpc("has_role", {
+        _user_id: session.user.id,
+        _role: "admin",
+      });
+      if (!isAdmin) { navigate("/"); return; }
+      setAuthorized(true);
+      await load();
+      setLoading(false);
+    })();
+  }, [navigate]);
+
+  useEffect(() => {
+    if (!authorized) return;
+    const id = setInterval(load, 60_000);
+    return () => clearInterval(id);
+  }, [authorized]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-3xl font-bold">Admin dashboard</h1>
+          <p className="text-sm text-muted-foreground">Live usage across the app</p>
+        </div>
+        <Button onClick={load} variant="outline" disabled={refreshing}>
+          <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
+          Refresh
+        </Button>
+      </div>
+
+      {error && (
+        <div className="mb-6 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
+      {stats && (
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+            <Stat label="Signups" value={stats.totals.signups} />
+            <Stat label="Active subscriptions" value={stats.totals.activeSubscriptions} />
+            <Stat label="Payments (completed)" value={stats.totals.payments} />
+            <Stat label="Documents generated" value={stats.totals.documents} />
+            <Stat label="Chairperson bookings" value={stats.totals.bookings} />
+            <Stat label="Contact messages" value={stats.totals.contacts} />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <Stat label="Page views (24h)" value={stats.pageViews.day} />
+            <Stat label="Page views (7d)" value={stats.pageViews.week} />
+            <Stat label="Page views (30d)" value={stats.pageViews.month} />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card>
+              <CardHeader><CardTitle className="text-base">Top pages (7d)</CardTitle></CardHeader>
+              <CardContent>
+                {stats.topPaths.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No data yet.</p>
+                ) : (
+                  <ul className="text-sm divide-y">
+                    {stats.topPaths.map((p) => (
+                      <li key={p.path} className="flex justify-between py-1.5">
+                        <span className="truncate pr-2">{p.path}</span>
+                        <span className="font-mono">{p.count}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader><CardTitle className="text-base">Recent signups</CardTitle></CardHeader>
+              <CardContent>
+                {stats.recentSignups.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No signups yet.</p>
+                ) : (
+                  <ul className="text-sm divide-y">
+                    {stats.recentSignups.map((u) => (
+                      <li key={u.id} className="flex justify-between py-1.5">
+                        <span className="truncate pr-2">{u.email}</span>
+                        <span className="text-muted-foreground text-xs">
+                          {new Date(u.created_at).toLocaleString()}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="md:col-span-2">
+              <CardHeader><CardTitle className="text-base">Recent documents</CardTitle></CardHeader>
+              <CardContent>
+                {stats.recentDocuments.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No documents yet.</p>
+                ) : (
+                  <ul className="text-sm divide-y">
+                    {stats.recentDocuments.map((d) => (
+                      <li key={d.id} className="flex justify-between py-1.5">
+                        <span className="truncate pr-2">{d.doc_type}</span>
+                        <span className="text-muted-foreground text-xs">
+                          {new Date(d.created_at).toLocaleString()}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: number }) {
+  return (
+    <Card>
+      <CardContent className="pt-6">
+        <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
+        <div className="text-3xl font-bold mt-1">{value.toLocaleString()}</div>
+      </CardContent>
+    </Card>
+  );
+}
