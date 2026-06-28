@@ -1,41 +1,33 @@
-## Goal
-1. Make sure the two super-admin emails (`badenhorst.casper@gmail.com` and `casperbadenhorst77@outlook.com`) can invite unlimited teammates regardless of subscription.
-2. Confirm normal subscribers get the advertised seat counts (Business 5, Professional 10, Enterprise 15).
-3. Give the super admin a single visible button in the app header that opens an admin dashboard showing user count, recent errors, and security issues — all fixable in as few clicks as possible.
+Two small security fixes the scanner flagged. Both are "warn" level, neither changes how the app looks or feels for you or your users.
 
-## What's wrong today
-- The Account modal sits in the legacy `index.html` (lines ~2333–2400). Seat cap = `SEAT_LIMITS[plan]` with a fallback of `1`. With no active subscription, the owner is stuck at 1 seat and the **+ Add invite** button is disabled — exactly what the screenshot shows.
-- The `invite-team-member` edge function applies the same cap server-side (`Solo: 1`), so even if the UI was unlocked the server would reject it.
-- The React `TeamManagement.tsx` (used only on the React account surface) has the same `SEAT_LIMITS` table with no admin override.
-- There is already an `/admin` page (`src/pages/Admin.tsx`) wired to the `admin-stats` edge function showing signups, page views, payments, top pages, recent docs. It works, but the legacy app has no link to it, so the super admin has to type the URL.
-- The two admin emails are already auto-granted the `admin` role via the `grant_owner_admin_on_signup` trigger (only the outlook address is in there today — the gmail address is missing).
+## 1. Make the company logos folder private
 
-## Changes
+Right now, anyone who guesses or is handed a logo's web address can open it directly — even people who never signed in. That's the warning. We'll switch the logos folder to "private" and have the app hand out short-lived viewing links (good for one hour) whenever a logo needs to be shown.
 
-### 1. Super-admin seat override (server + both UIs)
-- **`supabase/functions/invite-team-member/index.ts`** — before the seat check, call `has_role(ownerId, 'admin')`; if true, skip the cap entirely. Keep the existing duplicate-email and self-invite guards.
-- **`index.html`** (legacy Account modal, `refreshAccountModal`) — after fetching the subscription, also call `supabase.rpc('has_role', { _user_id: currentUser.id, _role: 'admin' })`. If true, set `cap = Infinity`, show "Unlimited (admin)" in the seats line, and never disable the **+ Add invite** button.
-- **`src/components/TeamManagement.tsx`** — same admin check on load; when admin, set `seatLimit = Infinity`, label as "Unlimited (admin)", never disable the Invite button.
+What changes behind the scenes:
+- The logos storage folder is flipped from public to private.
+- The Company Profile page asks for a fresh viewing link each time it shows your logo.
+- The shared-document link page (the page your staff/clients see when you send them a document link) also asks for a fresh viewing link for the logo.
+- The document maker (the part that builds PDFs and Word files) already downloads the logo into the document itself, so once a document is generated nothing breaks.
 
-### 2. Make sure the gmail admin also gets the role
-- New migration: extend `grant_owner_admin_on_signup` to match either email, and back-fill the role for any existing user with either email so both accounts have `admin` immediately on next sign-in.
+What you'll notice: nothing visible. Logos still appear where they did before.
 
-### 3. Verify subscriber seat counts
-- No code change needed — the `SEAT_LIMITS` table (Solo 1, Business 5, Professional 10, Enterprise 15) already matches the pricing page. Add a one-line code comment in both the legacy modal and the edge function pointing to `src/pages/Pricing.tsx` so the three places stay in sync.
+## 2. Stop showing invite tokens to invited people
 
-### 4. One-click super-admin dashboard
-- Add a small **🛡 Admin** button in the legacy header next to the existing **👤 Account** button (`index.html` line ~759). It is rendered only when `has_role(currentUser.id,'admin')` is true. Clicking it navigates to `/admin`.
-- The `/admin` page already shows totals (signups, active subs, payments, documents, bookings, contacts), page-view trends, top pages, recent signups, recent documents. Extend it with two more cards so the super admin can act without leaving the page:
-  - **Recent errors** — last 10 rows from `error_logs` (message, path, created_at). Add a "Mark resolved" button per row that flips a `resolved` flag (column already exists or will be added via tiny migration if missing — verified at build time).
-  - **Open security findings** — call the existing `run-security-scan` edge function on page load and list any findings, each with a "Mark resolved" button that calls `security--manage_security_finding` via a small edge function wrapper. Include a top-right **Re-run scan** button.
-- Auto-refresh stays at 60 s; both new sections refresh in the same tick.
+An "invite token" is the secret code inside a team invitation link. Today, once someone joins your team, they can still see their own invite code in the team list — which means it could be copied, forwarded, or reused.
 
-### Technical notes
-- Admin role lookup uses the existing `public.has_role(uuid, app_role)` RPC — no new SQL functions needed except the trigger update.
-- All UI changes respect the existing dark theme; no design-token changes.
-- No changes to pricing, billing, or non-admin user flows.
+Fix: invited team members will no longer be able to see the invite code column at all. Only you (the account owner) will. The invite acceptance flow already replaces the code with a new random one the moment someone joins, so this just closes the door fully.
 
-### Out of scope
-- Editing the `admin-stats` permissions model (already admin-gated).
-- Rewriting the legacy Account modal in React.
-- Adding bulk invite or CSV import.
+What you'll notice: nothing. The invite links you already sent keep working.
+
+## Wrap-up
+
+After the two fixes are in place, I'll mark both warnings as fixed in the security scanner.
+
+## Technical details (for reference)
+
+- Flip the `company-logos` storage bucket to `public = false` and update its storage policies so only the owner can read/write inside their own folder.
+- Replace `getPublicUrl` in `src/pages/CompanyProfile.tsx` with `createSignedUrl` (1h TTL) and refresh on upload/remove.
+- Extend `get-shared-document` edge function to sign the `company_profiles.logo_url` (or derive a path) and return a signed URL the share page can render.
+- `renderPdf.ts` / `renderDocx.ts` already embed bytes at generation time; keep as-is but switch the fetch URL to a signed URL produced just-in-time.
+- Revoke column-level `SELECT` on `team_members.invite_token` from the `authenticated` role; keep service_role and add a `WITH GRANT` to the owner via the existing policy by splitting member vs owner SELECT or using a column grant approach. Then `manage_security_finding` → `mark_as_fixed` for both `company_logos_public_bucket_no_select_all` and `team_members_invite_token_exposure`.
