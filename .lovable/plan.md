@@ -1,33 +1,47 @@
-Two small security fixes the scanner flagged. Both are "warn" level, neither changes how the app looks or feels for you or your users.
+# Plan: trial gating, installability, PayFast trial billing
 
-## 1. Make the company logos folder private
+## What I checked
 
-Right now, anyone who guesses or is handed a logo's web address can open it directly — even people who never signed in. That's the warning. We'll switch the logos folder to "private" and have the app hand out short-lived viewing links (good for one hour) whenever a logo needs to be shown.
+**1. App is installable (PWA).** `public/manifest.json`, theme-color, apple-touch-icon, and `/sw.js` are all wired up in `index.html`. `InstallAppButton.tsx` prompts the browser's install dialog and falls back to clear iPhone/Android instructions. Verdict: installable on Android/desktop Chrome via the install button; on iPhone via Safari → Share → Add to Home Screen.
 
-What changes behind the scenes:
-- The logos storage folder is flipped from public to private.
-- The Company Profile page asks for a fresh viewing link each time it shows your logo.
-- The shared-document link page (the page your staff/clients see when you send them a document link) also asks for a fresh viewing link for the logo.
-- The document maker (the part that builds PDFs and Word files) already downloads the logo into the document itself, so once a document is generated nothing breaks.
+**2. PayFast is configured for "free trial first, charge later".** `src/pages/Pricing.tsx` posts to PayFast with `amount=0.00`, `subscription_type=1`, `billing_date = today + 7 days`, and `recurring_amount = plan price`. That is PayFast's correct pattern: the card is tokenised today (R0 authorisation), the first real debit happens on `billing_date`, and if the user cancels in the app before then, no money is taken. ✅ Correct — no change needed.
 
-What you'll notice: nothing visible. Logos still appear where they did before.
+**3. Trial-day calculation has a gap.** `src/hooks/useSubscription.ts` returns `isEntitled = true` whenever `status === "trialing"`, regardless of `trial_ends_at`. If the first PayFast debit fails or the webhook is delayed, the user (and every invited team member, since the hook already resolves to the owner's subscription) keeps access past day 7. The trial-days countdown in `AppShell.tsx` is correct, but the gate is not.
 
-## 2. Stop showing invite tokens to invited people
+**4. Team-member inheritance works.** `useSubscription` already looks up the active `team_members` row and reads the owner's subscription. So once the owner's `isEntitled` flips, every invited user is blocked by `RequireSubscription`. The only missing piece is the trial-expiry flip itself (see #3).
 
-An "invite token" is the secret code inside a team invitation link. Today, once someone joins your team, they can still see their own invite code in the team list — which means it could be copied, forwarded, or reused.
+**5. Webhook handles CANCELLED but not FAILED.** `payfast-webhook` already flips `status` to `cancelled` on a CANCELLED ITN. It does not handle FAILED/past-due ITNs, which is what PayFast sends when the recurring debit bounces.
 
-Fix: invited team members will no longer be able to see the invite code column at all. Only you (the account owner) will. The invite acceptance flow already replaces the code with a new random one the moment someone joins, so this just closes the door fully.
+## Changes
 
-What you'll notice: nothing. The invite links you already sent keep working.
+### A. Client-side trial expiry (fixes the day-count gate)
+**File: `src/hooks/useSubscription.ts`**
+- Compute `trialExpired = status === "trialing" && trial_ends_at && new Date(trial_ends_at) < now`.
+- Change `isEntitled` to: `status === "active" || (status === "trialing" && !trialExpired)`.
+- `daysLeft` stays the same (already clamps at 0).
 
-## Wrap-up
+Effect: the moment the trial date passes, the owner AND every invited team member loses access and is bounced to `/pricing?reason=trial_ended` by `RequireSubscription`, even before PayFast's ITN arrives.
 
-After the two fixes are in place, I'll mark both warnings as fixed in the security scanner.
+### B. Server-side past-due handling (closes the long-tail case)
+**File: `supabase/functions/payfast-webhook/index.ts`**
+- Add a branch: if `payment_status` is `FAILED` (PayFast's recurring-failure status), flip the matching subscription to `status = 'past_due'`, mirroring the existing CANCELLED branch (lookup by `payfast_token` first, then `user_id`).
+- Update `useSubscription`: `past_due` is not entitled (handled implicitly by the new `isEntitled` rule since it only allows `active` / `trialing`).
 
-## Technical details (for reference)
+### C. Pricing page reassurance copy (no logic change)
+**File: `src/pages/Pricing.tsx`**
+- Under each plan's CTA, tighten the existing fine-print line to: "Card secured today via PayFast. No charge during the 7-day trial. First debit of {price} on {billing_date} only if you don't cancel."
 
-- Flip the `company-logos` storage bucket to `public = false` and update its storage policies so only the owner can read/write inside their own folder.
-- Replace `getPublicUrl` in `src/pages/CompanyProfile.tsx` with `createSignedUrl` (1h TTL) and refresh on upload/remove.
-- Extend `get-shared-document` edge function to sign the `company_profiles.logo_url` (or derive a path) and return a signed URL the share page can render.
-- `renderPdf.ts` / `renderDocx.ts` already embed bytes at generation time; keep as-is but switch the fetch URL to a signed URL produced just-in-time.
-- Revoke column-level `SELECT` on `team_members.invite_token` from the `authenticated` role; keep service_role and add a `WITH GRANT` to the owner via the existing policy by splitting member vs owner SELECT or using a column grant approach. Then `manage_security_finding` → `mark_as_fixed` for both `company_logos_public_bucket_no_select_all` and `team_members_invite_token_exposure`.
+### D. Installability — small polish
+**File: `src/pages/Pricing.tsx`** (and keep `PaymentSuccess.tsx` as-is, which already shows `InstallAppButton`)
+- Drop the existing `InstallAppButton` into the Pricing page header so users can install before signing up. No new components, just reuse.
+
+## Verification after build
+1. Manually set a test subscription's `trial_ends_at` to yesterday → confirm owner and invited member both get redirected to `/pricing?reason=trial_ended`.
+2. Open the published site on Android Chrome → tap Install → confirm a home-screen shortcut named "iNRECO" launches the app standalone.
+3. Re-read `Pricing.tsx` to confirm the PayFast form fields (`amount=0`, `billing_date`, `recurring_amount`) are unchanged.
+
+## What I am NOT changing
+- PayFast form fields (already correct).
+- Team-member resolution in `useSubscription` (already correct).
+- Existing CANCELLED webhook branch.
+- Manifest, service worker, or install button component.

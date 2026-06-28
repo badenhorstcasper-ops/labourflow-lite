@@ -238,6 +238,41 @@ Deno.serve(async (req) => {
       return ok();
     }
 
+    // 4c. Handle FAILED recurring debit — mark subscription past_due so app blocks access.
+    if (paymentStatus === "FAILED") {
+      let row: { id: string } | null = null;
+      if (subToken) {
+        const { data: r } = await supabase
+          .from("subscriptions")
+          .select("id")
+          .eq("payfast_token", subToken)
+          .maybeSingle();
+        row = r ?? null;
+      }
+      if (!row) {
+        const mParts = (mPaymentId || "").split("|");
+        const userIdRaw = data["custom_str1"] || mParts[0] || "";
+        const userId = userIdRaw && userIdRaw !== "guest" && userIdRaw !== "anon" ? userIdRaw : null;
+        if (userId) {
+          const { data: r } = await supabase
+            .from("subscriptions")
+            .select("id")
+            .eq("user_id", userId)
+            .limit(1)
+            .maybeSingle();
+          row = r ?? null;
+        }
+      }
+      if (row) {
+        await supabase
+          .from("subscriptions")
+          .update({ status: "past_due", updated_at: new Date().toISOString() })
+          .eq("id", row.id);
+      }
+      await logAttempt(supabase, { ...baseLog, outcome: "accepted", reason: "failed_debit" });
+      return ok();
+    }
+
     if (paymentStatus !== "COMPLETE") {
       await logAttempt(supabase, { ...baseLog, outcome: "ignored", reason: `status:${paymentStatus}` });
       return ok();

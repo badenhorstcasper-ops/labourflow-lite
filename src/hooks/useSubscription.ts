@@ -87,7 +87,11 @@ export function useSubscription(): SubscriptionInfo {
         )
       : null;
 
-  const isEntitled = status === "trialing" || status === "active";
+  const trialExpired =
+    status === "trialing" && trialEndsAt
+      ? new Date(trialEndsAt).getTime() < Date.now()
+      : false;
+  const isEntitled = status === "active" || (status === "trialing" && !trialExpired);
 
   return {
     loading,
