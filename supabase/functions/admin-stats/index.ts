@@ -90,6 +90,7 @@ Deno.serve(async (req) => {
       topPaths,
       recentSignups,
       recentDocuments: recentDocs.data ?? [],
+      recentErrors: recentErrors.data ?? [],
     }, 200);
   } catch (e) {
     console.error("admin-stats error", e);
