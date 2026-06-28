@@ -2344,8 +2344,20 @@ async function refreshAccountModal() {
     .select('plan_name').eq('user_id', currentUser.id)
     .order('updated_at', { ascending: false }).limit(1).maybeSingle();
   currentPlanName = (sub && sub.plan_name) || null;
-  const cap = currentPlanName ? (SEAT_LIMITS[currentPlanName] || 1) : 1;
-  planEl.textContent = currentPlanName || 'No active subscription';
+  // SEAT_LIMITS is mirrored in supabase/functions/invite-team-member/index.ts and src/pages/Pricing.tsx — keep them in sync.
+  let cap = currentPlanName ? (SEAT_LIMITS[currentPlanName] || 1) : 1;
+
+  // Super-admin override: founders get unlimited seats regardless of subscription.
+  let isAdmin = false;
+  try {
+    const { data: adminFlag } = await supabase.rpc('has_role', { _user_id: currentUser.id, _role: 'admin' });
+    isAdmin = !!adminFlag;
+  } catch (_) {}
+  if (isAdmin) {
+    cap = Infinity;
+    document.getElementById('adminBtn').style.display = '';
+  }
+  planEl.textContent = (currentPlanName || 'No active subscription') + (isAdmin ? ' · Super admin' : '');
 
   // Team
   const { data: tm } = await supabase.from('team_members')
@@ -2354,11 +2366,11 @@ async function refreshAccountModal() {
     .order('invited_at', { ascending: false });
   const members = tm || [];
   const used = members.length + 1; // owner counts
-  seatsEl.textContent = used + ' of ' + cap + ' seats used';
-  document.getElementById('acctInviteBtn').disabled = (used >= cap) || cap <= 1;
+  seatsEl.textContent = isAdmin ? (used + ' of unlimited (admin) seats used') : (used + ' of ' + cap + ' seats used');
+  document.getElementById('acctInviteBtn').disabled = !isAdmin && ((used >= cap) || cap <= 1);
 
   if (members.length === 0) {
-    membersEl.innerHTML = cap > 1
+    membersEl.innerHTML = (cap > 1 || isAdmin)
       ? '<div style="color:#94a3b8;font-size:13px;">No team members yet.</div>'
       : '<div style="color:#94a3b8;font-size:13px;">Upgrade to Business or higher to invite teammates.</div>';
   } else {
