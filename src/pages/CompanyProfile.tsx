@@ -103,13 +103,15 @@ export default function CompanyProfilePage() {
       toast.error("Couldn't upload that logo. The rest of your profile will still save. (" + error.message + ")");
       return;
     }
-    const { data } = supabase.storage.from("company-logos").getPublicUrl(path);
-    set("logo_url", data.publicUrl + "?t=" + Date.now());
+    // Store the storage path; we'll sign it for display each time.
+    set("logo_url", path);
+    setLogoPreview(await resolveLogoUrl(path));
     toast.success("Logo uploaded");
   }
 
   function removeLogo() {
     set("logo_url", "");
+    setLogoPreview(null);
     toast.success("Logo removed. Remember to save.");
   }
 
