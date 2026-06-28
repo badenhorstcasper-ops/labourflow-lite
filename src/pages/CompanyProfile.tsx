@@ -241,8 +241,8 @@ export default function CompanyProfilePage() {
             <div>
               <Label>Logo (optional)</Label>
               <div className="flex flex-wrap items-center gap-3 mt-2">
-                {form.logo_url && (
-                  <img src={form.logo_url} alt="Logo" className="h-16 w-auto rounded border bg-white p-1" />
+                {logoPreview && (
+                  <img src={logoPreview} alt="Logo" className="h-16 w-auto rounded border bg-white p-1" />
                 )}
                 <Input
                   type="file"
