@@ -1,66 +1,41 @@
-
 ## Goal
+1. Make sure the two super-admin emails (`badenhorst.casper@gmail.com` and `casperbadenhorst77@outlook.com`) can invite unlimited teammates regardless of subscription.
+2. Confirm normal subscribers get the advertised seat counts (Business 5, Professional 10, Enterprise 15).
+3. Give the super admin a single visible button in the app header that opens an admin dashboard showing user count, recent errors, and security issues — all fixable in as few clicks as possible.
 
-Let users **talk to CARA** instead of typing — useful when driving, on the shop floor, or just preferring voice. CARA's reply behavior stays exactly the same (knowledge answer, template wizard button, or AI fallback). No other part of the app changes.
+## What's wrong today
+- The Account modal sits in the legacy `index.html` (lines ~2333–2400). Seat cap = `SEAT_LIMITS[plan]` with a fallback of `1`. With no active subscription, the owner is stuck at 1 seat and the **+ Add invite** button is disabled — exactly what the screenshot shows.
+- The `invite-team-member` edge function applies the same cap server-side (`Solo: 1`), so even if the UI was unlocked the server would reject it.
+- The React `TeamManagement.tsx` (used only on the React account surface) has the same `SEAT_LIMITS` table with no admin override.
+- There is already an `/admin` page (`src/pages/Admin.tsx`) wired to the `admin-stats` edge function showing signups, page views, payments, top pages, recent docs. It works, but the legacy app has no link to it, so the super admin has to type the URL.
+- The two admin emails are already auto-granted the `admin` role via the `grant_owner_admin_on_signup` trigger (only the outlook address is in there today — the gmail address is missing).
 
-## Recommended UX (most user-friendly for the iNRECO audience)
+## Changes
 
-After looking at `src/pages/Cara.tsx`, the cleanest, lowest-friction pattern is a **mic button next to the Send button**, with two modes:
+### 1. Super-admin seat override (server + both UIs)
+- **`supabase/functions/invite-team-member/index.ts`** — before the seat check, call `has_role(ownerId, 'admin')`; if true, skip the cap entirely. Keep the existing duplicate-email and self-invite guards.
+- **`index.html`** (legacy Account modal, `refreshAccountModal`) — after fetching the subscription, also call `supabase.rpc('has_role', { _user_id: currentUser.id, _role: 'admin' })`. If true, set `cap = Infinity`, show "Unlimited (admin)" in the seats line, and never disable the **+ Add invite** button.
+- **`src/components/TeamManagement.tsx`** — same admin check on load; when admin, set `seatLimit = Infinity`, label as "Unlimited (admin)", never disable the Invite button.
 
-1. **Tap to start, tap to stop** (primary) — large, obvious, works one-handed. While recording, the mic turns red and shows a live "● Recording 0:07" timer plus a small animated level bar so the user knows it's actually listening. Tap again (or tap a Stop button) to finalize.
-2. **Hold-to-talk** (secondary, mobile only) — press and hold the mic, release to send. Faster for quick questions but harder for users with shaky hands or thick gloves, so we keep tap-to-toggle as the default and only enable hold-to-talk on touch devices as a power-user shortcut.
+### 2. Make sure the gmail admin also gets the role
+- New migration: extend `grant_owner_admin_on_signup` to match either email, and back-fill the role for any existing user with either email so both accounts have `admin` immediately on next sign-in.
 
-Other recommended touches:
-- **Transcript lands in the textarea, not auto-sent.** The user sees what was heard, can fix a word ("UIF" vs "you I F"), then taps Send. This is critical for a labour-law app where one wrong word changes the meaning. A small "Auto-send when I stop talking" toggle (off by default, remembered in localStorage) is offered for true hands-free use in the car.
-- **Language defaults to auto-detect** so English / Afrikaans / isiZulu / Xhosa code-switching works without the user picking a language. (SA users mix languages constantly.)
-- **Permission handled gracefully** — first tap asks for mic permission with a one-line explainer toast ("CARA needs your mic to listen"). If denied, the mic button shows a tooltip telling them how to re-enable it.
-- **Visual + haptic feedback** — short vibration on start/stop (mobile), red pulsing dot while recording, "CARA is listening…" hint, then "Transcribing…" spinner while the audio uploads.
-- **Safety rails** — auto-stop at 60 seconds (prevents runaway uploads on a forgotten mic), reject empty/silent clips client-side before uploading (saves credits), and show a clear error if the network drops mid-upload.
-- **Unsupported browsers** — if the browser can't record (very old iOS Safari, etc.), the mic button is hidden entirely so nothing looks broken.
+### 3. Verify subscriber seat counts
+- No code change needed — the `SEAT_LIMITS` table (Solo 1, Business 5, Professional 10, Enterprise 15) already matches the pricing page. Add a one-line code comment in both the legacy modal and the edge function pointing to `src/pages/Pricing.tsx` so the three places stay in sync.
 
-No wake-word ("Hey CARA"), no always-on listening — both are battery-hungry, privacy-unfriendly, and overkill for this use case.
+### 4. One-click super-admin dashboard
+- Add a small **🛡 Admin** button in the legacy header next to the existing **👤 Account** button (`index.html` line ~759). It is rendered only when `has_role(currentUser.id,'admin')` is true. Clicking it navigates to `/admin`.
+- The `/admin` page already shows totals (signups, active subs, payments, documents, bookings, contacts), page-view trends, top pages, recent signups, recent documents. Extend it with two more cards so the super admin can act without leaving the page:
+  - **Recent errors** — last 10 rows from `error_logs` (message, path, created_at). Add a "Mark resolved" button per row that flips a `resolved` flag (column already exists or will be added via tiny migration if missing — verified at build time).
+  - **Open security findings** — call the existing `run-security-scan` edge function on page load and list any findings, each with a "Mark resolved" button that calls `security--manage_security_finding` via a small edge function wrapper. Include a top-right **Re-run scan** button.
+- Auto-refresh stays at 60 s; both new sections refresh in the same tick.
 
-## Technical approach
+### Technical notes
+- Admin role lookup uses the existing `public.has_role(uuid, app_role)` RPC — no new SQL functions needed except the trigger update.
+- All UI changes respect the existing dark theme; no design-token changes.
+- No changes to pricing, billing, or non-admin user flows.
 
-**Provider:** Lovable AI Gateway speech-to-text (`openai/gpt-4o-mini-transcribe`). It's already wired up via `LOVABLE_API_KEY`, no new secret or connector needed, billed per request from existing credits, and supports SA languages well.
-
-**New edge function `cara-transcribe`:**
-- Accepts `multipart/form-data` with the audio blob.
-- Forwards to `https://ai.gateway.lovable.dev/v1/audio/transcriptions` with `model=openai/gpt-4o-mini-transcribe`, no `language` (auto-detect), streaming **off** (we want the final text in the textarea — streaming adds complexity for no UX gain here).
-- Returns `{ text }` to the client. Surfaces 402/429/400 errors with friendly messages.
-- Validates: must be multipart, file present, size ≤ 5 MB (we cap recording at 60 s so this is plenty), audio MIME type only.
-
-**New component `src/components/cara/MicButton.tsx`:**
-- Uses `MediaRecorder` with `audio/webm` (Chrome/Firefox/Android) or `audio/mp4` (Safari/iOS) — picked via `MediaRecorder.isTypeSupported`.
-- Manages: permission request, recording state, elapsed timer, level meter (via `AnalyserNode`), 60 s auto-stop, blob size guard (reject < 1 KB), upload via `supabase.functions.invoke('cara-transcribe', { body: formData })`.
-- Emits `onTranscript(text)` to the parent.
-- Hidden when `MediaRecorder` or `getUserMedia` is unavailable.
-
-**Wire into `src/pages/Cara.tsx` (minimal change):**
-- Add `<MicButton />` between the textarea and the Send button.
-- On transcript, append (or replace) the text in the `input` state. If "Auto-send when I stop talking" is on, call `send(text)` directly.
-- Add a tiny "Auto-send" toggle (Switch) under the composer, persisted in localStorage.
-
-**No DB changes, no schema changes, no new dependencies** — `MediaRecorder` is browser-native and `supabase.functions.invoke` already handles multipart uploads.
-
-## Files
-
-**Create**
-- `supabase/functions/cara-transcribe/index.ts` — audio → text edge function
-- `src/components/cara/MicButton.tsx` — recording UI + upload logic
-- `src/hooks/useVoiceRecorder.ts` — small hook wrapping `MediaRecorder` (timer, level meter, auto-stop, blob guard) so `MicButton` stays presentational
-
-**Edit**
-- `src/pages/Cara.tsx` — mount `<MicButton />` in the composer; add the optional auto-send toggle
-- `supabase/config.toml` — register the new function (verify_jwt default)
-
-## Out of scope (explicitly not doing)
-
-- Voice **replies** from CARA (text-to-speech). You said "CARA then replies with wizard or text", so we keep replies text/wizard only. Easy to add later if you want it.
-- Continuous / wake-word listening.
-- Changing any other page or any of CARA's reply logic.
-- Persisting audio files anywhere — the blob lives only in memory until the transcript comes back, then is discarded.
-
-## Cost note
-
-Lovable AI STT is billed per second of audio from existing credits. With a 60 s cap per recording and the mini model, a heavy user doing 50 voice questions a day costs cents, not dollars — well inside your "no extra spend until 10 users" rule.
+### Out of scope
+- Editing the `admin-stats` permissions model (already admin-gated).
+- Rewriting the legacy Account modal in React.
+- Adding bulk invite or CSV import.
