@@ -51,6 +51,15 @@ export default function AdminPage() {
     setRefreshing(false);
   }
 
+  async function resolveError(id: string) {
+    const { error } = await supabase.functions.invoke("resolve-error", { body: { id } });
+    if (error) {
+      setError(error.message);
+      return;
+    }
+    setStats((s) => s ? { ...s, recentErrors: s.recentErrors.filter((e) => e.id !== id) } : s);
+  }
+
   useEffect(() => {
     (async () => {
       const { data: { session } } = await supabase.auth.getSession();
