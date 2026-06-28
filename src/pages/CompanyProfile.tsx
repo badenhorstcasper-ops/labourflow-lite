@@ -55,6 +55,7 @@ export default function CompanyProfilePage() {
   const [justSaved, setJustSaved] = useState(false);
   const [ownerId, setOwnerId] = useState<string | null>(null);
   const [form, setForm] = useState<typeof empty>(empty);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [authed, setAuthed] = useState(false);
   const wasNewProfile = useRef(false);
   const navigate = useNavigate();
