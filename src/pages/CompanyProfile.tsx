@@ -77,7 +77,9 @@ export default function CompanyProfilePage() {
         .eq("owner_user_id", owner)
         .maybeSingle();
       if (data && (data as unknown as Profile).company_name) {
-        setForm({ ...empty, ...(data as unknown as Profile) });
+        const loaded = { ...empty, ...(data as unknown as Profile) };
+        setForm(loaded);
+        setLogoPreview(await resolveLogoUrl(loaded.logo_url));
         wasNewProfile.current = false;
       } else {
         wasNewProfile.current = true;
