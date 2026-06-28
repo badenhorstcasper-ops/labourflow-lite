@@ -12,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import InstallAppButton from "@/components/InstallAppButton";
 
 
 // Live vs sandbox is controlled by VITE_PAYFAST_LIVE in project env.
@@ -181,6 +182,7 @@ const Pricing = () => {
             </Link>
             .
           </p>
+          <div className="mt-5 flex justify-center"><InstallAppButton /></div>
         </header>
 
         {!userId && (
