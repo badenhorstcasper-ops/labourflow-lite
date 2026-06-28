@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { generateDocument } from "@/lib/documents";
+import { resolveLogoUrl } from "@/lib/companyLogo";
 
 type Profile = {
   owner_user_id: string;
