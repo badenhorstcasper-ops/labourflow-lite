@@ -64,6 +64,23 @@ Deno.serve(async (req) => {
       .eq("owner_user_id", doc.owner_user_id)
       .maybeSingle();
 
+    // Sign the company logo — bucket is private. Accept either a bare path
+    // or a legacy full public URL that contains "/company-logos/".
+    if (company?.logo_url) {
+      const raw = String(company.logo_url).split("?")[0];
+      const marker = "/company-logos/";
+      const idx = raw.indexOf(marker);
+      const path = idx >= 0
+        ? raw.slice(idx + marker.length)
+        : (/^https?:\/\//i.test(raw) ? null : raw);
+      if (path) {
+        const { data: signed } = await supabase.storage
+          .from("company-logos")
+          .createSignedUrl(path, 60 * 30);
+        company.logo_url = signed?.signedUrl ?? null;
+      }
+    }
+
     const expires = 60 * 30; // 30 min
     let pdf_url: string | null = null;
     let docx_url: string | null = null;

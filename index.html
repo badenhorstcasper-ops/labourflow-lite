@@ -1561,7 +1561,20 @@ function showDocumentModal(title, content) {
       const k = el.getAttribute('data-bf');
       if (data[k] != null && data[k] !== '') el.value = data[k];
     });
-    if (data.logo_url) logoPreview.innerHTML = `<img src="${data.logo_url}" alt="Logo" style="height:32px; vertical-align:middle; border:1px solid #e4e4e7; border-radius:4px; padding:2px; background:#fff;"/> <span>current logo</span>`;
+    if (data.logo_url) {
+      let logoSrc = data.logo_url;
+      const marker = '/company-logos/';
+      const i = String(logoSrc).indexOf(marker);
+      const isHttp = /^https?:\/\//i.test(String(logoSrc));
+      const path = i >= 0 ? String(logoSrc).split('?')[0].slice(i + marker.length) : (isHttp ? null : String(logoSrc));
+      if (path) {
+        try {
+          const { data: signed } = await supabase.storage.from('company-logos').createSignedUrl(path, 3600);
+          if (signed?.signedUrl) logoSrc = signed.signedUrl;
+        } catch (_) { /* fall through to raw value */ }
+      }
+      logoPreview.innerHTML = `<img src="${logoSrc}" alt="Logo" style="height:32px; vertical-align:middle; border:1px solid #e4e4e7; border-radius:4px; padding:2px; background:#fff;"/> <span>current logo</span>`;
+    }
   }
 
   box.querySelector('.brand-warn-open').onclick = async () => {
@@ -1611,8 +1624,8 @@ function showDocumentModal(title, content) {
           const path = `${ownerId}/logo.${ext}`;
           const up = await supabase.storage.from('company-logos').upload(path, file, { upsert: true, contentType: file.type });
           if (up.error) throw up.error;
-          const { data: pub } = supabase.storage.from('company-logos').getPublicUrl(path);
-          payload.logo_url = pub.publicUrl + '?t=' + Date.now();
+          // Store the bucket path; logos render via short-lived signed links.
+          payload.logo_url = path;
         } catch (logoErr) {
           // Logo upload failed — keep going, save the rest, warn the user.
           logoWarning = 'Logo upload failed (' + (logoErr?.message || logoErr) + '). Saved the rest of your details.';

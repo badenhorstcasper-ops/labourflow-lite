@@ -8,6 +8,7 @@
 import { renderPdf } from "./renderPdf";
 import { renderDocx } from "./renderDocx";
 import { supabase } from "@/integrations/supabase/client";
+import { resolveLogoUrl } from "@/lib/companyLogo";
 import type { CompanyProfile, DocBlock, DocumentTemplate, InlineRun } from "./types";
 
 const FORBIDDEN = new RegExp(["pocket" + "labour", "inreco\\s+consulting", "powered\\s+by"].join("|"), "i");
@@ -136,7 +137,9 @@ async function loadCompanyProfile(): Promise<CompanyProfile> {
         .eq("owner_user_id", user.id)
         .maybeSingle();
       if (data && (data as { company_name?: string }).company_name) {
-        return data as unknown as CompanyProfile;
+        const profile = data as unknown as CompanyProfile;
+        const signed = await resolveLogoUrl(profile.logo_url);
+        return { ...profile, logo_url: signed } as CompanyProfile;
       }
     } catch {
       /* ignore */

@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { renderPdf } from "./renderPdf";
 import { renderDocx } from "./renderDocx";
+import { resolveLogoUrl } from "@/lib/companyLogo";
 import type { CompanyProfile, DocumentTemplate, RenderContext } from "./types";
 
 export * from "./types";
@@ -28,7 +29,10 @@ async function loadCompanyProfile(): Promise<CompanyProfile> {
     .maybeSingle();
 
   if (data && data.company_name) {
-    return data as unknown as CompanyProfile;
+    const profile = data as unknown as CompanyProfile;
+    // Sign the logo so renderers can fetch the bytes — bucket is now private.
+    const signed = await resolveLogoUrl(profile.logo_url);
+    return { ...profile, logo_url: signed } as CompanyProfile;
   }
 
   // Fallback: no profile yet (or empty company name).

@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { generateDocument } from "@/lib/documents";
+import { resolveLogoUrl } from "@/lib/companyLogo";
 
 type Profile = {
   owner_user_id: string;
@@ -54,6 +55,7 @@ export default function CompanyProfilePage() {
   const [justSaved, setJustSaved] = useState(false);
   const [ownerId, setOwnerId] = useState<string | null>(null);
   const [form, setForm] = useState<typeof empty>(empty);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [authed, setAuthed] = useState(false);
   const wasNewProfile = useRef(false);
   const navigate = useNavigate();
@@ -75,7 +77,9 @@ export default function CompanyProfilePage() {
         .eq("owner_user_id", owner)
         .maybeSingle();
       if (data && (data as unknown as Profile).company_name) {
-        setForm({ ...empty, ...(data as unknown as Profile) });
+        const loaded = { ...empty, ...(data as unknown as Profile) };
+        setForm(loaded);
+        setLogoPreview(await resolveLogoUrl(loaded.logo_url));
         wasNewProfile.current = false;
       } else {
         wasNewProfile.current = true;
@@ -99,13 +103,15 @@ export default function CompanyProfilePage() {
       toast.error("Couldn't upload that logo. The rest of your profile will still save. (" + error.message + ")");
       return;
     }
-    const { data } = supabase.storage.from("company-logos").getPublicUrl(path);
-    set("logo_url", data.publicUrl + "?t=" + Date.now());
+    // Store the storage path; we'll sign it for display each time.
+    set("logo_url", path);
+    setLogoPreview(await resolveLogoUrl(path));
     toast.success("Logo uploaded");
   }
 
   function removeLogo() {
     set("logo_url", "");
+    setLogoPreview(null);
     toast.success("Logo removed. Remember to save.");
   }
 
@@ -235,8 +241,8 @@ export default function CompanyProfilePage() {
             <div>
               <Label>Logo (optional)</Label>
               <div className="flex flex-wrap items-center gap-3 mt-2">
-                {form.logo_url && (
-                  <img src={form.logo_url} alt="Logo" className="h-16 w-auto rounded border bg-white p-1" />
+                {logoPreview && (
+                  <img src={logoPreview} alt="Logo" className="h-16 w-auto rounded border bg-white p-1" />
                 )}
                 <Input
                   type="file"
