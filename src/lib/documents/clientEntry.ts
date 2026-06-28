@@ -8,6 +8,7 @@
 import { renderPdf } from "./renderPdf";
 import { renderDocx } from "./renderDocx";
 import { supabase } from "@/integrations/supabase/client";
+import { resolveLogoUrl } from "@/lib/companyLogo";
 import type { CompanyProfile, DocBlock, DocumentTemplate, InlineRun } from "./types";
 
 const FORBIDDEN = new RegExp(["pocket" + "labour", "inreco\\s+consulting", "powered\\s+by"].join("|"), "i");
