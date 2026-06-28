@@ -1611,8 +1611,8 @@ function showDocumentModal(title, content) {
           const path = `${ownerId}/logo.${ext}`;
           const up = await supabase.storage.from('company-logos').upload(path, file, { upsert: true, contentType: file.type });
           if (up.error) throw up.error;
-          const { data: pub } = supabase.storage.from('company-logos').getPublicUrl(path);
-          payload.logo_url = pub.publicUrl + '?t=' + Date.now();
+          // Store the bucket path; logos render via short-lived signed links.
+          payload.logo_url = path;
         } catch (logoErr) {
           // Logo upload failed — keep going, save the rest, warn the user.
           logoWarning = 'Logo upload failed (' + (logoErr?.message || logoErr) + '). Saved the rest of your details.';
