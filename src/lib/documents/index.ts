@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { renderPdf } from "./renderPdf";
 import { renderDocx } from "./renderDocx";
+import { resolveLogoUrl } from "@/lib/companyLogo";
 import type { CompanyProfile, DocumentTemplate, RenderContext } from "./types";
 
 export * from "./types";
