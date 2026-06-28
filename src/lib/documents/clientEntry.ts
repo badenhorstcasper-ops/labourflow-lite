@@ -137,7 +137,9 @@ async function loadCompanyProfile(): Promise<CompanyProfile> {
         .eq("owner_user_id", user.id)
         .maybeSingle();
       if (data && (data as { company_name?: string }).company_name) {
-        return data as unknown as CompanyProfile;
+        const profile = data as unknown as CompanyProfile;
+        const signed = await resolveLogoUrl(profile.logo_url);
+        return { ...profile, logo_url: signed } as CompanyProfile;
       }
     } catch {
       /* ignore */
