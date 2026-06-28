@@ -5,6 +5,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, RefreshCw } from "lucide-react";
 
+type ErrorRow = {
+  id: string;
+  short_id: string | null;
+  message: string | null;
+  route: string | null;
+  severity: string | null;
+  created_at: string;
+  email: string | null;
+};
+
 type Stats = {
   totals: {
     signups: number;
@@ -18,6 +28,7 @@ type Stats = {
   topPaths: { path: string; count: number }[];
   recentSignups: { id: string; email: string; created_at: string }[];
   recentDocuments: { id: string; doc_type: string; created_at: string }[];
+  recentErrors: ErrorRow[];
 };
 
 export default function AdminPage() {
@@ -38,6 +49,15 @@ export default function AdminPage() {
       setStats(data as Stats);
     }
     setRefreshing(false);
+  }
+
+  async function resolveError(id: string) {
+    const { error } = await supabase.functions.invoke("resolve-error", { body: { id } });
+    if (error) {
+      setError(error.message);
+      return;
+    }
+    setStats((s) => s ? { ...s, recentErrors: s.recentErrors.filter((e) => e.id !== id) } : s);
   }
 
   useEffect(() => {
@@ -157,6 +177,35 @@ export default function AdminPage() {
                         <span className="text-muted-foreground text-xs">
                           {new Date(d.created_at).toLocaleString()}
                         </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="md:col-span-2">
+              <CardHeader>
+                <CardTitle className="text-base">Open errors</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {stats.recentErrors.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No open errors — nice.</p>
+                ) : (
+                  <ul className="text-sm divide-y">
+                    {stats.recentErrors.map((e) => (
+                      <li key={e.id} className="flex items-start justify-between gap-3 py-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="font-medium truncate">{e.message || "(no message)"}</div>
+                          <div className="text-xs text-muted-foreground truncate">
+                            {e.severity ? `[${e.severity}] ` : ""}
+                            {e.route || "—"} · {e.email || "anon"} · {new Date(e.created_at).toLocaleString()}
+                            {e.short_id ? ` · #${e.short_id}` : ""}
+                          </div>
+                        </div>
+                        <Button size="sm" variant="outline" onClick={() => resolveError(e.id)}>
+                          Mark resolved
+                        </Button>
                       </li>
                     ))}
                   </ul>

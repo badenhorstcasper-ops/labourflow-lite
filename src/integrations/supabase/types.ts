@@ -232,6 +232,9 @@ export type Database = {
           email: string | null
           id: string
           message: string
+          resolved: boolean
+          resolved_at: string | null
+          resolved_by: string | null
           route: string | null
           severity: string
           short_id: string
@@ -245,6 +248,9 @@ export type Database = {
           email?: string | null
           id?: string
           message: string
+          resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
           route?: string | null
           severity?: string
           short_id?: string
@@ -258,6 +264,9 @@ export type Database = {
           email?: string | null
           id?: string
           message?: string
+          resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
           route?: string | null
           severity?: string
           short_id?: string

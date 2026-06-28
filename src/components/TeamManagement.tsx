@@ -48,15 +48,16 @@ export function TeamManagement() {
   const { toast } = useToast();
   const [userId, setUserId] = useState<string | null>(null);
   const [planName, setPlanName] = useState<string>("Solo");
+  const [isAdmin, setIsAdmin] = useState(false);
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [sending, setSending] = useState(false);
 
-  const seatLimit = SEAT_LIMITS[planName] ?? 1;
+  const seatLimit = isAdmin ? Infinity : (SEAT_LIMITS[planName] ?? 1);
   const seatsUsed = useMemo(() => members.length + 1, [members]); // owner counts
-  const seatsRemaining = Math.max(0, seatLimit - seatsUsed);
+  const seatsRemaining = isAdmin ? Infinity : Math.max(0, seatLimit - seatsUsed);
 
   async function load() {
     setLoading(true);
@@ -67,7 +68,7 @@ export function TeamManagement() {
       setLoading(false);
       return;
     }
-    const [{ data: sub }, { data: tm }] = await Promise.all([
+    const [{ data: sub }, { data: tm }, { data: adminFlag }] = await Promise.all([
       supabase
         .from("subscriptions")
         .select("plan_name")
@@ -80,9 +81,11 @@ export function TeamManagement() {
         .select("id, member_email, status, invited_at, joined_at")
         .eq("owner_user_id", uid)
         .order("invited_at", { ascending: false }),
+      supabase.rpc("has_role", { _user_id: uid, _role: "admin" }),
     ]);
     setPlanName(sub?.plan_name || "Solo");
     setMembers((tm as TeamMember[]) || []);
+    setIsAdmin(!!adminFlag);
     setLoading(false);
   }
 
@@ -151,18 +154,24 @@ export function TeamManagement() {
             <CardTitle>Invite Team Members</CardTitle>
             <CardDescription>
               Current plan: <span className="font-medium text-foreground">{planName}</span>
-              {" · "}
-              {seatsUsed} of {seatLimit} seats used
-              {seatsRemaining > 0 ? (
-                <> · {seatsRemaining} remaining</>
+              {isAdmin ? (
+                <> · {seatsUsed} of unlimited (admin) seats used</>
               ) : (
-                <> · no seats remaining</>
+                <>
+                  {" · "}
+                  {seatsUsed} of {seatLimit} seats used
+                  {seatsRemaining > 0 ? (
+                    <> · {seatsRemaining} remaining</>
+                  ) : (
+                    <> · no seats remaining</>
+                  )}
+                </>
               )}
             </CardDescription>
           </div>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button disabled={seatsRemaining <= 0}>Invite Member</Button>
+              <Button disabled={!isAdmin && seatsRemaining <= 0}>Invite Member</Button>
             </DialogTrigger>
             <DialogContent>
               <form onSubmit={sendInvite}>

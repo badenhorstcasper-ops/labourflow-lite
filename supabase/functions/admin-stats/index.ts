@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
     const [
       docs, payments, bookings, contacts, subs,
       pv1, pv7, pv30,
-      recentDocs,
+      recentDocs, recentErrors,
     ] = await Promise.all([
       count(admin.from("generated_documents").select("*", { count: "exact", head: true })),
       count(admin.from("payfast_webhook_log").select("*", { count: "exact", head: true }).eq("payment_status", "COMPLETE")),
@@ -57,6 +57,7 @@ Deno.serve(async (req) => {
       count(admin.from("page_views").select("*", { count: "exact", head: true }).gte("created_at", week)),
       count(admin.from("page_views").select("*", { count: "exact", head: true }).gte("created_at", month)),
       admin.from("generated_documents").select("id, doc_type, created_at").order("created_at", { ascending: false }).limit(10),
+      admin.from("error_logs").select("id, short_id, message, route, severity, created_at, email").eq("resolved", false).order("created_at", { ascending: false }).limit(15),
     ]);
 
     // Recent signups via admin.auth
@@ -89,6 +90,7 @@ Deno.serve(async (req) => {
       topPaths,
       recentSignups,
       recentDocuments: recentDocs.data ?? [],
+      recentErrors: recentErrors.data ?? [],
     }, 200);
   } catch (e) {
     console.error("admin-stats error", e);
