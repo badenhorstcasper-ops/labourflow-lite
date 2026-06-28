@@ -5,6 +5,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, RefreshCw } from "lucide-react";
 
+type ErrorRow = {
+  id: string;
+  short_id: string | null;
+  message: string | null;
+  route: string | null;
+  severity: string | null;
+  created_at: string;
+  email: string | null;
+};
+
 type Stats = {
   totals: {
     signups: number;
@@ -18,6 +28,7 @@ type Stats = {
   topPaths: { path: string; count: number }[];
   recentSignups: { id: string; email: string; created_at: string }[];
   recentDocuments: { id: string; doc_type: string; created_at: string }[];
+  recentErrors: ErrorRow[];
 };
 
 export default function AdminPage() {
