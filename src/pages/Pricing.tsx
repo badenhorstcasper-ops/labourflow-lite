@@ -163,8 +163,9 @@ const Pricing = () => {
         <header className="mb-10 text-center">
           <h1 className="text-3xl font-bold tracking-tight">Start Free</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Every paid plan starts with a <strong>7-day free trial</strong> — no
-            charge during the trial, cancel anytime.
+            Every paid plan starts with a <strong>7-day free trial</strong>. Your
+            card is secured today via PayFast (no money taken). The first debit
+            happens only after day 7, and only if you haven't cancelled.
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
             Secure recurring billing via PayFast{IS_LIVE ? "" : " (sandbox mode — no real charges)"}.
