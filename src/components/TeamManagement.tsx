@@ -154,18 +154,24 @@ export function TeamManagement() {
             <CardTitle>Invite Team Members</CardTitle>
             <CardDescription>
               Current plan: <span className="font-medium text-foreground">{planName}</span>
-              {" · "}
-              {seatsUsed} of {seatLimit} seats used
-              {seatsRemaining > 0 ? (
-                <> · {seatsRemaining} remaining</>
+              {isAdmin ? (
+                <> · {seatsUsed} of unlimited (admin) seats used</>
               ) : (
-                <> · no seats remaining</>
+                <>
+                  {" · "}
+                  {seatsUsed} of {seatLimit} seats used
+                  {seatsRemaining > 0 ? (
+                    <> · {seatsRemaining} remaining</>
+                  ) : (
+                    <> · no seats remaining</>
+                  )}
+                </>
               )}
             </CardDescription>
           </div>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button disabled={seatsRemaining <= 0}>Invite Member</Button>
+              <Button disabled={!isAdmin && seatsRemaining <= 0}>Invite Member</Button>
             </DialogTrigger>
             <DialogContent>
               <form onSubmit={sendInvite}>
