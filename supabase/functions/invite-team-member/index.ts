@@ -11,6 +11,7 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+// NOTE: keep in sync with index.html (legacy account modal) and src/pages/Pricing.tsx.
 const SEAT_LIMITS: Record<string, number> = {
   Solo: 1,
   Business: 5,
