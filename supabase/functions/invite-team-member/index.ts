@@ -53,6 +53,13 @@ Deno.serve(async (req) => {
     // Service-role client for privileged work
     const admin = createClient(supabaseUrl, serviceKey);
 
+    // Super-admin override: founders bypass the seat cap entirely.
+    const { data: isAdminFlag } = await admin.rpc("has_role", {
+      _user_id: ownerId,
+      _role: "admin",
+    });
+    const isAdmin = !!isAdminFlag;
+
     // Look up owner's plan + seat usage
     const { data: sub } = await admin
       .from("subscriptions")
@@ -72,7 +79,7 @@ Deno.serve(async (req) => {
 
     // Owner consumes 1 seat
     const used = (usedCount ?? 0) + 1;
-    if (used >= seatLimit) {
+    if (!isAdmin && used >= seatLimit) {
       return json(403, {
         error: `No seats remaining on the ${planName} plan (${used}/${seatLimit}).`,
       });
