@@ -14,12 +14,13 @@ export interface SubscriptionInfo {
   refresh: () => Promise<void>;
 }
 
-export function useSubscription(): SubscriptionInfo {
+export function useSubscription(): SubscriptionInfo & { isAdmin: boolean } {
   const [loading, setLoading] = useState(true);
   const [authed, setAuthed] = useState(false);
   const [status, setStatus] = useState<SubStatus>("none");
   const [planName, setPlanName] = useState<string | null>(null);
   const [trialEndsAt, setTrialEndsAt] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -82,8 +83,7 @@ export function useSubscription(): SubscriptionInfo {
       setPlanName(null);
       setTrialEndsAt(null);
     }
-    (load as unknown as { _isAdmin?: boolean })._isAdmin = isAdmin;
-    setAdminFlag(isAdmin);
+    setIsAdmin(isAdmin);
     setLoading(false);
   }
 
@@ -109,7 +109,7 @@ export function useSubscription(): SubscriptionInfo {
     status === "trialing" && trialEndsAt
       ? new Date(trialEndsAt).getTime() < Date.now()
       : false;
-  const isEntitled = status === "active" || (status === "trialing" && !trialExpired);
+  const isEntitled = isAdmin || status === "active" || (status === "trialing" && !trialExpired);
 
   return {
     loading,
@@ -119,6 +119,7 @@ export function useSubscription(): SubscriptionInfo {
     trialEndsAt,
     daysLeft,
     isEntitled,
+    isAdmin,
     refresh: load,
   };
 }
