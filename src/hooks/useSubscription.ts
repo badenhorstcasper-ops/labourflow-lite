@@ -14,12 +14,13 @@ export interface SubscriptionInfo {
   refresh: () => Promise<void>;
 }
 
-export function useSubscription(): SubscriptionInfo {
+export function useSubscription(): SubscriptionInfo & { isAdmin: boolean } {
   const [loading, setLoading] = useState(true);
   const [authed, setAuthed] = useState(false);
   const [status, setStatus] = useState<SubStatus>("none");
   const [planName, setPlanName] = useState<string | null>(null);
   const [trialEndsAt, setTrialEndsAt] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -34,6 +35,16 @@ export function useSubscription(): SubscriptionInfo {
       return;
     }
     setAuthed(true);
+
+    // Admin bypass: admins always have full access, even without a subscription.
+    let isAdmin = false;
+    try {
+      const { data: adminFlag } = await supabase.rpc("has_role", {
+        _user_id: user.id,
+        _role: "admin",
+      });
+      isAdmin = !!adminFlag;
+    } catch (_) {}
 
     // Resolve the owner (could be a team member acting under an owner).
     let ownerId = user.id;
@@ -57,7 +68,12 @@ export function useSubscription(): SubscriptionInfo {
       .limit(1)
       .maybeSingle();
 
-    if (data) {
+    if (isAdmin) {
+      // Admins always entitled. Reflect any real plan if present, else show "active".
+      setStatus(((data?.status as SubStatus) ?? "active"));
+      setPlanName((data?.plan_name as string) ?? "Admin");
+      setTrialEndsAt((data as { trial_ends_at?: string | null })?.trial_ends_at ?? null);
+    } else if (data) {
       setStatus((data.status as SubStatus) ?? "none");
       setPlanName((data.plan_name as string) ?? null);
       setTrialEndsAt((data as { trial_ends_at?: string | null }).trial_ends_at ?? null);
@@ -66,6 +82,7 @@ export function useSubscription(): SubscriptionInfo {
       setPlanName(null);
       setTrialEndsAt(null);
     }
+    setIsAdmin(isAdmin);
     setLoading(false);
   }
 
@@ -91,7 +108,7 @@ export function useSubscription(): SubscriptionInfo {
     status === "trialing" && trialEndsAt
       ? new Date(trialEndsAt).getTime() < Date.now()
       : false;
-  const isEntitled = status === "active" || (status === "trialing" && !trialExpired);
+  const isEntitled = isAdmin || status === "active" || (status === "trialing" && !trialExpired);
 
   return {
     loading,
@@ -101,6 +118,7 @@ export function useSubscription(): SubscriptionInfo {
     trialEndsAt,
     daysLeft,
     isEntitled,
+    isAdmin,
     refresh: load,
   };
 }

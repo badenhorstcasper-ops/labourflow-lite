@@ -56,10 +56,10 @@ const PLANS: Plan[] = [
     tagline: "per month · 1 user",
     description: "For individuals getting started.",
     features: [
-      "50 AI questions/month",
+      "CARA AI adviser",
       "All documents",
       "CCMA deadline tracker",
-      "CARA AI adviser",
+      "1 user",
     ],
     cta: "Start 7-day free trial",
     kind: "paid",

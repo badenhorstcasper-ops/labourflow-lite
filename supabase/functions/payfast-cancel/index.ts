@@ -82,14 +82,14 @@ Deno.serve(async (req) => {
   );
 
   const token = authHeader.replace("Bearer ", "");
-  const { data: claims, error: claimsErr } = await supabase.auth.getClaims(token);
-  if (claimsErr || !claims?.claims) {
+  const { data: userRes, error: userErr } = await supabase.auth.getUser(token);
+  if (userErr || !userRes?.user) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
-  const userId = claims.claims.sub as string;
+  const userId = userRes.user.id;
 
   // Find caller's subscription (most recent).
   const { data: sub, error: subErr } = await admin

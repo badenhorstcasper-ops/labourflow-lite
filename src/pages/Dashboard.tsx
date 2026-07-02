@@ -98,6 +98,28 @@ export default function Dashboard() {
           </Button>
         </div>
 
+        {(sub?.plan_name === "Professional" || sub?.plan_name === "Enterprise") && (
+          <Card className="border-green-600/40 bg-green-50 dark:bg-green-950/20">
+            <CardContent className="p-4 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="font-semibold">Priority WhatsApp support</p>
+                <p className="text-sm text-muted-foreground">
+                  As a {sub.plan_name} subscriber, tap the button to reach your iNRECO consultant on WhatsApp.
+                </p>
+              </div>
+              <Button asChild className="bg-green-600 hover:bg-green-700 text-white">
+                <a
+                  href="https://wa.me/27844027029?text=Hi%20iNRECO%2C%20I%27m%20a%20subscriber%20and%20need%20support."
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  WhatsApp your consultant
+                </a>
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
         {!profileComplete && (
           <Card className="border-primary/40 bg-primary/10">
             <CardContent className="p-4 flex flex-wrap items-center justify-between gap-3">
