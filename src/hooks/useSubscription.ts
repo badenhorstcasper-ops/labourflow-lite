@@ -73,7 +73,6 @@ export function useSubscription(): SubscriptionInfo & { isAdmin: boolean } {
       setStatus(((data?.status as SubStatus) ?? "active"));
       setPlanName((data?.plan_name as string) ?? "Admin");
       setTrialEndsAt((data as { trial_ends_at?: string | null })?.trial_ends_at ?? null);
-      (load as unknown as { _isAdmin?: boolean })._isAdmin = true;
     } else if (data) {
       setStatus((data.status as SubStatus) ?? "none");
       setPlanName((data.plan_name as string) ?? null);
