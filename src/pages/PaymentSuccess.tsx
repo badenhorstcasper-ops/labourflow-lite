@@ -25,7 +25,7 @@ const PaymentSuccess = () => {
         <>
           <p className="text-muted-foreground">Your subscription is now active.</p>
           <Button asChild>
-            <Link to="/">Open CARA</Link>
+            <Link to="/app">Open CARA</Link>
           </Button>
         </>
       ) : (

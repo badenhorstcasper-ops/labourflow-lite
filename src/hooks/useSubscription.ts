@@ -35,6 +35,16 @@ export function useSubscription(): SubscriptionInfo {
     }
     setAuthed(true);
 
+    // Admin bypass: admins always have full access, even without a subscription.
+    let isAdmin = false;
+    try {
+      const { data: adminFlag } = await supabase.rpc("has_role", {
+        _user_id: user.id,
+        _role: "admin",
+      });
+      isAdmin = !!adminFlag;
+    } catch (_) {}
+
     // Resolve the owner (could be a team member acting under an owner).
     let ownerId = user.id;
     try {
@@ -57,7 +67,13 @@ export function useSubscription(): SubscriptionInfo {
       .limit(1)
       .maybeSingle();
 
-    if (data) {
+    if (isAdmin) {
+      // Admins always entitled. Reflect any real plan if present, else show "active".
+      setStatus(((data?.status as SubStatus) ?? "active"));
+      setPlanName((data?.plan_name as string) ?? "Admin");
+      setTrialEndsAt((data as { trial_ends_at?: string | null })?.trial_ends_at ?? null);
+      (load as unknown as { _isAdmin?: boolean })._isAdmin = true;
+    } else if (data) {
       setStatus((data.status as SubStatus) ?? "none");
       setPlanName((data.plan_name as string) ?? null);
       setTrialEndsAt((data as { trial_ends_at?: string | null }).trial_ends_at ?? null);
@@ -66,6 +82,8 @@ export function useSubscription(): SubscriptionInfo {
       setPlanName(null);
       setTrialEndsAt(null);
     }
+    (load as unknown as { _isAdmin?: boolean })._isAdmin = isAdmin;
+    setAdminFlag(isAdmin);
     setLoading(false);
   }
 
