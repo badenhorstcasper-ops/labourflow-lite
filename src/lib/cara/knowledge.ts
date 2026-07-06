@@ -340,6 +340,135 @@ export const TOPICS: KnowledgeTopic[] = [
     ],
     keywords: ["harassment", "sexual harassment", "harass", "me too", "inappropriate", "molested", "touched"],
   },
+  {
+    key: "aarto_overview",
+    label: "AARTO overview",
+    prompt: "How does AARTO affect me as an employer?",
+    summary:
+      "AARTO (the Administrative Adjudication of Road Traffic Offences Act 46 of 1998) replaces criminal prosecution for most traffic offences with an administrative demerit-point system. If a driving employee accumulates too many points, their licence is suspended — and if driving is part of their job, that becomes YOUR labour-law problem, not just theirs.",
+    steps: [
+      "Understand the demerit system: every infringement carries a penalty AND demerit points. When points exceed the threshold, the licence is suspended. Repeated suspensions can cancel it.",
+      "Identify which of your employees drive as an operational requirement (delivery, sales, technicians, fleet, security, managers, field staff).",
+      "For those employees, a valid driver's licence is often an INHERENT requirement of the position — losing it can end their ability to do the job.",
+      "Remember your OHSA duty of care: you may not lawfully allow an employee with a suspended licence to keep driving. Doing so exposes you to insurance repudiation, civil liability and regulatory action.",
+      "Prepare proactively: contract clauses, a driver / AARTO policy, periodic licence verification, and a clear disclosure duty. This is cheaper than reacting to a crisis.",
+    ],
+    relatedTemplates: ["aarto_policy", "driver_addendum", "licence_disclosure_request"],
+    followUps: [
+      "How do I know if driving is an inherent requirement of the job?",
+      "Can I check my employee's demerit points?",
+      "What must a driver / AARTO policy contain?",
+    ],
+    keywords: ["aarto", "demerit", "demerits", "demerit point", "demerit points", "traffic fine", "traffic fines", "traffic offence", "infringement", "rtia", "road traffic infringement"],
+  },
+  {
+    key: "licence_lost",
+    label: "Lost licence: discipline or incapacity?",
+    prompt: "My driver has lost his driver's licence. Can I dismiss him?",
+    summary:
+      "Not automatically. There are TWO possible paths — misconduct or incapacity — and picking the wrong one makes the dismissal unfair. Ask first: did the employee's own conduct cause the loss (misconduct), or did they simply lose an inherent requirement of the job (incapacity)?",
+    steps: [
+      "Scenario 1 — MISCONDUCT: the employee intentionally or negligently caused the loss (repeated speeding, reckless driving, ignoring infringement notices, driving without authority, failing to disclose the suspension). Charge them and hold a disciplinary hearing. Possible charges: negligence, breach of company policy, bringing the employer into disrepute, failure to obey lawful instructions, dishonesty for non-disclosure.",
+      "Scenario 2 — INCAPACITY: the employee no longer holds an essential qualification (licence suspended through demerits, medically disqualified, or statutorily prohibited) without workplace misconduct. Follow an incapacity process, not a disciplinary hearing.",
+      "For incapacity, investigate: how long is the suspension, is alternative non-driving work available, can duties be temporarily reallocated, what is the operational impact.",
+      "Whichever route you pick, follow a fair procedure: investigate, obtain the RTIA record, allow representations, consider alternatives, weigh length of service and disciplinary record, and document every decision.",
+      "Dismissal must be a LAST resort in either scenario. It is never automatic — the LRA still requires substantive and procedural fairness.",
+      "Do NOT allow the employee to keep driving a company vehicle in the meantime. That would breach your OHSA duty and likely void your insurance.",
+    ],
+    relatedTemplates: ["licence_incapacity_notice", "notice_hearing", "suspension", "dismissal"],
+    followUps: [
+      "What if the suspension is only for 3 months?",
+      "Can I move them to a non-driving role instead?",
+      "What if they hid the suspension from me?",
+    ],
+    keywords: ["lost licence", "lost license", "licence suspended", "license suspended", "suspended licence", "suspended license", "licence suspension", "license suspension", "cancelled licence", "cancelled license", "no licence", "no license", "invalid licence", "invalid license", "driver lost", "driver's licence", "drivers licence", "drivers license", "driver's license"],
+  },
+  {
+    key: "licence_hidden",
+    label: "Hidden licence suspension",
+    prompt: "My employee hid the fact that his licence was suspended. What now?",
+    summary:
+      "This changes everything. The core issue is no longer the suspended licence — it is DISHONESTY. Concealing a licence suspension, continuing to drive company vehicles, or falsely claiming a valid licence destroys the trust relationship and is normally treated as serious misconduct.",
+    steps: [
+      "Preserve the evidence: RTIA record, dates the suspension took effect, dates the employee continued to drive, any statements or messages where they confirmed licence validity.",
+      "Suspend the employee from driving duties immediately (precautionary suspension may be appropriate for a serious matter).",
+      "Charge them with dishonesty and any related misconduct: concealing a material fact, driving without a valid licence, unauthorised use of company vehicles, breach of policy, bringing the employer into disrepute.",
+      "Convene a disciplinary hearing. Give proper notice, list every charge, and allow representation.",
+      "SA labour law consistently treats dishonesty as capable of destroying trust — dismissal is often a fair sanction, but must still be procedurally correct.",
+    ],
+    relatedTemplates: ["suspension", "notice_hearing", "dismissal"],
+    followUps: [
+      "What if they say they didn't know they were suspended?",
+      "Can I recover the fines from their salary?",
+      "Do I have to report this to their next employer?",
+    ],
+    keywords: ["hid licence", "hid license", "concealed licence", "concealed license", "hidden suspension", "lied about licence", "lied about license", "didn't disclose licence", "didnt disclose licence", "false licence", "false license"],
+  },
+  {
+    key: "aarto_disclosure",
+    label: "AARTO disclosure & licence checks",
+    prompt: "Can I make my drivers disclose their fines and demerits?",
+    summary:
+      "Yes — where driving is part of the job, you may lawfully require employees to disclose licence suspensions, cancellations, endorsements, relevant traffic convictions and (where operationally relevant) their demerit balance. You must do it through the contract or a policy, and you must comply with POPIA when processing the information.",
+    steps: [
+      "Put the disclosure duty in writing: employment contract, driver policy, fleet policy or code of conduct. Verbal duties are unenforceable.",
+      "Get the employee's consent to periodic licence verification (RTIA / eNaTIS check) and record it — this is POPIA compliance.",
+      "Verify licences at least annually, and immediately after any incident (accident, fine, complaint).",
+      "Require IMMEDIATE written disclosure of any suspension, cancellation or endorsement. Set a deadline (usually 24-48 hours from becoming aware).",
+      "Store the information securely, use it only for the stated purpose, and don't share it beyond the people who need it — POPIA again.",
+      "If the employee refuses to disclose or consent, treat it as a breach of contract / policy and follow a disciplinary process.",
+    ],
+    relatedTemplates: ["licence_disclosure_request", "aarto_policy", "driver_addendum"],
+    followUps: [
+      "Do I need the employee's consent to check their licence?",
+      "How often should I verify licences?",
+      "What if the employee refuses to sign the disclosure clause?",
+    ],
+    keywords: ["disclose licence", "disclose license", "licence check", "license check", "licence verification", "license verification", "check demerits", "check licence", "check license", "popia licence", "popia license", "driver disclosure"],
+  },
+  {
+    key: "driver_policy",
+    label: "Driver & fleet policies",
+    prompt: "What policies do I need for drivers and company vehicles?",
+    summary:
+      "If your business has drivers or company vehicles, four documents work together: a Driver Policy, a Fleet Management Policy, an AARTO Compliance Policy, and matching entries in your Disciplinary Code. Without them you cannot fairly discipline a driver, and your insurance may repudiate a claim.",
+    steps: [
+      "Driver Policy: licence verification, annual re-checks, reporting obligations, alcohol and drug testing (where lawful), pre-trip vehicle inspections, driver competence and training.",
+      "Fleet Management Policy: vehicle allocation, fuel cards, treatment of traffic fines, authorised drivers list, telematics / tracking, accident and incident reporting.",
+      "AARTO Compliance Policy: reporting of infringement notices, employer notification, demerit monitoring, licence suspension procedures, internal investigations, POPIA handling of driver data.",
+      "Disciplinary Code additions: failure to disclose licence suspension, driving without a valid licence, unauthorised use of a company vehicle, repeated traffic violations, gross negligence behind the wheel.",
+      "Roll out properly: publish, train managers, get signed acknowledgements from every driving employee, and review annually.",
+    ],
+    relatedTemplates: ["aarto_policy", "driver_addendum"],
+    followUps: [
+      "Can I deduct traffic fines from an employee's salary?",
+      "Can I install a tracker in a company vehicle?",
+      "Do I need the employee's consent for alcohol testing?",
+    ],
+    keywords: ["driver policy", "fleet policy", "fleet management", "aarto policy", "company vehicle policy", "vehicle policy", "driving policy"],
+  },
+  {
+    key: "driving_inherent_requirement",
+    label: "Licence as inherent job requirement",
+    prompt: "When is a driver's licence an inherent requirement of the job?",
+    summary:
+      "A driver's licence is an INHERENT requirement whenever an employee cannot perform their contractual duties without it — sales reps, delivery drivers, technicians, fleet operators, security response, field service, and often managers. Marking it as such in the contract makes both discipline and incapacity dismissals defensible.",
+    steps: [
+      "Audit every position: can the person actually do the job without a valid licence? If no, driving is inherent.",
+      "State it clearly in the employment contract: 'A valid Code X driver's licence is an inherent requirement of the position. Loss or suspension may affect continued employment.'",
+      "Add the disclosure duty and consent to periodic verification in the same clause.",
+      "Refer to the driver / fleet / AARTO policy in the contract so those policies bind the employee.",
+      "When a licence is lost, having this clause makes an incapacity dismissal (loss of an essential qualification) much easier to defend at the CCMA.",
+      "Check your insurance policy: most insurers exclude cover where the driver is unlicensed or breaching the law. Your contract and policy must align with your cover.",
+    ],
+    relatedTemplates: ["driver_addendum", "contract", "aarto_policy"],
+    followUps: [
+      "What if the employee was hired without a licence being required, but now needs to drive?",
+      "Do I have to find alternative work for a driver who loses their licence?",
+      "Can I make holding a licence a condition of promotion?",
+    ],
+    keywords: ["inherent requirement", "essential qualification", "licence required", "license required", "must have licence", "must have license", "driving job", "driver job"],
+  },
 ];
 
 export function findTopic(textOrKey: string): KnowledgeTopic | undefined {
