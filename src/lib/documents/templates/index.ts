@@ -586,6 +586,213 @@ const counselling: TemplateDefinition = {
   }),
 };
 
+// ---------- 15. AARTO / Driver Policy ----------
+const aarto_policy: TemplateDefinition = {
+  key: "aarto_policy",
+  name: "AARTO / Driver Policy",
+  description: "Full driver, fleet and AARTO compliance policy — licence verification, disclosure duty, demerit monitoring, fleet rules and disciplinary offences.",
+  fields: [
+    { key: "effective_date", label: "Effective date", type: "date", required: true },
+    { key: "scope", label: "Employees covered", type: "textarea",
+      placeholder: "e.g. All employees who drive any company vehicle, or who use their own vehicle for company business, or who are required to hold a valid driver's licence as part of their duties." },
+    { key: "verification_freq", label: "Licence verification frequency", type: "text",
+      placeholder: "e.g. On appointment and annually thereafter, and immediately after any incident." },
+    { key: "disclosure_deadline", label: "Disclosure deadline", type: "text",
+      placeholder: "e.g. Within 24 hours of becoming aware of any suspension, cancellation or endorsement." },
+    { key: "alcohol_testing", label: "Alcohol / drug testing", type: "textarea",
+      placeholder: "State when testing may be conducted (e.g. random, post-incident, reasonable suspicion) and the process followed." },
+    { key: "fines_treatment", label: "Treatment of traffic fines", type: "textarea",
+      placeholder: "e.g. Fines resulting from the driver's conduct are the driver's personal liability and may be recovered from salary with written consent." },
+  ],
+  build: (v) => ({
+    type: "aarto_policy",
+    title: "AARTO, Driver and Fleet Policy",
+    subtitle: `Effective from ${fmtDate(v.effective_date)}`,
+    body: [
+      { kind: "h", text: "1. Purpose" },
+      { kind: "p", text: "This policy sets out the Employer's requirements for employees who drive as part of their duties, and gives effect to the Employer's obligations under the National Road Traffic Act, the Administrative Adjudication of Road Traffic Offences Act 46 of 1998 (AARTO), the Occupational Health and Safety Act, and the Employer's insurance arrangements." },
+      { kind: "h", text: "2. Scope" },
+      ...paragraphs(v.scope || "This policy applies to every employee who drives a company vehicle, uses a personal vehicle for company business, or is required to hold a valid driver's licence as an inherent requirement of the position."),
+      { kind: "h", text: "3. Inherent requirement" },
+      { kind: "p", text: "Where the position requires driving, a valid, current and unrestricted driver's licence for the applicable vehicle class is an INHERENT REQUIREMENT of the position. Loss, suspension or cancellation of the licence may materially affect the employee's continued employment." },
+      { kind: "h", text: "4. Licence verification" },
+      { kind: "p", text: v.verification_freq || "The Employer will verify each driving employee's licence on appointment and at least annually thereafter, and may verify at any time after an incident, accident or complaint. The employee consents to such verification, including checks with the RTIA / eNaTIS." },
+      { kind: "h", text: "5. Disclosure duty" },
+      { kind: "list", items: [
+        `The employee must disclose IN WRITING any suspension, cancellation, endorsement or material restriction of their licence ${v.disclosure_deadline || "within 24 hours of becoming aware"}.`,
+        "The employee must disclose any infringement notice, summons, arrest or conviction relating to the driving of any vehicle.",
+        "Where operationally relevant, the employee must disclose their accumulated demerit balance on request.",
+        "Non-disclosure or false disclosure constitutes serious misconduct.",
+      ]},
+      { kind: "h", text: "6. AARTO compliance" },
+      { kind: "list", items: [
+        "Every infringement notice served on the employee (whether at work or otherwise) must be reported to the line manager within 48 hours.",
+        "The employee is responsible for paying, representing or electing to be tried on their own infringements, and for managing their demerit balance.",
+        "The Employer will not represent the employee in AARTO proceedings and does not accept responsibility for the employee's demerit accumulation.",
+        "The employee may not drive on Employer business once their licence is suspended, cancelled or otherwise invalid.",
+      ]},
+      { kind: "h", text: "7. Fleet rules" },
+      { kind: "list", items: [
+        "Only authorised employees, listed in writing, may drive Employer vehicles.",
+        "Pre-trip inspections must be conducted and defects reported before use.",
+        "Company vehicles may not be used for private purposes without written authorisation.",
+        "Telematics / tracking is installed for safety, insurance and operational reasons; the employee consents to its use.",
+        "All accidents and incidents must be reported immediately, regardless of severity.",
+      ]},
+      ...(v.alcohol_testing ? [{ kind: "h" as const, text: "8. Alcohol and drug testing" }, ...paragraphs(v.alcohol_testing)] : []),
+      ...(v.fines_treatment ? [{ kind: "h" as const, text: "9. Traffic fines" }, ...paragraphs(v.fines_treatment)] : []),
+      { kind: "h", text: "10. Disciplinary offences" },
+      { kind: "list", items: [
+        "Driving without a valid licence.",
+        "Failure to disclose licence suspension, cancellation or endorsement.",
+        "Concealing or misrepresenting demerit points, infringements or convictions.",
+        "Unauthorised use of a company vehicle.",
+        "Repeated traffic violations while on Employer business.",
+        "Gross negligence or reckless driving.",
+        "Refusing lawful alcohol or drug testing where this policy applies.",
+      ]},
+      { kind: "h", text: "11. POPIA" },
+      { kind: "p", text: "Personal information collected under this policy (licence details, RTIA records, demerit balance, testing results) is processed only for the purposes set out in this policy, kept secure, and disclosed only to those who need it. The employee has the rights afforded by the Protection of Personal Information Act." },
+      { kind: "h", text: "12. Acknowledgement" },
+      { kind: "p", text: "By signing below, the employee acknowledges receipt of this policy, agrees to its terms, and consents to the licence verification and processing of personal information described above." },
+    ],
+    signatures: [
+      { label: "Authorised Signatory" },
+      { label: "Employee" },
+    ],
+  }),
+};
+
+// ---------- 16. Driver contract addendum ----------
+const driver_addendum: TemplateDefinition = {
+  key: "driver_addendum",
+  name: "Driver contract addendum",
+  description: "Addendum making a valid driver's licence an inherent requirement, with disclosure duty and consent to periodic verification.",
+  fields: [
+    { key: "employee", label: "Employee full name", type: "text", required: true },
+    { key: "position", label: "Position", type: "text", required: true },
+    { key: "licence_class", label: "Required licence class", type: "text", placeholder: "e.g. Code B, Code EC1, PrDP" },
+    { key: "effective_date", label: "Effective date", type: "date", required: true },
+  ],
+  build: (v) => ({
+    type: "driver_addendum",
+    title: "Addendum to Contract of Employment — Driving Requirements",
+    subtitle: v.employee ? `Between the Employer and ${v.employee}${v.position ? ` (${v.position})` : ""}` : undefined,
+    body: [
+      { kind: "p", text: `This addendum takes effect on ${fmtDate(v.effective_date)} and forms part of the Employee's contract of employment.` },
+      { kind: "h", text: "1. Inherent requirement" },
+      { kind: "p", text: `The Employee's position requires driving. A valid, current and unrestricted ${v.licence_class || "driver's"} licence is an INHERENT REQUIREMENT of the position. The Employee cannot perform the duties of the position without such a licence.` },
+      { kind: "h", text: "2. Duty to maintain licence" },
+      { kind: "p", text: "The Employee must maintain a valid driver's licence at all times during employment, at the Employee's own cost, and must renew it timeously." },
+      { kind: "h", text: "3. Disclosure duty" },
+      { kind: "list", items: [
+        "The Employee must immediately (and in any event within 24 hours) disclose IN WRITING any suspension, cancellation, endorsement, restriction, expiry or invalidation of the licence.",
+        "The Employee must disclose any AARTO infringement notice, summons, arrest or conviction relating to driving.",
+        "The Employee must disclose their accumulated AARTO demerit balance when requested.",
+      ]},
+      { kind: "h", text: "4. Consent to verification" },
+      { kind: "p", text: "The Employee consents to periodic verification of licence status and demerit balance by the Employer, including checks with the RTIA / eNaTIS, on appointment, annually, and after any incident. The Employee consents to the processing of this personal information under the Protection of Personal Information Act." },
+      { kind: "h", text: "5. Consequences of loss of licence" },
+      { kind: "list", items: [
+        "Where the loss results from the Employee's misconduct (repeated infringements, reckless driving, non-disclosure, driving without authority), disciplinary action may follow, up to and including dismissal.",
+        "Where the loss occurs without disciplinary fault (for example, demerit-point suspension), an incapacity process will be followed, considering alternatives before dismissal is contemplated.",
+        "The Employee may not drive on Employer business while the licence is suspended, cancelled or otherwise invalid.",
+      ]},
+      { kind: "h", text: "6. Policies incorporated" },
+      { kind: "p", text: "The Employer's Driver, Fleet and AARTO Compliance Policies are incorporated into this addendum by reference and bind the Employee." },
+      { kind: "h", text: "7. Whole agreement" },
+      { kind: "p", text: "This addendum, together with the contract of employment and the policies referred to above, constitutes the whole agreement between the parties on this subject." },
+    ],
+    signatures: sigs(v.employee),
+  }),
+};
+
+// ---------- 17. Licence-suspension incapacity notice ----------
+const licence_incapacity_notice: TemplateDefinition = {
+  key: "licence_incapacity_notice",
+  name: "Licence-suspension incapacity notice",
+  description: "Invite an employee to a meeting to discuss loss of driver's licence as loss of an inherent job requirement.",
+  fields: [
+    { key: "employee", label: "Employee full name", type: "text", required: true },
+    { key: "position", label: "Position", type: "text", required: true },
+    { key: "suspension_date", label: "Date licence was suspended / lost", type: "date", required: true },
+    { key: "expected_duration", label: "Expected duration of suspension", type: "text", placeholder: "e.g. 3 months, or unknown pending RTIA process" },
+    { key: "meeting_date", label: "Meeting date", type: "date", required: true },
+    { key: "meeting_time", label: "Meeting time", type: "text", required: true, placeholder: "e.g. 10:00" },
+    { key: "venue", label: "Venue", type: "text", required: true },
+  ],
+  build: (v) => ({
+    type: "licence_incapacity_notice",
+    title: "Notice — Incapacity Discussion (Loss of Driver's Licence)",
+    subtitle: v.employee ? `To: ${v.employee}${v.position ? ` (${v.position})` : ""}` : undefined,
+    body: [
+      { kind: "p", text: `The Employer records that your driver's licence was suspended / became invalid on ${fmtDate(v.suspension_date)}. A valid driver's licence is an inherent requirement of your position as ${v.position || "____________"}.` },
+      ...(v.expected_duration ? [{ kind: "p" as const, text: `The expected duration of the suspension is: ${v.expected_duration}.` }] : []),
+      { kind: "h", text: "Nature of the discussion" },
+      { kind: "p", text: "This is NOT a disciplinary hearing. It is an incapacity consultation to discuss the loss of an essential qualification for your position and what, if anything, can be done about it." },
+      { kind: "h", text: "Meeting details" },
+      { kind: "p", text: `Date: ${fmtDate(v.meeting_date)}   Time: ${v.meeting_time}   Venue: ${v.venue}` },
+      { kind: "h", text: "What will be discussed" },
+      { kind: "list", items: [
+        "The circumstances and expected duration of the licence suspension.",
+        "Whether alternative non-driving work is available, temporarily or permanently.",
+        "Whether duties can be reallocated for the period of the suspension.",
+        "Whether unpaid leave, reduced hours or redeployment is a workable option.",
+        "The operational impact on the Employer and any reasonable accommodation.",
+        "Only if no workable alternative exists, whether termination of employment on the ground of incapacity is appropriate.",
+      ]},
+      { kind: "h", text: "Your rights" },
+      { kind: "list", items: [
+        "You may be represented by a fellow employee or a recognised shop steward.",
+        "You may present documentation, including the RTIA notice, medical or other records.",
+        "You may propose alternatives.",
+        "You will receive a written outcome.",
+      ]},
+      { kind: "p", text: "Please note that pending the outcome of this consultation you MAY NOT drive any Employer vehicle or drive on Employer business. Alternative arrangements will be made if possible." },
+    ],
+    signatures: sigs(v.employee),
+  }),
+};
+
+// ---------- 18. Licence disclosure request ----------
+const licence_disclosure_request: TemplateDefinition = {
+  key: "licence_disclosure_request",
+  name: "Licence status disclosure request",
+  description: "Formal request to a driving employee to confirm licence status, demerit balance and pending infringements.",
+  fields: [
+    { key: "employee", label: "Employee full name", type: "text", required: true },
+    { key: "position", label: "Position", type: "text" },
+    { key: "reason", label: "Reason for the request", type: "textarea",
+      placeholder: "e.g. Annual verification under the Driver Policy, or following an accident on 12 March." },
+    { key: "deadline", label: "Response deadline", type: "date", required: true },
+  ],
+  build: (v) => ({
+    type: "licence_disclosure_request",
+    title: "Request for Driver's Licence Disclosure",
+    subtitle: v.employee ? `To: ${v.employee}${v.position ? ` (${v.position})` : ""}` : undefined,
+    body: [
+      { kind: "p", text: "In terms of your contract of employment and the Employer's Driver / AARTO Policy, you are required to provide the information set out below." },
+      ...(v.reason ? [{ kind: "h" as const, text: "Reason for this request" }, ...paragraphs(v.reason)] : []),
+      { kind: "h", text: "Information required" },
+      { kind: "list", items: [
+        "A clear copy of your current driver's licence card (both sides) and its expiry date.",
+        "Confirmation in writing that your licence is valid, unrestricted and not suspended or cancelled.",
+        "Any endorsements or restrictions currently on your licence.",
+        "Your current AARTO demerit-point balance, if known.",
+        "Details of any pending AARTO infringement notices, summonses or court dates relating to driving.",
+        "Details of any accident, incident or traffic-related arrest since your last disclosure.",
+      ]},
+      { kind: "h", text: "Consent to verification" },
+      { kind: "p", text: "By responding you confirm your consent (as previously given) to the Employer verifying the above information with the RTIA / eNaTIS. The information will be processed in accordance with POPIA and used only for employment-related purposes." },
+      { kind: "h", text: "Deadline" },
+      { kind: "p", text: `Please provide the requested information by no later than ${fmtDate(v.deadline)}.` },
+      { kind: "h", text: "Consequences of non-response or false disclosure" },
+      { kind: "p", text: "Failure to respond by the deadline, refusal to consent, or a false or incomplete disclosure will be treated as a breach of your contractual and policy obligations and may result in disciplinary action, up to and including dismissal." },
+    ],
+    signatures: sigs(v.employee),
+  }),
+};
+
 export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
   warning,
   contract,
@@ -601,6 +808,10 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
   retrenchment_letter,
   incapacity_notice,
   counselling,
+  aarto_policy,
+  driver_addendum,
+  licence_incapacity_notice,
+  licence_disclosure_request,
 ];
 
 export function getTemplate(key: string): TemplateDefinition | undefined {
