@@ -74,7 +74,8 @@ export default function SharePage() {
         style={{ borderBottomColor: c.accent_color || undefined, borderBottomWidth: 3 }}
       >
         {c.logo_url && <img src={c.logo_url} alt="" className="h-10 w-auto" />}
-        <div className="font-semibold">{c.company_name || "Shared document"}</div>
+        <div className="font-semibold flex-1">{c.company_name || "Shared document"}</div>
+        <img src={inrecoLogo.url} alt="iNRECO" className="h-10 w-auto" />
       </header>
       <main className="flex-1 flex items-center justify-center p-6">
         <Card className="max-w-lg w-full">
