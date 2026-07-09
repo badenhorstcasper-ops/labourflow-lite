@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import inrecoLogo from "@/assets/inreco-logo.png.asset.json";
 
 type ShareData = {
   title: string;
