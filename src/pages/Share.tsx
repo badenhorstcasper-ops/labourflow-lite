@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import inrecoLogo from "@/assets/inreco-logo.png.asset.json";
 
 type ShareData = {
   title: string;
@@ -73,7 +74,8 @@ export default function SharePage() {
         style={{ borderBottomColor: c.accent_color || undefined, borderBottomWidth: 3 }}
       >
         {c.logo_url && <img src={c.logo_url} alt="" className="h-10 w-auto" />}
-        <div className="font-semibold">{c.company_name || "Shared document"}</div>
+        <div className="font-semibold flex-1">{c.company_name || "Shared document"}</div>
+        <img src={inrecoLogo.url} alt="iNRECO" className="h-10 w-auto" />
       </header>
       <main className="flex-1 flex items-center justify-center p-6">
         <Card className="max-w-lg w-full">
@@ -100,9 +102,12 @@ export default function SharePage() {
                 </Button>
               )}
             </div>
-            <p className="text-[11px] text-muted-foreground pt-4 border-t">
-              Shared securely via iNRECO.
-            </p>
+            <div className="pt-4 border-t flex items-center gap-2">
+              <img src={inrecoLogo.url} alt="iNRECO" className="h-6 w-auto" />
+              <p className="text-[11px] text-muted-foreground">
+                Shared securely via iNRECO.
+              </p>
+            </div>
           </CardContent>
         </Card>
       </main>
