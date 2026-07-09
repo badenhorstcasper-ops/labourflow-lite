@@ -102,9 +102,12 @@ export default function SharePage() {
                 </Button>
               )}
             </div>
-            <p className="text-[11px] text-muted-foreground pt-4 border-t">
-              Shared securely via iNRECO.
-            </p>
+            <div className="pt-4 border-t flex items-center gap-2">
+              <img src={inrecoLogo.url} alt="iNRECO" className="h-6 w-auto" />
+              <p className="text-[11px] text-muted-foreground">
+                Shared securely via iNRECO.
+              </p>
+            </div>
           </CardContent>
         </Card>
       </main>
