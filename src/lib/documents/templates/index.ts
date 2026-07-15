@@ -1098,6 +1098,10 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
   driver_addendum,
   licence_incapacity_notice,
   licence_disclosure_request,
+  visa_expiry_procedure,
+  visa_reminder_letter,
+  visa_incapacity_notice,
+  visa_termination_letter,
 ];
 
 export function getTemplate(key: string): TemplateDefinition | undefined {
