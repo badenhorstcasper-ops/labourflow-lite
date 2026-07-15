@@ -469,6 +469,116 @@ export const TOPICS: KnowledgeTopic[] = [
     ],
     keywords: ["inherent requirement", "essential qualification", "licence required", "license required", "must have licence", "must have license", "driving job", "driver job"],
   },
+  {
+    key: "visa_overview",
+    label: "Foreign national visa overview",
+    prompt: "How do I manage foreign national employees whose visas or permits are expiring?",
+    summary:
+      "The Immigration Act 13 of 2002 makes it a criminal offence to employ anyone without valid work authorisation, and places an ongoing duty on you to verify status throughout the employment — not just at hire. But labour law still requires a fair reason and a fair process to dismiss. The correct legal characterisation is STATUTORY (LEGAL) INCAPACITY — not misconduct, and not retrenchment.",
+    steps: [
+      "Verify, don't assume. Every decision must be based on documentary evidence of expiry or lapse, verified with the Department of Home Affairs (DHA) or an authorised verification service — not on assumption, complaint, or the employee's nationality.",
+      "Treat as INCAPACITY, not misconduct. Unless there is separate evidence of dishonesty (forged documents, deliberate concealment), the employee is not being disciplined — they are being managed because an external legal impediment prevents lawful performance.",
+      "Give the employee a genuine opportunity to regularise their status, with reasonable employer assistance where practicable. Refusing to help can itself make a later dismissal unfair (see Joel).",
+      "Do NOT rely on an automatic-termination or suspensive-condition clause to skip a fair process once employment has commenced (Kawalya-Kagwa). Discovery Health confirms the CCMA still has jurisdiction, even if the permit has lapsed.",
+      "Get legal / immigration sign-off before issuing an enquiry notice, and again before any termination decision.",
+      "Notify the DHA of the termination of a foreign national's employment, retain the full file, and process the personal information in line with POPIA.",
+    ],
+    relatedTemplates: ["visa_expiry_procedure", "visa_reminder_letter", "visa_incapacity_notice"],
+    followUps: [
+      "What is 'statutory incapacity' and why does it matter?",
+      "Can I just terminate on the day the visa expires?",
+      "Do I have to help the employee renew their permit?",
+    ],
+    keywords: ["visa", "work visa", "work permit", "permit", "foreign national", "foreigner", "immigration", "home affairs", "dha", "critical skills", "intra-company", "corporate visa", "general work visa"],
+  },
+  {
+    key: "visa_expired",
+    label: "Expired visa — what to do",
+    prompt: "My employee's work visa has expired. What do I do?",
+    summary:
+      "Don't just remove them from payroll — Discovery Health confirms the CCMA still has jurisdiction. Follow the statutory-incapacity route: monitor → written notice → incapacity enquiry → decision. Consider unpaid leave as an interim step where a renewal is genuinely still pending with the DHA.",
+    steps: [
+      "Confirm the expiry objectively — copy of the permit, DHA / authorised verification. Do not act on hearsay.",
+      "Ask the employee for evidence of any timeously-lodged renewal application. Genuine, still-pending DHA delays weigh heavily in favour of the employee (see Joel and the guidance on asylum permits below).",
+      "If there is no valid authorisation and no credible pending application, issue a written notice convening an INCAPACITY ENQUIRY, to be held no sooner than 5 working days later.",
+      "The notice must state: the specific documentation that has expired; that continued employment may render the Employer non-compliant with section 38(1) of the Immigration Act; the employee's right to make written and/or oral representations; the right to be accompanied by a co-employee or trade union representative; and the possible outcomes, including termination for incapacity.",
+      "Consider UNPAID LEAVE (rather than suspension or dismissal) pending the outcome of a genuinely pending application — this protects you from section 38(1) liability while preserving the employment relationship.",
+      "Hold the enquiry. Impartial chair (not the direct line manager where possible). Consider alternatives: adjusted duties, redeployment, unpaid leave, an extended monitoring window.",
+      "Obtain legal/immigration sign-off before any termination. If termination is the outcome, issue a written letter for STATUTORY INCAPACITY, pay BCEA notice pay and accrued leave, issue a certificate of service, and notify the DHA.",
+    ],
+    relatedTemplates: ["visa_reminder_letter", "visa_incapacity_notice", "visa_termination_letter", "visa_expiry_procedure"],
+    followUps: [
+      "Can I put them on unpaid leave instead of dismissing?",
+      "Do I have to pay notice pay on a statutory incapacity termination?",
+      "What if renewal is stuck at Home Affairs?",
+    ],
+    keywords: ["expired visa", "expired permit", "expired work permit", "expired work visa", "visa lapsed", "permit lapsed", "visa expiry", "permit expiry", "lapsed visa", "lapsed permit", "visa expired", "permit expired"],
+  },
+  {
+    key: "asylum_permit",
+    label: "Asylum & refugee permits",
+    prompt: "My employee is an asylum seeker and their permit renewal is stuck at Home Affairs. What do I do?",
+    summary:
+      "Holders of a section 22 asylum seeker permit or refugee status under the Refugees Act 130 of 1998 are entitled to work while their permit is valid. DHA backlogs on renewals are common and are usually NOT the employee's fault — extra caution and a longer monitoring window are required before you convene any enquiry.",
+    steps: [
+      "Ask the employee for evidence of the timeously-lodged renewal or appeal — receipt slip, appointment confirmation, tracking reference. Keep copies on file.",
+      "If a renewal is demonstrably pending through no fault of the employee, EXTEND the monitoring period rather than proceed to an enquiry. DHA processing delays weigh heavily in fairness assessments (Joel).",
+      "Offer reasonable assistance — time off to attend DHA appointments, a supporting letter from the Employer, help gathering documentation. Refusal to assist has been held to make a subsequent dismissal unfair.",
+      "Only if the permit has clearly lapsed with no credible pending application should you move to the standard statutory-incapacity procedure (see 'Expired visa — what to do').",
+      "Never differentiate on nationality or ethnicity. Section 187(1)(f) of the LRA makes that AUTOMATICALLY UNFAIR — uncapped compensation. The decision must rest strictly on the objective absence of work authorisation.",
+    ],
+    relatedTemplates: ["visa_reminder_letter", "visa_incapacity_notice", "visa_expiry_procedure"],
+    followUps: [
+      "How long should I keep them on while renewal is pending?",
+      "Can I put them on unpaid leave while waiting for DHA?",
+      "Do I have to write a supporting letter for their DHA appointment?",
+    ],
+    keywords: ["asylum", "asylum seeker", "refugee", "section 22", "refugees act", "dha backlog", "home affairs backlog", "renewal pending", "permit renewal"],
+  },
+  {
+    key: "visa_verification",
+    label: "Verification & POPIA",
+    prompt: "How do I lawfully check my foreign employees' work authorisation?",
+    summary:
+      "Section 38(2) of the Immigration Act places a positive, ONGOING duty on you to verify status throughout the employment. Passport, visa and permit details are personal information under POPIA — collect them for the specified purpose, store them securely, and don't keep them longer than needed.",
+    steps: [
+      "Before finalising any offer, verify the candidate's right to work directly with the DHA or an authorised verification partner — do NOT rely solely on documents presented by the candidate.",
+      "Record the visa/permit type, conditions, employer/occupation restrictions and expiry date in a central expiry-tracking register.",
+      "Diarise reminders: 90 days, 60 days, 30 days and 14 days before expiry. Issue written renewal reminders to the employee.",
+      "Collect the information directly from the employee where practicable, for the stated purpose of verifying work authorisation. Get consent to periodic re-verification.",
+      "Store the file in an access-controlled location. Access is limited to HR, Legal / Immigration counsel and, where strictly necessary, the direct line manager.",
+      "Retain records for the period required by the Immigration Act. Thereafter, securely dispose of the personal information in line with POPIA's retention-limitation principle.",
+    ],
+    relatedTemplates: ["visa_expiry_procedure", "visa_reminder_letter"],
+    followUps: [
+      "How often should I re-verify visas?",
+      "Can I keep a copy of the passport on file forever?",
+      "Who in the business is allowed to see this information?",
+    ],
+    keywords: ["visa verification", "permit verification", "verify visa", "verify permit", "immigration verification", "popia visa", "popia permit", "dha verification", "section 38"],
+  },
+  {
+    key: "visa_dismissal_fairness",
+    label: "Visa dismissal fairness checklist",
+    prompt: "Have I done enough to fairly dismiss a foreign employee whose visa has lapsed?",
+    summary:
+      "Three tests must all be satisfied: FAIR REASON (Discovery Health, Sibanda), FAIR PROCESS (Joel, Sibanda), and NO SHORTCUTS BY CONTRACT (Kawalya-Kagwa). Getting any one of these wrong exposes you to an unfair dismissal award — and if the decision was really based on nationality, an AUTOMATICALLY unfair dismissal with uncapped compensation.",
+    steps: [
+      "Fair reason: the objective, verified absence of valid work authorisation is a legitimate, non-discriminatory reason for dismissal — but ONLY where you can prove it with DHA or authorised-verification records.",
+      "Fair process: written notice, adequate time to prepare, a genuine opportunity to regularise (with reasonable employer assistance where practicable), an impartial chairperson, right to representation, and a written outcome.",
+      "No shortcuts by contract: automatic-termination or suspensive-condition clauses do NOT remove the need for a fair process once employment has commenced.",
+      "Consistency: the same process must be applied as in comparable prior cases — audit your case log for disparate treatment between nationalities.",
+      "Correct legal characterisation: STATUTORY INCAPACITY, not misconduct and not retrenchment. Using the wrong label often makes the dismissal procedurally unfair on its own.",
+      "Legal / immigration sign-off obtained before the enquiry notice, and again before the final termination decision. DHA notified of the termination afterwards. Full file retained.",
+    ],
+    relatedTemplates: ["visa_incapacity_notice", "visa_termination_letter", "visa_expiry_procedure"],
+    followUps: [
+      "What are the leading cases I need to know?",
+      "What must the written outcome include?",
+      "What is 'automatically unfair' and how do I avoid it?",
+    ],
+    keywords: ["visa dismissal", "permit dismissal", "foreign dismissal", "statutory incapacity", "legal incapacity", "discovery health", "sibanda", "roots butchery", "kawalya-kagwa", "joel"],
+  },
 ];
 
 export function findTopic(textOrKey: string): KnowledgeTopic | undefined {
