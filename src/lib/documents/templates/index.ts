@@ -793,6 +793,292 @@ const licence_disclosure_request: TemplateDefinition = {
   }),
 };
 
+// ---------- 19. Foreign national visa expiry procedure ----------
+const visa_expiry_procedure: TemplateDefinition = {
+  key: "visa_expiry_procedure",
+  name: "Foreign national visa expiry procedure",
+  description: "Full internal HR procedure for managing foreign national employees whose visas or permits have expired or are about to expire — aligned with the Immigration Act, LRA and POPIA.",
+  fields: [
+    { key: "prepared_date", label: "Date prepared", type: "date", required: true },
+    { key: "review_date", label: "Next review date", type: "date", placeholder: "Usually 12 months from preparation" },
+  ],
+  build: (v) => ({
+    type: "visa_expiry_procedure",
+    title: "Procedure — Management of Foreign National Employees Whose Work Authorisation Has Expired",
+    subtitle: `Prepared: ${fmtDate(v.prepared_date)}${v.review_date ? `  |  Next review: ${fmtDate(v.review_date)}` : ""}`,
+    body: [
+      { kind: "p", text: "A compliance procedure aligned with the Immigration Act 13 of 2002, the Labour Relations Act 66 of 1995, the Employment Equity Act 55 of 1998, the Basic Conditions of Employment Act 75 of 1997 and the Protection of Personal Information Act 4 of 2013, designed to minimise exposure to unfair dismissal awards at the CCMA arising from statutory illegality." },
+      { kind: "p", text: "This procedure is a general compliance framework, not legal advice. South African case law (notably Discovery Health Ltd v CCMA, Sibanda and Others v Roots Butchery, and the Joel line of authority) is highly fact-specific. Legal or immigration counsel should sign off on any decision to place an employee on incapacity proceedings or to terminate under this procedure before that step is taken." },
+
+      { kind: "h", text: "1. Purpose and scope" },
+      { kind: "p", text: "This procedure governs how the Employer identifies, monitors and responds to foreign national employees whose work visas, permits, asylum documentation or other statutory authorisation to work in South Africa (\"work authorisation\") has expired, is about to expire, or is otherwise deficient. Its purpose is (a) to meet the Employer's statutory duties under the Immigration Act, and (b) to ensure that any decision to suspend, place on incapacity proceedings or terminate a foreign national employee's employment is substantively and procedurally fair under the LRA." },
+      { kind: "p", text: "It applies to all foreign national employees — general work visa, critical skills visa, intra-company transfer visa, corporate visa, and asylum seekers or refugees under the Refugees Act 130 of 1998 — from recruitment through to post-termination record-keeping." },
+
+      { kind: "h", text: "2. Legal framework" },
+      { kind: "p", text: "Immigration Act 13 of 2002 — section 38(1) makes it an offence to employ an illegal foreigner or on terms inconsistent with the visa; section 38(2) places a positive, ongoing duty on the Employer to verify status throughout employment; section 49(3) creates criminal liability for knowingly employing an illegal foreigner (fine or up to one year for a first offence, increasing on repetition); regulations require record-keeping and notification to the Department of Home Affairs (\"DHA\") on termination and known breaches." },
+      { kind: "p", text: "Labour Relations Act 66 of 1995 — sections 185/188 give every employee the right not to be unfairly dismissed; the correct characterisation of a lapsed-authorisation dismissal is STATUTORY / LEGAL INCAPACITY (external legal impediment preventing performance), not misconduct and not operational requirements (Sibanda). Section 187(1)(f) makes it AUTOMATICALLY UNFAIR to dismiss for reasons of unfair discrimination including ethnic or social origin — decisions must rest strictly on the objective absence of authorisation, not on nationality. Section 213 confirms the person remains an 'employee' for LRA purposes even where the contract may be tainted by illegality (Discovery Health)." },
+      { kind: "p", text: "Employment Equity Act 55 of 1998 — section 6 prohibits unfair discrimination. Differentiating strictly on the objective basis of valid versus expired authorisation is not itself unfair discrimination, provided it is applied consistently to employees of all nationalities and is not a proxy for targeting particular nationalities or ethnic groups." },
+      { kind: "p", text: "Basic Conditions of Employment Act 75 of 1997 — ordinary notice, remuneration and certificate-of-service obligations continue to apply to any termination under this procedure." },
+      { kind: "p", text: "POPIA 4 of 2013 — passport, visa and permit details are personal information. Collect directly from the employee where practicable, for the specified and communicated purpose of verifying work authorisation. Store securely, retain only for as long as necessary, and dispose of securely thereafter." },
+
+      { kind: "h", text: "Key case law" },
+      { kind: "list", items: [
+        "Discovery Health Ltd v CCMA [2008] 7 BLLR 633 (LC) — a contract with a foreign national is not automatically void because the work permit has lapsed; the employee remains an 'employee' and the CCMA retains jurisdiction. Fair-process obligations cannot be avoided by arguing the contract was a nullity.",
+        "Kawalya-Kagwa v Development Bank of Southern Africa [2017] 1 BLLR 33 (LC) — a suspensive condition requiring a valid work permit can lawfully be built into a contract, but it cannot be used as a device to circumvent LRA protections once employment has commenced.",
+        "Joel v MEIBC & Others (LC, JR318/15, 24 November 2017) — dismissal unfair where the Employer gave only three days to secure a permit and refused reasonable assistance. An Employer that contributes to or fails to assist in the non-renewal cannot then rely on it to justify dismissal.",
+        "Sibanda and Others v Roots Butchery (2025) 46 ILJ 2969 (CCMA) — after a compliance inspection, the Employer gave affected employees roughly one month to regularise and held a disciplinary/incapacity-style enquiry before termination. The CCMA upheld the dismissals as substantively fair and confirmed 'legal incapacity' (not retrenchment) as the correct basis.",
+      ]},
+      { kind: "p", text: "Fair reason + fair process + no shortcuts by contract — all three must be satisfied. This procedure is built to satisfy all three." },
+
+      { kind: "h", text: "3. Guiding principles" },
+      { kind: "list", items: [
+        "Verify, don't assume. Every decision must be based on documentary evidence of expiry, verified with the DHA or an authorised verification service — not on assumption, complaint, or an employee's nationality.",
+        "Treat this as incapacity, not misconduct. Unless there is separate evidence of dishonesty (e.g. forged documents, deliberate concealment), the employee is not being disciplined; they are being managed because an external legal impediment prevents lawful performance.",
+        "Give the employee a reasonable opportunity to regularise their status, with reasonable Employer assistance where practicable.",
+        "Consistency: the same process is applied to comparable prior cases across all nationalities.",
+        "Confidentiality: all information is processed in accordance with POPIA.",
+      ]},
+
+      { kind: "h", text: "4. Roles and responsibilities" },
+      { kind: "list", items: [
+        "Line manager: flags performance/attendance concerns, supports the employee in attending DHA appointments, does NOT independently warn, suspend or dismiss.",
+        "HR / Employee Relations: owns the tracking system, issues all formal correspondence, chairs or arranges the incapacity enquiry, maintains records.",
+        "Immigration / Legal counsel: verifies the immigration-law position, reviews the file before any suspension or termination, advises on DHA notification obligations.",
+        "Designated enquiry chairperson: an impartial person (not the direct line manager where possible) who considers representations and makes the incapacity determination.",
+      ]},
+
+      { kind: "h", text: "5. Step-by-step procedure" },
+      { kind: "h", text: "5.1 Pre-employment and onboarding" },
+      { kind: "list", items: [
+        "Before any offer is finalised, verify the candidate's right to work directly with the DHA or an authorised verification partner. Do not rely solely on documents presented by the candidate.",
+        "Record visa/permit type, conditions, employer/occupation restrictions, and expiry date in the central tracking register (5.2).",
+        "Include a clear, lawful contractual clause on work-authorisation, disclosure duties and consent to periodic verification.",
+      ]},
+      { kind: "h", text: "5.2 Central tracking register" },
+      { kind: "p", text: "HR maintains a central register recording, per employee: name, position, permit type, permit number, conditions, issue date and EXPIRY DATE, together with a status log (renewal lodged, DHA appointment date, receipt number, outcome). The register drives the reminder cycle below." },
+      { kind: "h", text: "5.3 Reminder cycle" },
+      { kind: "list", items: [
+        "90 days before expiry: written reminder to the employee to lodge renewal, with an offer of reasonable assistance.",
+        "60 days before expiry: second reminder plus a status check with the employee.",
+        "30 days before expiry: escalation to HR and the direct line manager; confirm the renewal application has been lodged.",
+        "14 days before expiry (or on actual expiry, whichever comes first): status review. If a renewal was timeously lodged and is demonstrably still pending through no fault of the employee, EXTEND the monitoring period rather than proceed to an enquiry — DHA processing delays beyond the employee's control weigh heavily in fairness assessments (Joel).",
+      ]},
+      { kind: "h", text: "5.4 Where authorisation lapses without a satisfactory explanation" },
+      { kind: "list", items: [
+        "If, on expiry, the employee has no valid authorisation and no credible evidence of a timeously-lodged, still-pending application, HR issues written notice convening an INCAPACITY ENQUIRY, held no sooner than 5 working days later.",
+        "The notice must set out: the specific documentation that has expired; that continued employment may render the Employer non-compliant with section 38(1) of the Immigration Act; the right to make written and/or oral representations; the right to be accompanied by a co-employee or trade union representative; and the possible outcomes, including termination for incapacity.",
+        "Consider UNPAID LEAVE (rather than suspension or dismissal) pending the outcome of a genuinely pending application — this avoids section 38(1) liability while preserving the relationship.",
+      ]},
+      { kind: "h", text: "5.5 The incapacity enquiry" },
+      { kind: "list", items: [
+        "Impartial chairperson (not the direct line manager where possible).",
+        "The employee may make representations, present documents, be accompanied, and propose alternatives.",
+        "The chair considers alternatives: adjusted duties, redeployment, temporary reallocation, unpaid leave, extended monitoring where a pending renewal is credible.",
+        "The chair issues a WRITTEN OUTCOME with reasons and, where applicable, CCMA referral rights.",
+      ]},
+      { kind: "h", text: "5.6 Termination for statutory incapacity" },
+      { kind: "list", items: [
+        "Obtain legal/immigration sign-off before finalising a termination decision.",
+        "Where the outcome is termination, issue a written letter recording STATUTORY INCAPACITY as the reason, pay BCEA notice pay and accrued leave, and issue a certificate of service.",
+        "Termination for statutory incapacity is NOT a s189 retrenchment — severance under s41 BCEA is not required by law, but may be paid as a matter of fairness or established practice.",
+      ]},
+      { kind: "h", text: "5.7 Post-termination compliance" },
+      { kind: "list", items: [
+        "Notify the DHA of the termination of the foreign national's employment, as required by the Immigration Act's regulatory framework.",
+        "Retain the full file — verification records, correspondence, notices, enquiry minutes and outcome — for the period required by the Immigration Act, consistent with POPIA's data-minimisation and retention principles.",
+        "Secure the file so it is accessible only to HR, Legal and Immigration counsel.",
+      ]},
+
+      { kind: "h", text: "6. Special circumstances" },
+      { kind: "p", text: "Asylum seekers and refugees — persons holding a section 22 asylum seeker permit or refugee status under the Refugees Act 130 of 1998 are entitled to work while their permit remains valid. Permit renewal delays are frequently attributable to DHA backlogs rather than the individual. Additional caution and a longer monitoring window are warranted before any enquiry is convened, and evidence of a timeously-lodged renewal or appeal should ordinarily be treated as a basis for EXTENDING — not shortening — the process." },
+      { kind: "p", text: "Employer-caused or contributed delay — where the Employer contributed to or failed to reasonably assist with a renewal (e.g. by refusing supporting documents, delaying paperwork, or giving impossibly short deadlines), a subsequent dismissal is at high risk of being found unfair (Joel). Provide supporting letters, time off for DHA appointments, and reasonable administrative assistance." },
+      { kind: "p", text: "Dishonesty — where there is separate evidence of forged documents or deliberate concealment, the matter becomes MISCONDUCT (dishonesty), not statutory incapacity. Follow the disciplinary process, not this procedure." },
+
+      { kind: "h", text: "7. Consistency and non-discrimination safeguards" },
+      { kind: "list", items: [
+        "Decisions rest strictly on the documented status of work authorisation, applied consistently to employees of all nationalities.",
+        "Keep a consolidated case log so HR and Legal can periodically audit for disparate treatment.",
+        "Train line managers not to initiate adverse action themselves; every step must run through HR to preserve consistency.",
+      ]},
+
+      { kind: "h", text: "8. Record-keeping and POPIA compliance" },
+      { kind: "list", items: [
+        "Maintain the central expiry-tracking register (5.2), all correspondence, enquiry records and outcome letters in a secure, access-controlled file.",
+        "Collect and process personal information only for the stated purpose of verifying and managing work authorisation.",
+        "Retain records for the period required by the Immigration Act; thereafter, securely dispose in line with POPIA's retention-limitation principle.",
+        "Restrict access to HR, Legal / Immigration counsel and, where strictly necessary, the direct line manager.",
+      ]},
+
+      { kind: "h", text: "9. Governance, training and review" },
+      { kind: "list", items: [
+        "HR must obtain legal / immigration sign-off before issuing an enquiry notice under 5.4 and before any termination under 5.6.",
+        "Line managers and HR practitioners must receive periodic training on this procedure and the case law referenced in Section 2.",
+        "This procedure is reviewed at least every twelve months, or sooner if the Immigration Act, LRA or relevant case law changes materially.",
+      ]},
+
+      { kind: "h", text: "10. Fairness checklist (per matter)" },
+      { kind: "list", items: [
+        "Expiry verified with DHA or an authorised service (not assumed).",
+        "Written reminders issued at 90 / 60 / 30 / 14 days.",
+        "Employee given a reasonable opportunity to regularise, with reasonable Employer assistance.",
+        "Written notice of incapacity enquiry issued, with charges, rights and possible outcomes.",
+        "Impartial chairperson appointed.",
+        "Alternatives (adjusted duties, redeployment, unpaid leave, extended monitoring) considered on the record.",
+        "Decision based strictly on documentation status, with no reference to nationality or ethnicity.",
+        "Same process applied as in comparable prior cases (consistency check).",
+        "Written outcome issued with reasons and CCMA referral rights.",
+        "Legal / immigration sign-off obtained prior to termination.",
+        "DHA notified of termination post-dismissal.",
+        "File retained securely in line with the Immigration Act and POPIA.",
+      ]},
+    ],
+    signatures: [
+      { label: "Approved by (Executive / HR Director)" },
+      { label: "Legal / Immigration Counsel sign-off" },
+    ],
+  }),
+};
+
+// ---------- 20. Visa renewal reminder letter ----------
+const visa_reminder_letter: TemplateDefinition = {
+  key: "visa_reminder_letter",
+  name: "Visa / permit renewal reminder",
+  description: "Written reminder to a foreign national employee to lodge a renewal of their work visa or permit, with an offer of reasonable employer assistance (important under Joel).",
+  fields: [
+    { key: "employee", label: "Employee full name", type: "text", required: true },
+    { key: "position", label: "Position", type: "text" },
+    { key: "permit_type", label: "Visa / permit type", type: "text", required: true, placeholder: "e.g. General Work Visa, Critical Skills Visa, section 22 asylum permit" },
+    { key: "expiry_date", label: "Expiry date", type: "date", required: true },
+    { key: "reminder_stage", label: "Reminder stage", type: "select", required: true, options: [
+      { value: "90 days", label: "90 days before expiry" },
+      { value: "60 days", label: "60 days before expiry" },
+      { value: "30 days", label: "30 days before expiry" },
+      { value: "14 days", label: "14 days before expiry / on expiry" },
+    ]},
+    { key: "hr_contact", label: "HR contact person", type: "text", placeholder: "Name and contact details of the HR person to speak to" },
+  ],
+  build: (v) => ({
+    type: "visa_reminder_letter",
+    title: "Reminder — Renewal of Work Authorisation",
+    subtitle: v.employee ? `To: ${v.employee}${v.position ? ` (${v.position})` : ""}` : undefined,
+    body: [
+      { kind: "p", text: `Our records show that your ${v.permit_type || "work authorisation"} is due to expire on ${fmtDate(v.expiry_date)} (approximately ${v.reminder_stage || "shortly"} from the date of this letter).` },
+      { kind: "h", text: "Why this matters" },
+      { kind: "p", text: "In terms of the Immigration Act 13 of 2002, the Employer may not lawfully continue to employ you once your work authorisation has lapsed. This is why we monitor expiry dates and remind you well in advance." },
+      { kind: "h", text: "What we ask you to do" },
+      { kind: "list", items: [
+        "Lodge your renewal application with the Department of Home Affairs (DHA) as soon as possible.",
+        "Provide HR with a copy of the receipt or tracking reference for your renewal application.",
+        "Keep HR updated on DHA appointment dates and outcomes.",
+        "Notify HR IMMEDIATELY of any refusal, delay or additional documentation required.",
+      ]},
+      { kind: "h", text: "How we will assist you" },
+      { kind: "p", text: "The Employer will provide reasonable assistance, including: reasonable time off to attend DHA appointments, a supporting letter confirming your employment, and copies of employment documents you may need in support of your application. If you need any of this, please contact " + (v.hr_contact || "HR") + " without delay." },
+      { kind: "h", text: "If renewal is delayed" },
+      { kind: "p", text: "If your renewal application has been lodged in good time and is genuinely still pending with the DHA on the expiry date, please provide proof to HR immediately. Where a renewal is credibly pending, the Employer will consider interim measures such as extended monitoring or unpaid leave, rather than moving to a formal incapacity process." },
+      { kind: "h", text: "If no renewal is lodged" },
+      { kind: "p", text: "If your work authorisation lapses without a timeously-lodged, still-pending renewal, the Employer will convene a formal incapacity consultation to consider the position — including alternatives to termination. Please do not allow it to reach that stage." },
+    ],
+    signatures: sigs(v.employee),
+  }),
+};
+
+// ---------- 21. Visa incapacity enquiry notice ----------
+const visa_incapacity_notice: TemplateDefinition = {
+  key: "visa_incapacity_notice",
+  name: "Visa expiry — incapacity enquiry notice",
+  description: "Formal notice inviting a foreign national employee to an incapacity enquiry after work authorisation has lapsed. Structured as statutory incapacity, not misconduct.",
+  fields: [
+    { key: "employee", label: "Employee full name", type: "text", required: true },
+    { key: "position", label: "Position", type: "text", required: true },
+    { key: "permit_type", label: "Visa / permit type that has expired", type: "text", required: true },
+    { key: "expiry_date", label: "Date the authorisation expired", type: "date", required: true },
+    { key: "hearing_date", label: "Enquiry date", type: "date", required: true },
+    { key: "hearing_time", label: "Enquiry time", type: "text", required: true, placeholder: "e.g. 10:00" },
+    { key: "venue", label: "Venue", type: "text", required: true },
+    { key: "chair", label: "Chairperson", type: "text" },
+  ],
+  build: (v) => ({
+    type: "visa_incapacity_notice",
+    title: "Notice — Incapacity Enquiry (Lapsed Work Authorisation)",
+    subtitle: v.employee ? `To: ${v.employee}${v.position ? ` (${v.position})` : ""}` : undefined,
+    body: [
+      { kind: "p", text: `The Employer records that your ${v.permit_type || "work authorisation"} expired on ${fmtDate(v.expiry_date)}. On the information currently available, there is no timeously-lodged, still-pending renewal application on file.` },
+      { kind: "h", text: "Nature of this enquiry" },
+      { kind: "p", text: "This is NOT a disciplinary hearing. It is an INCAPACITY enquiry to consider whether an external legal impediment — the absence of valid work authorisation — makes it impossible for you to lawfully perform your position, and if so, whether any workable alternatives to termination exist. The correct legal characterisation is STATUTORY (LEGAL) INCAPACITY under the Labour Relations Act 66 of 1995, following the approach confirmed in Sibanda and Others v Roots Butchery." },
+      { kind: "h", text: "Why continued employment is a problem" },
+      { kind: "p", text: "In terms of section 38(1) of the Immigration Act 13 of 2002, the Employer may not lawfully employ a person without valid work authorisation. Section 49(3) creates criminal liability for knowingly doing so. The Employer must therefore consider its position without delay." },
+      { kind: "h", text: "Enquiry details" },
+      { kind: "p", text: `Date: ${fmtDate(v.hearing_date)}   Time: ${v.hearing_time || "____________"}   Venue: ${v.venue || "____________"}` },
+      ...(v.chair ? [{ kind: "p" as const, text: `The enquiry will be chaired by ${v.chair}, who will act impartially.` }] : []),
+      { kind: "h", text: "What will be considered" },
+      { kind: "list", items: [
+        "The current status of your work authorisation and any pending renewal application, with supporting documentation.",
+        "The reasonable steps you have taken to regularise your status.",
+        "The assistance the Employer has offered and any further assistance that may reasonably be provided.",
+        "Whether alternative non-affected work or duties are available, temporarily or permanently.",
+        "Whether unpaid leave, reduced hours, or an extended monitoring window is a workable interim option pending a credible renewal.",
+        "Only if no workable alternative exists — whether termination on the ground of statutory incapacity is appropriate.",
+      ]},
+      { kind: "h", text: "Your rights" },
+      { kind: "list", items: [
+        "You may make written and/or oral representations.",
+        "You may be accompanied by a fellow employee or a recognised trade union representative.",
+        "You may present documentation, including your DHA receipts and correspondence.",
+        "You may propose alternatives to termination.",
+        "You are entitled to a written outcome with reasons and, where applicable, notice of your CCMA referral rights.",
+      ]},
+      { kind: "h", text: "Interim position" },
+      { kind: "p", text: "Pending the outcome of this enquiry, you may not perform any work that requires valid work authorisation. Alternative arrangements (including unpaid leave) will be considered where appropriate. This interim measure is precautionary and is not itself a sanction." },
+      { kind: "p", text: "Failure to attend without good reason may result in the enquiry proceeding in your absence, on the basis of the information available to the Employer." },
+    ],
+    signatures: sigs(v.employee),
+  }),
+};
+
+// ---------- 22. Statutory incapacity termination letter ----------
+const visa_termination_letter: TemplateDefinition = {
+  key: "visa_termination_letter",
+  name: "Statutory incapacity termination letter",
+  description: "Termination letter for a foreign national employee whose work authorisation has lapsed, on the ground of statutory (legal) incapacity — issued after a fair enquiry.",
+  fields: [
+    { key: "employee", label: "Employee full name", type: "text", required: true },
+    { key: "position", label: "Position", type: "text" },
+    { key: "permit_type", label: "Visa / permit type that has expired", type: "text", required: true },
+    { key: "expiry_date", label: "Date the authorisation expired", type: "date", required: true },
+    { key: "enquiry_date", label: "Date of incapacity enquiry", type: "date", required: true },
+    { key: "last_day", label: "Last day of employment", type: "date", required: true },
+    { key: "alternatives_considered", label: "Alternatives considered", type: "textarea",
+      placeholder: "Briefly record the alternatives considered at the enquiry (redeployment, unpaid leave, extended monitoring, etc.) and why none was workable." },
+    { key: "notice_period", label: "Notice period paid", type: "text", placeholder: "e.g. One calendar month per the contract / BCEA" },
+  ],
+  build: (v) => ({
+    type: "visa_termination_letter",
+    title: "Termination of Employment — Statutory Incapacity",
+    subtitle: v.employee ? `To: ${v.employee}${v.position ? ` (${v.position})` : ""}` : undefined,
+    body: [
+      { kind: "p", text: `Following the incapacity enquiry held on ${fmtDate(v.enquiry_date)}, the Employer has decided to terminate your employment on the ground of STATUTORY (LEGAL) INCAPACITY, being the absence of valid work authorisation in South Africa.` },
+      { kind: "h", text: "Reason" },
+      { kind: "p", text: `Your ${v.permit_type || "work authorisation"} expired on ${fmtDate(v.expiry_date)}. On the information before the chairperson, there is no timeously-lodged, still-pending renewal application, and no workable alternative to termination.` },
+      { kind: "p", text: "This decision follows the approach confirmed in Sibanda and Others v Roots Butchery: dismissal for statutory incapacity — an external legal impediment preventing lawful performance — is a fair reason for termination, provided a fair process has been followed. It is not a dismissal for misconduct and it is not a retrenchment under section 189 of the LRA." },
+      { kind: "h", text: "Alternatives considered" },
+      ...(v.alternatives_considered ? paragraphs(v.alternatives_considered) : [{ kind: "p" as const, text: "Alternatives including redeployment to non-affected duties, unpaid leave pending a credible renewal application, and an extended monitoring window were considered at the enquiry. None was found workable in the circumstances." }]),
+      { kind: "h", text: "Effective date and final pay" },
+      { kind: "p", text: `Your last day of employment will be ${fmtDate(v.last_day)}. The Employer will pay you ${v.notice_period || "your contractual / BCEA notice pay"}, together with any accrued leave pay and other amounts owing, in accordance with the Basic Conditions of Employment Act.` },
+      { kind: "h", text: "Certificate of service and UIF" },
+      { kind: "p", text: "A certificate of service will be issued to you. Your UI19 will be submitted so you may claim UIF benefits where you qualify." },
+      { kind: "h", text: "Return of company property" },
+      { kind: "p", text: "All Employer property in your possession must be returned by your last day of employment." },
+      { kind: "h", text: "Right to refer to the CCMA" },
+      { kind: "p", text: "You have the right to refer this matter to the CCMA within 30 days of the date of this letter, in terms of the Labour Relations Act. Discovery Health Ltd v CCMA confirms that the CCMA has jurisdiction to hear such a referral even where work authorisation has lapsed." },
+      { kind: "h", text: "Regulatory notification" },
+      { kind: "p", text: "The Employer will notify the Department of Home Affairs of the termination of your employment as required by the Immigration Act." },
+    ],
+    signatures: sigs(v.employee),
+  }),
+};
+
+
 export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
   warning,
   contract,
