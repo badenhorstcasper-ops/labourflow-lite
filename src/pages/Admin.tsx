@@ -24,6 +24,7 @@ type Stats = {
     contacts: number;
     activeSubscriptions: number;
   };
+  signups: { week: number; month: number };
   pageViews: { day: number; week: number; month: number };
   topPaths: { path: string; count: number }[];
   recentSignups: { id: string; email: string; created_at: string }[];
