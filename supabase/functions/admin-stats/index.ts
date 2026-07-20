@@ -60,11 +60,16 @@ Deno.serve(async (req) => {
       admin.from("error_logs").select("id, short_id, message, route, severity, created_at, email").eq("resolved", false).order("created_at", { ascending: false }).limit(15),
     ]);
 
-    // Recent signups via admin.auth
-    const { data: recentUsersData } = await admin.auth.admin.listUsers({ page: 1, perPage: 10 });
-    const recentSignups = (recentUsersData?.users ?? []).map((u: any) => ({
+    // Recent signups via admin.auth + week/month counts
+    const { data: recentUsersData } = await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
+    const allUsers = recentUsersData?.users ?? [];
+    const recentSignups = allUsers.slice(0, 10).map((u: any) => ({
       id: u.id, email: u.email, created_at: u.created_at,
     }));
+    const weekMs = Date.parse(week);
+    const monthMs = Date.parse(month);
+    const signupsWeek = allUsers.filter((u: any) => Date.parse(u.created_at) >= weekMs).length;
+    const signupsMonth = allUsers.filter((u: any) => Date.parse(u.created_at) >= monthMs).length;
 
     // Top paths in last 7 days
     const { data: pathRows } = await admin
