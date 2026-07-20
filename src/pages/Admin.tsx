@@ -120,7 +120,9 @@ export default function AdminPage() {
             <Stat label="Contact messages" value={stats.totals.contacts} />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+            <Stat label="Signups (7d)" value={stats.signups?.week ?? 0} />
+            <Stat label="Signups (30d)" value={stats.signups?.month ?? 0} />
             <Stat label="Page views (24h)" value={stats.pageViews.day} />
             <Stat label="Page views (7d)" value={stats.pageViews.week} />
             <Stat label="Page views (30d)" value={stats.pageViews.month} />
