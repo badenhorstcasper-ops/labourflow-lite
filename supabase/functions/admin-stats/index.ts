@@ -91,6 +91,7 @@ Deno.serve(async (req) => {
         contacts,
         activeSubscriptions: subs,
       },
+      signups: { week: signupsWeek, month: signupsMonth },
       pageViews: { day: pv1, week: pv7, month: pv30 },
       topPaths,
       recentSignups,
