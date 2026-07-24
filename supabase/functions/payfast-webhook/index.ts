@@ -219,9 +219,10 @@ Deno.serve(async (req) => {
 
     const { data: txData } = await supabase
       .from("payfast_transactions")
-      .select("id, user_id, email, plan_name, amount, billing_date")
+      .select("id, user_id, email, plan_name, amount, billing_date, referral_code")
       .eq("m_payment_id", mPaymentId)
       .maybeSingle();
+
     const tx = txData as PayfastTransaction | null;
 
     if (!tx) {
