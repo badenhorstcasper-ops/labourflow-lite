@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
-type SP = { id: string; full_name: string; email: string; phone: string | null; referral_code: string | null; status: string; created_at: string };
+type SP = { id: string; full_name: string; email: string; phone: string | null; referral_code: string | null; status: string; created_at: string; notice_end_date?: string | null; terminated_reason?: string | null };
 type Calc = { id: string; salesperson_id: string; calendar_month: string; active_subs_count: number; cancellations_count: number; gross_commission_zar: number; status: string; paid_at: string | null };
 type Rate = { id: string; plan_name: string; amount_zar: number; active_from: string; active_to: string | null };
 
@@ -57,6 +57,23 @@ export default function AdminCommissions() {
     const { error } = await supabase.functions.invoke("approve-salesperson", { body: { id, action } });
     if (error) { toast.error(error.message); return; }
     toast.success("Updated");
+    await loadAll();
+  }
+
+  async function terminateNotice(id: string, name: string) {
+    if (!confirm(`Give ${name} ONE calendar month's notice? They keep their code and demo access until the notice period ends.`)) return;
+    const { data, error } = await supabase.functions.invoke("terminate-partner", { body: { id, mode: "notice" } });
+    if (error) { toast.error(error.message); return; }
+    toast.success(`Notice served — ends ${(data as { notice_end_date: string }).notice_end_date}`);
+    await loadAll();
+  }
+
+  async function terminateImmediate(id: string, name: string) {
+    const reason = prompt(`Immediate termination of ${name}. Type the reason (breach of clause 6/7, unlawful conduct, etc.):`);
+    if (!reason || reason.trim().length < 5) { toast.error("A reason of at least 5 characters is required."); return; }
+    const { error } = await supabase.functions.invoke("terminate-partner", { body: { id, mode: "immediate", reason } });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Partner terminated immediately.");
     await loadAll();
   }
 
