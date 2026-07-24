@@ -6,6 +6,11 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import {
+  CLAUSE_ACCEPTANCE_LABELS,
+  PARTNER_AGREEMENT_CLAUSES,
+  PARTNER_AGREEMENT_VERSION,
+} from "@/lib/partnerAgreement";
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -23,20 +28,52 @@ export default function PartnerApply() {
   const [account_number, setAcct] = useState("");
   const [branch_code, setBranch] = useState("");
   const [account_type, setType] = useState("Cheque");
-  const [accept, setAccept] = useState(false);
 
-  const next = () => setStep(s => (Math.min(4, s + 1) as Step));
-  const back = () => setStep(s => (Math.max(1, s - 1) as Step));
+  // Acceptance
+  const [acceptAgreement, setAcceptAgreement] = useState(false);
+  const [acceptNotEmployment, setAcceptNotEmployment] = useState(false);
+  const [acceptTaxAndAds, setAcceptTaxAndAds] = useState(false);
+  const [signatureName, setSignatureName] = useState("");
 
-  const canStep1 = full_name.trim().length > 1 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && phone.trim().length > 5;
-  const canStep2 = id_number.trim().length === 13 && bank_name && account_holder && account_number.trim().length >= 6 && branch_code.trim().length >= 4;
+  const next = () => setStep((s) => Math.min(4, s + 1) as Step);
+  const back = () => setStep((s) => Math.max(1, s - 1) as Step);
+
+  const canStep1 =
+    full_name.trim().length > 1 &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) &&
+    phone.trim().length > 5;
+  const canStep2 =
+    id_number.trim().length === 13 &&
+    bank_name &&
+    account_holder &&
+    account_number.trim().length >= 6 &&
+    branch_code.trim().length >= 4;
+  const canSubmit =
+    acceptAgreement &&
+    acceptNotEmployment &&
+    acceptTaxAndAds &&
+    signatureName.trim().toLowerCase() === full_name.trim().toLowerCase() &&
+    signatureName.trim().length > 1;
 
   async function submit() {
     setBusy(true);
     const { error } = await supabase.functions.invoke("submit-partner-application", {
       body: {
-        full_name, email, phone, id_number,
+        full_name,
+        email,
+        phone,
+        id_number,
         banking_details: { bank_name, account_holder, account_number, branch_code, account_type },
+        agreement: {
+          version: PARTNER_AGREEMENT_VERSION,
+          accepted_full_name: signatureName,
+          clause_flags: {
+            agreement: acceptAgreement,
+            not_employment: acceptNotEmployment,
+            tax_and_ads: acceptTaxAndAds,
+          },
+          user_agent: navigator.userAgent,
+        },
       },
     });
     setBusy(false);
@@ -63,7 +100,7 @@ export default function PartnerApply() {
         </p>
 
         <div className="flex items-center gap-2 mb-6">
-          {[1, 2, 3, 4].map(n => (
+          {[1, 2, 3, 4].map((n) => (
             <div key={n} className={`h-2 flex-1 rounded ${step >= (n as Step) ? "bg-primary" : "bg-muted"}`} />
           ))}
         </div>
@@ -73,37 +110,39 @@ export default function PartnerApply() {
             <CardTitle>
               {step === 1 && "About you"}
               {step === 2 && "ID and banking"}
-              {step === 3 && "Confirm"}
+              {step === 3 && "Partner Agreement"}
               {step === 4 && "Submitted"}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {step === 1 && (
               <>
-                <div><Label>Full name</Label><Input value={full_name} onChange={e => setName(e.target.value)} /></div>
-                <div><Label>Email</Label><Input type="email" value={email} onChange={e => setEmail(e.target.value)} /></div>
-                <div><Label>Phone</Label><Input value={phone} onChange={e => setPhone(e.target.value)} /></div>
+                <div><Label>Full name</Label><Input value={full_name} onChange={(e) => setName(e.target.value)} /></div>
+                <div><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
+                <div><Label>Phone</Label><Input value={phone} onChange={(e) => setPhone(e.target.value)} /></div>
                 <Button className="w-full" onClick={next} disabled={!canStep1}>Continue</Button>
               </>
             )}
             {step === 2 && (
               <>
                 <p className="text-sm text-muted-foreground">
-                  We need your ID and banking so we can pay your commission and comply with SARS. This information is stored securely and only visible to iNRECO admin.
+                  We need your ID and banking so we can pay your commission and comply with SARS.
+                  This information is stored securely and only visible to iNRECO admin.
                 </p>
-                <div><Label>ID number (13 digits)</Label><Input value={id_number} onChange={e => setIdNumber(e.target.value.replace(/\D/g, "").slice(0, 13))} /></div>
+                <div><Label>ID number (13 digits)</Label><Input value={id_number} onChange={(e) => setIdNumber(e.target.value.replace(/\D/g, "").slice(0, 13))} /></div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><Label>Bank</Label><Input value={bank_name} onChange={e => setBank(e.target.value)} /></div>
-                  <div><Label>Account type</Label>
-                    <select className="w-full border rounded-md h-10 px-3 bg-background" value={account_type} onChange={e => setType(e.target.value)}>
+                  <div><Label>Bank</Label><Input value={bank_name} onChange={(e) => setBank(e.target.value)} /></div>
+                  <div>
+                    <Label>Account type</Label>
+                    <select className="w-full border rounded-md h-10 px-3 bg-background" value={account_type} onChange={(e) => setType(e.target.value)}>
                       <option>Cheque</option><option>Savings</option><option>Transmission</option>
                     </select>
                   </div>
                 </div>
-                <div><Label>Account holder</Label><Input value={account_holder} onChange={e => setHolder(e.target.value)} /></div>
+                <div><Label>Account holder</Label><Input value={account_holder} onChange={(e) => setHolder(e.target.value)} /></div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><Label>Account number</Label><Input value={account_number} onChange={e => setAcct(e.target.value)} /></div>
-                  <div><Label>Branch code</Label><Input value={branch_code} onChange={e => setBranch(e.target.value)} /></div>
+                  <div><Label>Account number</Label><Input value={account_number} onChange={(e) => setAcct(e.target.value)} /></div>
+                  <div><Label>Branch code</Label><Input value={branch_code} onChange={(e) => setBranch(e.target.value)} /></div>
                 </div>
                 <div className="flex gap-2">
                   <Button variant="outline" onClick={back}>Back</Button>
@@ -113,21 +152,74 @@ export default function PartnerApply() {
             )}
             {step === 3 && (
               <>
-                <ul className="text-sm space-y-1">
-                  <li><b>Name:</b> {full_name}</li>
-                  <li><b>Email:</b> {email}</li>
-                  <li><b>Phone:</b> {phone}</li>
-                  <li><b>ID:</b> ***{id_number.slice(-4)}</li>
-                  <li><b>Bank:</b> {bank_name} ({account_type})</li>
-                  <li><b>Account:</b> ***{account_number.slice(-4)} · Branch {branch_code}</li>
-                </ul>
-                <label className="flex items-start gap-2 text-sm">
-                  <input type="checkbox" className="mt-1" checked={accept} onChange={e => setAccept(e.target.checked)} />
-                  <span>I confirm the details are correct and accept the iNRECO Partner terms — commissions are paid monthly by EFT within 3 business days of month-end and only for subscribers who complete payment via my referral code.</span>
-                </label>
+                <div className="text-sm space-y-2">
+                  <p className="text-muted-foreground">
+                    This sets out the rules of the referral relationship. It is written in plain language
+                    and is governed by South African law. In short: <b>this is not employment</b>, you set
+                    your own pace, and iNRECO pays you a monthly commission for subscribers who sign up
+                    with your code.
+                  </p>
+                  <Link to="/partner/agreement" target="_blank" className="underline text-primary text-xs">
+                    Open the full agreement in a new tab →
+                  </Link>
+                </div>
+
+                <div className="max-h-64 overflow-y-auto rounded-md border bg-muted/30 p-3 text-xs space-y-3">
+                  {PARTNER_AGREEMENT_CLAUSES.map((c) => (
+                    <div key={c.n}>
+                      <p className="font-semibold">{c.n}. {c.title}</p>
+                      <p className="text-foreground/80 leading-relaxed whitespace-pre-line">{c.body}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="space-y-3">
+                  <label className="flex items-start gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      className="mt-1"
+                      checked={acceptAgreement}
+                      onChange={(e) => setAcceptAgreement(e.target.checked)}
+                    />
+                    <span>{CLAUSE_ACCEPTANCE_LABELS.agreement}</span>
+                  </label>
+                  <label className="flex items-start gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      className="mt-1"
+                      checked={acceptNotEmployment}
+                      onChange={(e) => setAcceptNotEmployment(e.target.checked)}
+                    />
+                    <span>{CLAUSE_ACCEPTANCE_LABELS.notEmployment}</span>
+                  </label>
+                  <label className="flex items-start gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      className="mt-1"
+                      checked={acceptTaxAndAds}
+                      onChange={(e) => setAcceptTaxAndAds(e.target.checked)}
+                    />
+                    <span>{CLAUSE_ACCEPTANCE_LABELS.taxAndAds}</span>
+                  </label>
+                </div>
+
+                <div>
+                  <Label>Type your full name to sign</Label>
+                  <Input
+                    value={signatureName}
+                    onChange={(e) => setSignatureName(e.target.value)}
+                    placeholder={full_name}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Must match the name you entered in step 1.
+                  </p>
+                </div>
+
                 <div className="flex gap-2">
                   <Button variant="outline" onClick={back} disabled={busy}>Back</Button>
-                  <Button className="flex-1" onClick={submit} disabled={!accept || busy}>{busy ? "Submitting…" : "Submit application"}</Button>
+                  <Button className="flex-1" onClick={submit} disabled={!canSubmit || busy}>
+                    {busy ? "Submitting…" : "Sign and submit"}
+                  </Button>
                 </div>
               </>
             )}

@@ -29,6 +29,7 @@ Deno.serve(async (req) => {
   const phone = clean(body.phone, 40);
   const id_number = clean(body.id_number, 20);
   const banking = (body.banking_details && typeof body.banking_details === "object") ? body.banking_details : null;
+  const agreement = (body.agreement && typeof body.agreement === "object") ? body.agreement as Record<string, unknown> : null;
 
   if (!full_name || !email || !phone || !id_number || !banking) {
     return json({ error: "Please complete every field before submitting." }, 400);
@@ -36,10 +37,30 @@ Deno.serve(async (req) => {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return json({ error: "Please enter a valid email address." }, 400);
   }
+  if (!agreement) {
+    return json({ error: "You must accept the Partner Agreement to apply." }, 400);
+  }
+
+  const agreement_version = clean(agreement.version, 20);
+  const accepted_full_name = clean(agreement.accepted_full_name, 200);
+  const flags = (agreement.clause_flags && typeof agreement.clause_flags === "object")
+    ? agreement.clause_flags as Record<string, unknown>
+    : {};
+  const user_agent = clean(agreement.user_agent, 500);
+
+  if (!agreement_version || !accepted_full_name) {
+    return json({ error: "Missing signature on the agreement." }, 400);
+  }
+  if (!flags.agreement || !flags.not_employment || !flags.tax_and_ads) {
+    return json({ error: "All three acceptance boxes must be ticked." }, 400);
+  }
+  if (accepted_full_name.toLowerCase().trim() !== full_name.toLowerCase().trim()) {
+    return json({ error: "The signature name must match your full name." }, 400);
+  }
 
   const admin = createClient(url, key);
 
-  // Simple rate limit: max 5 pending applications from same email within 24h.
+  // Simple rate limit: max 3 applications from same email within 24h.
   const { count } = await admin
     .from("salespersons")
     .select("*", { count: "exact", head: true })
@@ -49,20 +70,35 @@ Deno.serve(async (req) => {
     return json({ error: "You've already applied recently — we'll email you soon." }, 429);
   }
 
-  const { error } = await admin.from("salespersons").insert({
+  const { data: sp, error } = await admin.from("salespersons").insert({
     full_name,
     email,
     phone,
     id_number,
     banking_details: banking,
     status: "pending_approval",
-  });
-  if (error) {
+  }).select("id").maybeSingle();
+
+  if (error || !sp) {
     console.error("insert salesperson failed", error);
     return json({ error: "Could not save your application. Please try again." }, 500);
   }
 
-  // Notification log for admin (best-effort).
+  // Capture caller IP for legal record
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+    ?? req.headers.get("cf-connecting-ip")
+    ?? null;
+
+  await admin.from("partner_agreements").insert({
+    salesperson_id: sp.id,
+    applicant_email: email,
+    agreement_version,
+    accepted_full_name,
+    clause_flags: flags,
+    accepted_ip: ip,
+    accepted_user_agent: user_agent || null,
+  });
+
   await admin.from("notification_log").insert([
     { recipient_email: "casperbadenhorst77@outlook.com", type: "partner_application", status: "queued" },
     { recipient_email: "badenhorst.casper@gmail.com", type: "partner_application", status: "queued" },

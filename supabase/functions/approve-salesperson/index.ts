@@ -37,10 +37,16 @@ Deno.serve(async (req) => {
   }
 
   const admin = createClient(url, key);
-  const { data: sp } = await admin.from("salespersons").select("id, referral_code, status").eq("id", id).maybeSingle();
+  const { data: sp } = await admin
+    .from("salespersons")
+    .select("id, email, referral_code, status")
+    .eq("id", id)
+    .maybeSingle();
   if (!sp) return json({ error: "Not found" }, 404);
 
   const update: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  let becameActive = false;
+
   if (action === "approve") {
     update.status = "active";
     update.approved_at = new Date().toISOString();
@@ -49,15 +55,57 @@ Deno.serve(async (req) => {
       const { data: code } = await admin.rpc("generate_referral_code");
       update.referral_code = code;
     }
+    becameActive = true;
   } else if (action === "reject") {
     update.status = "rejected";
   } else if (action === "deactivate") {
     update.status = "inactive";
   } else if (action === "reactivate") {
     update.status = "active";
+    becameActive = true;
   }
 
   const { error } = await admin.from("salespersons").update(update).eq("id", id);
   if (error) return json({ error: error.message }, 500);
+
+  // Silent demo Solo access on the partner's email — 1 device max.
+  // Not advertised anywhere in the UI.
+  if (becameActive && sp.email) {
+    const email = sp.email.toLowerCase();
+    const { data: existing } = await admin
+      .from("subscriptions")
+      .select("id, is_demo")
+      .ilike("email", email)
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!existing) {
+      await admin.from("subscriptions").insert({
+        email,
+        plan_name: "Solo",
+        status: "active",
+        is_demo: true,
+        device_limit: 1,
+      });
+    } else if (existing.is_demo) {
+      // Re-activate an existing demo row (e.g. after reactivate)
+      await admin
+        .from("subscriptions")
+        .update({ status: "active", plan_name: "Solo", device_limit: 1, updated_at: new Date().toISOString() })
+        .eq("id", existing.id);
+    }
+    // If they already have a real (non-demo) subscription, don't touch it.
+  }
+
+  // On deactivate / reject — turn off demo access silently.
+  if ((action === "deactivate" || action === "reject") && sp.email) {
+    await admin
+      .from("subscriptions")
+      .update({ status: "inactive", updated_at: new Date().toISOString() })
+      .ilike("email", sp.email.toLowerCase())
+      .eq("is_demo", true);
+  }
+
   return json({ ok: true, referral_code: update.referral_code ?? sp.referral_code });
 });

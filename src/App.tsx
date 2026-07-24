@@ -28,6 +28,8 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import RequireSubscription from "@/components/RequireSubscription";
 import PartnerApply from "@/pages/PartnerApply";
 import PartnerPortal from "@/pages/PartnerPortal";
+import PartnerAgreement from "@/pages/PartnerAgreement";
+import PartnerMarketing from "@/pages/PartnerMarketing";
 import AdminCommissions from "@/pages/AdminCommissions";
 import AdminSalespersonNew from "@/pages/AdminSalespersonNew";
 
@@ -75,6 +77,9 @@ function AppRoutes() {
       {/* Partner routes */}
       <Route path="/partner" element={<PartnerPortal />} />
       <Route path="/partner/apply" element={<PartnerApply />} />
+      <Route path="/partner/agreement" element={<PartnerAgreement />} />
+      <Route path="/partner/marketing" element={<PartnerMarketing />} />
+
 
 
       {/* Subscription-gated routes */}
