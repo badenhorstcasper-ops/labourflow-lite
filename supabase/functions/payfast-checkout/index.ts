@@ -187,6 +187,7 @@ Deno.serve(async (req) => {
     amount,
     status: "pending",
     billing_date: billingDate,
+    referral_code: referralCode,
   });
 
   if (txError) {
@@ -194,26 +195,27 @@ Deno.serve(async (req) => {
     return json({ error: "Checkout could not start. Please try again." }, 500);
   }
 
-  const fields = await signFields(
-    {
-      merchant_id: merchantId,
-      merchant_key: merchantKey,
-      return_url: `${origin}/payment-success?m=${encodeURIComponent(mPaymentId)}`,
-      cancel_url: `${origin}/payment-cancelled?m=${encodeURIComponent(mPaymentId)}`,
-      notify_url: notifyUrl,
-      email_address: email,
-      m_payment_id: mPaymentId,
-      amount: "0.00",
-      item_name: `iNRECO ${planName} Plan - 7-day free trial`,
-      item_description: "iNRECO subscription access",
-      subscription_type: "1",
-      billing_date: billingDate,
-      recurring_amount: amount.toFixed(2),
-      frequency: "3",
-      cycles: "0",
-    },
-    passphrase,
-  );
+  const baseFields: Record<string, string> = {
+    merchant_id: merchantId,
+    merchant_key: merchantKey,
+    return_url: `${origin}/payment-success?m=${encodeURIComponent(mPaymentId)}`,
+    cancel_url: `${origin}/payment-cancelled?m=${encodeURIComponent(mPaymentId)}`,
+    notify_url: notifyUrl,
+    email_address: email,
+    m_payment_id: mPaymentId,
+    amount: "0.00",
+    item_name: `iNRECO ${planName} Plan - 7-day free trial`,
+    item_description: "iNRECO subscription access",
+    subscription_type: "1",
+    billing_date: billingDate,
+    recurring_amount: amount.toFixed(2),
+    frequency: "3",
+    cycles: "0",
+  };
+  if (referralCode) baseFields.custom_str1 = referralCode;
+
+  const fields = await signFields(baseFields, passphrase);
+
 
   return json({
     actionUrl: mode === "live" ? "https://www.payfast.co.za/eng/process" : "https://sandbox.payfast.co.za/eng/process",
