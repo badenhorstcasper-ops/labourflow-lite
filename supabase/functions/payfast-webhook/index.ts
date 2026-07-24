@@ -23,7 +23,9 @@ type PayfastTransaction = {
   plan_name: string;
   amount: number | string;
   billing_date: string | null;
+  referral_code: string | null;
 };
+
 
 let ipCache: { ips: Set<string>; at: number } = { ips: new Set(), at: 0 };
 
