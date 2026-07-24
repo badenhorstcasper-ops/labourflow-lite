@@ -125,7 +125,7 @@ async function functionErrorMessage(error: unknown) {
     try {
       const parsed = JSON.parse(text) as { error?: string; details?: string };
       if (parsed.error?.includes("13-character merchant key")) {
-        return "Checkout is temporarily unavailable while iNRECO finalises PayFast. Please WhatsApp 084 402 7029 and we'll help you start your trial.";
+        return "Checkout is being finalised. Please try again in a minute — if it persists, WhatsApp 084 402 7029.";
       }
       return [parsed.error, parsed.details].filter(Boolean).join(" ") || text;
     } catch (_) {
