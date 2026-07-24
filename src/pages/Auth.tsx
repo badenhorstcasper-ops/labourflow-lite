@@ -38,6 +38,7 @@ const Auth = () => {
       linkPendingSubscription().finally(() => {
         localStorage.removeItem("inreco.pendingEmail");
         localStorage.removeItem("inreco.pendingPlan");
+        localStorage.removeItem("inreco.pendingPayment");
         navigate("/app", { replace: true });
       });
     });
@@ -68,6 +69,7 @@ const Auth = () => {
         await linkPendingSubscription();
         localStorage.removeItem("inreco.pendingEmail");
         localStorage.removeItem("inreco.pendingPlan");
+        localStorage.removeItem("inreco.pendingPayment");
         navigate("/app", { replace: true });
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -75,6 +77,7 @@ const Auth = () => {
         await linkPendingSubscription();
         localStorage.removeItem("inreco.pendingEmail");
         localStorage.removeItem("inreco.pendingPlan");
+        localStorage.removeItem("inreco.pendingPayment");
         navigate("/app", { replace: true });
       }
     } catch (err) {
@@ -112,6 +115,7 @@ const Auth = () => {
       await linkPendingSubscription();
       localStorage.removeItem("inreco.pendingEmail");
       localStorage.removeItem("inreco.pendingPlan");
+      localStorage.removeItem("inreco.pendingPayment");
       navigate("/app", { replace: true });
     }
   }
