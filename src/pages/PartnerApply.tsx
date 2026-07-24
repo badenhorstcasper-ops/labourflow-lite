@@ -14,6 +14,8 @@ import {
 
 type Step = 1 | 2 | 3 | 4;
 
+const normalizeName = (value: string) => value.trim().replace(/\s+/g, " ").toLowerCase();
+
 export default function PartnerApply() {
   const nav = useNavigate();
   const [step, setStep] = useState<Step>(1);
@@ -48,40 +50,69 @@ export default function PartnerApply() {
     account_holder &&
     account_number.trim().length >= 6 &&
     branch_code.trim().length >= 4;
+  const missingSubmitItems = [
+    !acceptAgreement ? "Tick the main Partner Agreement acceptance box." : "",
+    !acceptNotEmployment ? "Tick the non-employment acknowledgement box." : "",
+    !acceptTaxAndAds ? "Tick the SARS and advertising approval box." : "",
+    signatureName.trim().length <= 1 ? "Type your full name in the signature box." : "",
+    signatureName.trim().length > 1 && normalizeName(signatureName) !== normalizeName(full_name)
+      ? `Your signature must match: ${full_name.trim()}`
+      : "",
+  ].filter(Boolean);
+
   const canSubmit =
     acceptAgreement &&
     acceptNotEmployment &&
     acceptTaxAndAds &&
-    signatureName.trim().toLowerCase() === full_name.trim().toLowerCase() &&
+    normalizeName(signatureName) === normalizeName(full_name) &&
     signatureName.trim().length > 1;
 
   async function submit() {
-    setBusy(true);
-    const { error } = await supabase.functions.invoke("submit-partner-application", {
-      body: {
-        full_name,
-        email,
-        phone,
-        id_number,
-        banking_details: { bank_name, account_holder, account_number, branch_code, account_type },
-        agreement: {
-          version: PARTNER_AGREEMENT_VERSION,
-          accepted_full_name: signatureName,
-          clause_flags: {
-            agreement: acceptAgreement,
-            not_employment: acceptNotEmployment,
-            tax_and_ads: acceptTaxAndAds,
-          },
-          user_agent: navigator.userAgent,
-        },
-      },
-    });
-    setBusy(false);
-    if (error) {
-      toast.error("Could not submit — please try again.");
+    if (!canSubmit) {
+      toast.error(missingSubmitItems[0] || "Please complete the agreement before submitting.");
       return;
     }
-    setStep(4);
+
+    setBusy(true);
+    try {
+      const { error } = await supabase.functions.invoke("submit-partner-application", {
+        body: {
+          full_name: full_name.trim(),
+          email: email.trim(),
+          phone: phone.trim(),
+          id_number: id_number.trim(),
+          banking_details: {
+            bank_name: bank_name.trim(),
+            account_holder: account_holder.trim(),
+            account_number: account_number.trim(),
+            branch_code: branch_code.trim(),
+            account_type,
+          },
+          agreement: {
+            version: PARTNER_AGREEMENT_VERSION,
+            accepted_full_name: signatureName.trim(),
+            clause_flags: {
+              agreement: acceptAgreement,
+              not_employment: acceptNotEmployment,
+              tax_and_ads: acceptTaxAndAds,
+            },
+            user_agent: navigator.userAgent,
+          },
+        },
+      });
+      if (error) {
+        const message = typeof error.message === "string" && error.message.trim()
+          ? error.message
+          : "Could not submit — please try again.";
+        toast.error(message);
+        return;
+      }
+      setStep(4);
+    } catch {
+      toast.error("Could not submit — please try again.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -177,7 +208,7 @@ export default function PartnerApply() {
                   <label className="flex items-start gap-2 text-sm">
                     <input
                       type="checkbox"
-                      className="mt-1"
+                      className="mt-1 h-4 w-4 shrink-0 accent-primary"
                       checked={acceptAgreement}
                       onChange={(e) => setAcceptAgreement(e.target.checked)}
                     />
@@ -186,7 +217,7 @@ export default function PartnerApply() {
                   <label className="flex items-start gap-2 text-sm">
                     <input
                       type="checkbox"
-                      className="mt-1"
+                      className="mt-1 h-4 w-4 shrink-0 accent-primary"
                       checked={acceptNotEmployment}
                       onChange={(e) => setAcceptNotEmployment(e.target.checked)}
                     />
@@ -195,7 +226,7 @@ export default function PartnerApply() {
                   <label className="flex items-start gap-2 text-sm">
                     <input
                       type="checkbox"
-                      className="mt-1"
+                      className="mt-1 h-4 w-4 shrink-0 accent-primary"
                       checked={acceptTaxAndAds}
                       onChange={(e) => setAcceptTaxAndAds(e.target.checked)}
                     />
@@ -213,11 +244,16 @@ export default function PartnerApply() {
                   <p className="text-xs text-muted-foreground mt-1">
                     Must match the name you entered in step 1.
                   </p>
+                  {missingSubmitItems.length > 0 && (
+                    <p className="text-xs text-destructive mt-2" role="alert">
+                      {missingSubmitItems[0]}
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex gap-2">
                   <Button variant="outline" onClick={back} disabled={busy}>Back</Button>
-                  <Button className="flex-1" onClick={submit} disabled={!canSubmit || busy}>
+                  <Button className="flex-1" onClick={submit} disabled={busy}>
                     {busy ? "Submitting…" : "Sign and submit"}
                   </Button>
                 </div>
