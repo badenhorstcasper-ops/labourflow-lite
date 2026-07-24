@@ -19,14 +19,27 @@ const Auth = () => {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [busy, setBusy] = useState(false);
 
+  async function linkPendingSubscription() {
+    try {
+      await supabase.functions.invoke("link-subscription", { body: {} });
+    } catch (_) {
+      // The app can still open; the backend will retry linking when payment confirms.
+    }
+  }
+
   useEffect(() => {
     // If they paid as a guest, pre-fill the email
     const pending = localStorage.getItem("inreco.pendingEmail");
     if (pending) setEmail(pending);
 
-    // If already signed in, bounce to dashboard
+    // If already signed in, link any trial started before signup, then open the app.
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate("/app", { replace: true });
+      if (!data.session) return;
+      linkPendingSubscription().finally(() => {
+        localStorage.removeItem("inreco.pendingEmail");
+        localStorage.removeItem("inreco.pendingPlan");
+        navigate("/app", { replace: true });
+      });
     });
   }, [navigate]);
 
@@ -52,12 +65,14 @@ const Auth = () => {
         // Auto-confirm is on, so sign them in immediately.
         const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
         if (signInErr) throw signInErr;
+        await linkPendingSubscription();
         localStorage.removeItem("inreco.pendingEmail");
         localStorage.removeItem("inreco.pendingPlan");
         navigate("/app", { replace: true });
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        await linkPendingSubscription();
         localStorage.removeItem("inreco.pendingEmail");
         localStorage.removeItem("inreco.pendingPlan");
         navigate("/app", { replace: true });
@@ -94,6 +109,7 @@ const Auth = () => {
     }
     if (!result?.redirected) {
       // Got tokens directly; go to dashboard
+      await linkPendingSubscription();
       localStorage.removeItem("inreco.pendingEmail");
       localStorage.removeItem("inreco.pendingPlan");
       navigate("/app", { replace: true });

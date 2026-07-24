@@ -11,7 +11,7 @@ const PaymentCancelled = () => (
         You can subscribe any time from your account settings.
       </p>
       <Button asChild>
-        <Link to="/">Back to dashboard</Link>
+        <Link to="/pricing">Back to plans</Link>
       </Button>
     </div>
   </div>

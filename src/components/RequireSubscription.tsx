@@ -21,6 +21,8 @@ export default function RequireSubscription({ children }: { children: React.Reac
     const reason =
       status === "cancelled"
         ? "subscription_cancelled"
+        : status === "pending"
+          ? "payment_processing"
         : status === "none"
           ? "no_subscription"
           : "trial_ended";

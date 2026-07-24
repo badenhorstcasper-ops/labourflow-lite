@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { FunctionsHttpError } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,21 +14,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import InstallAppButton from "@/components/InstallAppButton";
-
-
-// PayFast merchant credentials are PUBLIC (they travel in the checkout form
-// that every visitor's browser can already see). Hardcoding guarantees they
-// ship with the live site every build, independent of env injection.
-// Flip IS_LIVE to false only to test against the PayFast sandbox.
-const IS_LIVE = true;
-const PAYFAST_URL = IS_LIVE
-  ? "https://www.payfast.co.za/eng/process"
-  : "https://sandbox.payfast.co.za/eng/process";
-const MERCHANT_ID = IS_LIVE ? "12090292" : "10000100";
-const MERCHANT_KEY = IS_LIVE ? "3xbkln8wrhwq" : "46f0cd694581a";
-const RETURN_URL = "https://app.inreco.co.za/payment-success";
-const CANCEL_URL = "https://app.inreco.co.za/payment-cancelled";
-const NOTIFY_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/payfast-webhook`;
 
 const TRIAL_DAYS = 7;
 
@@ -127,16 +113,54 @@ function trialBillingDate(): string {
   return d.toISOString().slice(0, 10);
 }
 
+type CheckoutResponse = {
+  actionUrl?: string;
+  fields?: Record<string, string>;
+  billingDate?: string;
+};
+
+async function functionErrorMessage(error: unknown) {
+  if (error instanceof FunctionsHttpError) {
+    const text = await error.context.text();
+    try {
+      const parsed = JSON.parse(text) as { error?: string; details?: string };
+      return [parsed.error, parsed.details].filter(Boolean).join(" ") || text;
+    } catch (_) {
+      return text || error.message;
+    }
+  }
+  return error instanceof Error ? error.message : "Checkout could not start. Please try again.";
+}
+
+function submitPreparedCheckout(actionUrl: string, fields: Record<string, string>) {
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = actionUrl;
+  Object.entries(fields).forEach(([name, value]) => {
+    if (!value) return;
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = name;
+    input.value = value;
+    form.appendChild(input);
+  });
+  document.body.appendChild(form);
+  form.submit();
+}
+
 const REASON_MESSAGES: Record<string, string> = {
   trial_ended: "Your 7-day free trial has ended. Pick a plan to keep using iNRECO.",
   subscription_cancelled: "Your subscription is cancelled. Re-subscribe to keep using iNRECO.",
   no_subscription: "You need an active plan to use iNRECO. Start your 7-day free trial below.",
+  payment_processing: "PayFast is still confirming your trial. Please wait a minute, then sign in again or refresh this page.",
 };
 
 const Pricing = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string>("");
   const [guestEmail, setGuestEmail] = useState<string>("");
+  const [busyPlan, setBusyPlan] = useState<string | null>(null);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
   const reason = searchParams.get("reason");
   const reasonMessage = reason ? REASON_MESSAGES[reason] : null;
@@ -150,7 +174,39 @@ const Pricing = () => {
 
   const checkoutEmail = userEmail || guestEmail.trim().toLowerCase();
   const canSubmit = Boolean(checkoutEmail);
-  const billingDate = useMemo(() => trialBillingDate(), []);
+  const billingDate = trialBillingDate();
+
+  async function startTrial(plan: Plan) {
+    if (!checkoutEmail) {
+      setCheckoutError("Please enter your email address before starting the trial.");
+      return;
+    }
+
+    setBusyPlan(plan.name);
+    setCheckoutError(null);
+    try {
+      const { data, error } = await supabase.functions.invoke<CheckoutResponse>("payfast-checkout", {
+        body: { planName: plan.name, email: checkoutEmail },
+      });
+      if (error) throw new Error(await functionErrorMessage(error));
+      if (!data?.actionUrl || !data.fields) {
+        throw new Error("Checkout could not start. Please try again.");
+      }
+
+      try {
+        localStorage.setItem("inreco.pendingInstallPrompt", "1");
+        localStorage.setItem("inreco.pendingEmail", checkoutEmail);
+        localStorage.setItem("inreco.pendingPlan", plan.name);
+      } catch (_) {
+        // Checkout still works if storage is blocked.
+      }
+
+      submitPreparedCheckout(data.actionUrl, data.fields);
+    } catch (error) {
+      setCheckoutError(await functionErrorMessage(error));
+      setBusyPlan(null);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -169,7 +225,7 @@ const Pricing = () => {
             happens only after day 7, and only if you haven't cancelled.
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Secure recurring billing via PayFast{IS_LIVE ? "" : " (sandbox mode — no real charges)"}.
+            Secure recurring billing via PayFast.
             By subscribing you agree to our{" "}
             <Link to="/terms" className="underline">Terms of Use</Link>,{" "}
             <Link to="/privacy" className="underline">Privacy Policy</Link> and{" "}
@@ -205,9 +261,14 @@ const Pricing = () => {
           </div>
         )}
 
+        {checkoutError && (
+          <div className="mx-auto mb-6 max-w-2xl rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            {checkoutError}
+          </div>
+        )}
+
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {PLANS.map((plan) => {
-            const mPaymentId = `${userId ?? "guest"}|${plan.name}|${Date.now()}`;
             return (
               <Card
                 key={plan.name}
@@ -252,65 +313,21 @@ const Pricing = () => {
                   )}
 
                   {plan.kind === "paid" && (
-                    <form
-                      action={PAYFAST_URL}
-                      method="post"
-                      onSubmit={() => {
-                        try {
-                          localStorage.setItem("inreco.pendingInstallPrompt", "1");
-                        } catch (_) {}
-                        if (!userId && guestEmail) {
-                          localStorage.setItem(
-                            "inreco.pendingEmail",
-                            guestEmail.trim().toLowerCase(),
-                          );
-                          localStorage.setItem("inreco.pendingPlan", plan.name);
-                        }
-                      }}
-                    >
-                      <input type="hidden" name="merchant_id" value={MERCHANT_ID} />
-                      <input type="hidden" name="merchant_key" value={MERCHANT_KEY} />
-                      <input type="hidden" name="return_url" value={RETURN_URL} />
-                      <input type="hidden" name="cancel_url" value={CANCEL_URL} />
-                      <input type="hidden" name="notify_url" value={NOTIFY_URL} />
-                      <input type="hidden" name="m_payment_id" value={mPaymentId} />
-                      {/* Free 7-day trial: signup amount is 0; first real debit on billing_date. */}
-                      <input type="hidden" name="amount" value="0.00" />
-                      <input
-                        type="hidden"
-                        name="item_name"
-                        value={`iNRECO ${plan.name} Plan — 7-day free trial`}
-                      />
-                      <input type="hidden" name="subscription_type" value="1" />
-                      <input type="hidden" name="billing_date" value={billingDate} />
-                      <input type="hidden" name="frequency" value="3" />
-                      <input type="hidden" name="cycles" value="0" />
-                      <input
-                        type="hidden"
-                        name="recurring_amount"
-                        value={plan.amount.toFixed(2)}
-                      />
-                      {userId && <input type="hidden" name="custom_str1" value={userId} />}
-                      <input type="hidden" name="custom_str2" value={plan.name} />
-                      {checkoutEmail && (
-                        <>
-                          <input type="hidden" name="email_address" value={checkoutEmail} />
-                          <input type="hidden" name="custom_str3" value={checkoutEmail} />
-                        </>
-                      )}
+                    <div>
                       <Button
-                        type="submit"
+                        type="button"
                         className="w-full"
                         variant={plan.highlight ? "default" : "outline"}
-                        disabled={!canSubmit}
+                        disabled={!canSubmit || busyPlan !== null}
+                        onClick={() => startTrial(plan)}
                       >
-                        {canSubmit ? plan.cta : "Enter your email above"}
+                        {busyPlan === plan.name ? "Opening PayFast…" : canSubmit ? plan.cta : "Enter your email above"}
                       </Button>
                       <p className="mt-2 text-center text-[11px] text-muted-foreground">
                         No charge today. First debit of {plan.priceLabel} on{" "}
                         {new Date(billingDate).toLocaleDateString("en-ZA")}.
                       </p>
-                    </form>
+                    </div>
                   )}
                 </CardContent>
               </Card>

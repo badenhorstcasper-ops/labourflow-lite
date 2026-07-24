@@ -831,7 +831,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
 // React, leaving /terms /privacy /disclaimer blank on the live site.
 window.__IS_REACT_ROUTE__ = (() => {
   const p = window.location.pathname;
-  return p.startsWith('/d/') || p.startsWith('/account-app') || p.startsWith('/share/') || p === '/terms' || p === '/privacy' || p === '/disclaimer' || p === '/pricing' || p === '/auth' || p === '/contact' || p === '/payment-success' || p === '/payment-cancelled' || p === '/dashboard' || p === '/settings';
+  return p.startsWith('/d/') || p.startsWith('/account-app') || p.startsWith('/share/') || p === '/terms' || p === '/privacy' || p === '/disclaimer' || p === '/pricing' || p === '/auth' || p === '/contact' || p === '/payment-success' || p === '/payment-cancelled' || p === '/dashboard' || p === '/settings' || p === '/app' || p === '/admin';
 })();
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -2076,39 +2076,15 @@ micBtn.addEventListener('click', () => {
 function openUpgrade(){ $('upgradeModal').classList.add('show'); }
 function closeUpgrade(){ $('upgradeModal').classList.remove('show'); }
 
-// --- PayFast checkout (in-app, no email handoff) ---
-const PAYFAST_CFG = {
-  url: 'https://sandbox.payfast.co.za/eng/process',
-  merchant_id: '10000100',
-  merchant_key: '46f0cd694581a',
-  return_url: 'https://app.inreco.co.za/payment-success',
-  cancel_url: 'https://app.inreco.co.za/payment-cancelled',
-  notify_url: 'https://riqswihuzclbyjemynyd.supabase.co/functions/v1/payfast-webhook'
-};
+// --- PayFast checkout (prepared by backend so live details stay consistent) ---
 const PLAN_AMOUNTS = { Solo: 259, Business: 499, Professional: 1499, Enterprise: 3999 };
 
-function submitPayfastForm(plan, amount, userId, email) {
-  const fields = {
-    merchant_id: PAYFAST_CFG.merchant_id,
-    merchant_key: PAYFAST_CFG.merchant_key,
-    return_url: PAYFAST_CFG.return_url,
-    cancel_url: PAYFAST_CFG.cancel_url,
-    notify_url: PAYFAST_CFG.notify_url,
-    m_payment_id: (userId || 'guest') + '|' + plan + '|' + Date.now(),
-    amount: amount.toFixed(2),
-    item_name: 'iNRECO ' + plan + ' Plan',
-    subscription_type: '1',
-    frequency: '3',
-    cycles: '0',
-    recurring_amount: amount.toFixed(2),
-    custom_str2: plan
-  };
-  if (userId) fields.custom_str1 = userId;
-  if (email) { fields.email_address = email; fields.custom_str3 = email; }
+function submitPayfastForm(actionUrl, fields) {
   const form = document.createElement('form');
   form.method = 'POST';
-  form.action = PAYFAST_CFG.url;
+  form.action = actionUrl;
   Object.entries(fields).forEach(([k, v]) => {
+    if (!v) return;
     const input = document.createElement('input');
     input.type = 'hidden'; input.name = k; input.value = String(v);
     form.appendChild(input);
@@ -2132,7 +2108,15 @@ async function payWithPayfast(plan) {
     showScreen('signup');
     return;
   }
-  submitPayfastForm(plan, amount, userId, email);
+  try {
+    const { data, error } = await supabase.functions.invoke('payfast-checkout', { body: { planName: plan, email } });
+    if (error) throw error;
+    if (!data || !data.actionUrl || !data.fields) throw new Error('Checkout could not start');
+    try { localStorage.setItem('inreco.pendingEmail', email || ''); localStorage.setItem('inreco.pendingPlan', plan); } catch (_) {}
+    submitPayfastForm(data.actionUrl, data.fields);
+  } catch (err) {
+    toast((err && err.message) ? err.message : 'PayFast checkout could not start. Please try again.', 'error');
+  }
 }
 
 function selectPlan(p) {
