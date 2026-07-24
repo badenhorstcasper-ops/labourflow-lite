@@ -34,7 +34,9 @@ function isValidEmail(email: string) {
 }
 
 function pfEncode(value: string) {
-  return encodeURIComponent(value).replace(/%20/g, "+");
+  return encodeURIComponent(value.trim())
+    .replace(/%[0-9a-f]{2}/g, (match) => match.toUpperCase())
+    .replace(/%20/g, "+");
 }
 
 async function md5Hex(input: string) {
@@ -45,15 +47,23 @@ async function md5Hex(input: string) {
     .join("");
 }
 
-async function signFields(fields: Record<string, string>, passphrase: string) {
-  if (!passphrase) return fields;
+async function payfastSignature(fields: Record<string, string>, passphrase: string) {
   const base = Object.entries(fields)
-    .filter(([, value]) => value !== "")
+    .filter(([key, value]) => key !== "signature" && value !== "")
     .map(([key, value]) => `${key}=${pfEncode(value)}`)
     .join("&");
+
+  const withPassphrase = passphrase.trim()
+    ? `${base}&passphrase=${pfEncode(passphrase)}`
+    : base;
+
+  return md5Hex(withPassphrase);
+}
+
+async function signFields(fields: Record<string, string>, passphrase: string) {
   return {
     ...fields,
-    signature: await md5Hex(`${base}&passphrase=${pfEncode(passphrase)}`),
+    signature: await payfastSignature(fields, passphrase),
   };
 }
 
@@ -136,7 +146,7 @@ Deno.serve(async (req) => {
   const merchantKey = mode === "live"
     ? (envKey.length === 13 ? envKey : LIVE_MERCHANT_KEY)
     : SANDBOX_MERCHANT_KEY;
-  const passphrase = Deno.env.get("PAYFAST_PASSPHRASE") || "";
+  const passphrase = (Deno.env.get("PAYFAST_PASSPHRASE") || "").trim();
 
   if (mode === "live" && merchantKey.length !== 13) {
     return json(
@@ -151,66 +161,49 @@ Deno.serve(async (req) => {
   const origin = safeOrigin(req);
   const amount = PLAN_PRICES[planName as PlanName];
   const billingDate = trialBillingDate();
-  const userPart = authedUser.id || "guest";
-  const uniquePart = `${Date.now()}${Math.random().toString(36).slice(2, 8)}`;
-  const mPaymentId = `${userPart}|${planName}|${uniquePart}`;
+  const mPaymentId = globalThis.crypto.randomUUID();
   const notifyUrl = `${supabaseUrl}/functions/v1/payfast-webhook`;
+  const admin = createClient(supabaseUrl, serviceKey);
+  const { error: txError } = await admin.from("payfast_transactions").insert({
+    user_id: authedUser.id,
+    email,
+    m_payment_id: mPaymentId,
+    plan_name: planName,
+    amount,
+    status: "pending",
+    billing_date: billingDate,
+  });
+
+  if (txError) {
+    console.error("Could not create PayFast tracking record", txError);
+    return json({ error: "Checkout could not start. Please try again." }, 500);
+  }
 
   const fields = await signFields(
     {
       merchant_id: merchantId,
       merchant_key: merchantKey,
-      return_url: `${origin}/payment-success`,
-      cancel_url: `${origin}/payment-cancelled`,
+      return_url: `${origin}/payment-success?m=${encodeURIComponent(mPaymentId)}`,
+      cancel_url: `${origin}/payment-cancelled?m=${encodeURIComponent(mPaymentId)}`,
       notify_url: notifyUrl,
+      email_address: email,
       m_payment_id: mPaymentId,
       amount: "0.00",
       item_name: `iNRECO ${planName} Plan - 7-day free trial`,
+      item_description: "iNRECO subscription access",
       subscription_type: "1",
       billing_date: billingDate,
+      recurring_amount: amount.toFixed(2),
       frequency: "3",
       cycles: "0",
-      recurring_amount: amount.toFixed(2),
-      email_address: email,
-      custom_str1: authedUser.id || "",
-      custom_str2: planName,
-      custom_str3: email,
     },
     passphrase,
   );
-
-  const admin = createClient(supabaseUrl, serviceKey);
-  const now = new Date().toISOString();
-  try {
-    const row = {
-      user_id: authedUser.id,
-      email,
-      plan_name: planName,
-      status: "pending",
-      trial_ends_at: new Date(`${billingDate}T00:00:00.000Z`).toISOString(),
-      updated_at: now,
-    };
-
-    const { data: existingByUser } = authedUser.id
-      ? await admin.from("subscriptions").select("id").eq("user_id", authedUser.id).limit(1).maybeSingle()
-      : { data: null };
-    const { data: existingByEmail } = !existingByUser && email
-      ? await admin.from("subscriptions").select("id").is("user_id", null).ilike("email", email).limit(1).maybeSingle()
-      : { data: null };
-    const existingId = existingByUser?.id || existingByEmail?.id;
-
-    if (existingId) {
-      await admin.from("subscriptions").update(row).eq("id", existingId);
-    } else {
-      await admin.from("subscriptions").insert(row);
-    }
-  } catch (error) {
-    console.error("Could not save pending checkout", error);
-  }
 
   return json({
     actionUrl: mode === "live" ? "https://www.payfast.co.za/eng/process" : "https://sandbox.payfast.co.za/eng/process",
     fields,
     billingDate,
+    mPaymentId,
   });
 });
