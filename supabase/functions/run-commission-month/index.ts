@@ -28,11 +28,12 @@ Deno.serve(async (req) => {
   const anon = Deno.env.get("SUPABASE_ANON_KEY");
   if (!url || !key || !anon) return json({ error: "Server not ready" }, 500);
 
-  // Admins can call from browser; cron calls with service role.
+  // Admins can call from browser; cron calls with a shared CRON_SECRET header.
   const authHeader = req.headers.get("Authorization") || "";
-  const bearer = authHeader.replace(/^Bearer\s+/i, "");
-  const isService = bearer === key;
-  if (!isService) {
+  const cronSecretHeader = req.headers.get("x-cron-secret") || "";
+  const cronSecret = Deno.env.get("CRON_SECRET") || "";
+  const isCron = cronSecret && cronSecretHeader === cronSecret;
+  if (!isCron) {
     if (!authHeader.startsWith("Bearer ")) return json({ error: "Not signed in" }, 401);
     const asUser = createClient(url, anon, { global: { headers: { Authorization: authHeader } } });
     const { data: userData } = await asUser.auth.getUser();
@@ -41,6 +42,7 @@ Deno.serve(async (req) => {
     const { data: isAdmin } = await asUser.rpc("has_role", { _user_id: uid, _role: "admin" });
     if (!isAdmin) return json({ error: "Admins only" }, 403);
   }
+
 
   let body: Record<string, unknown> = {};
   try { body = await req.json(); } catch { /* empty ok */ }
