@@ -515,6 +515,53 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_agreements: {
+        Row: {
+          accepted_at: string
+          accepted_full_name: string
+          accepted_ip: string | null
+          accepted_user_agent: string | null
+          agreement_version: string
+          applicant_email: string
+          clause_flags: Json
+          created_at: string
+          id: string
+          salesperson_id: string | null
+        }
+        Insert: {
+          accepted_at?: string
+          accepted_full_name: string
+          accepted_ip?: string | null
+          accepted_user_agent?: string | null
+          agreement_version: string
+          applicant_email: string
+          clause_flags: Json
+          created_at?: string
+          id?: string
+          salesperson_id?: string | null
+        }
+        Update: {
+          accepted_at?: string
+          accepted_full_name?: string
+          accepted_ip?: string | null
+          accepted_user_agent?: string | null
+          agreement_version?: string
+          applicant_email?: string
+          clause_flags?: Json
+          created_at?: string
+          id?: string
+          salesperson_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_agreements_salesperson_id_fkey"
+            columns: ["salesperson_id"]
+            isOneToOne: false
+            referencedRelation: "salespersons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payfast_transactions: {
         Row: {
           amount: number
@@ -719,9 +766,11 @@ export type Database = {
           id: string
           id_number: string | null
           notes: string | null
+          notice_end_date: string | null
           phone: string | null
           referral_code: string | null
           status: Database["public"]["Enums"]["salesperson_status"]
+          terminated_reason: string | null
           updated_at: string
           user_id: string | null
         }
@@ -735,9 +784,11 @@ export type Database = {
           id?: string
           id_number?: string | null
           notes?: string | null
+          notice_end_date?: string | null
           phone?: string | null
           referral_code?: string | null
           status?: Database["public"]["Enums"]["salesperson_status"]
+          terminated_reason?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -751,9 +802,11 @@ export type Database = {
           id?: string
           id_number?: string | null
           notes?: string | null
+          notice_end_date?: string | null
           phone?: string | null
           referral_code?: string | null
           status?: Database["public"]["Enums"]["salesperson_status"]
+          terminated_reason?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -902,8 +955,10 @@ export type Database = {
       subscriptions: {
         Row: {
           created_at: string
+          device_limit: number
           email: string | null
           id: string
+          is_demo: boolean
           payfast_token: string | null
           pf_payment_id: string | null
           plan_name: string
@@ -914,8 +969,10 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          device_limit?: number
           email?: string | null
           id?: string
+          is_demo?: boolean
           payfast_token?: string | null
           pf_payment_id?: string | null
           plan_name: string
@@ -926,8 +983,10 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          device_limit?: number
           email?: string | null
           id?: string
+          is_demo?: boolean
           payfast_token?: string | null
           pf_payment_id?: string | null
           plan_name?: string
@@ -1084,6 +1143,7 @@ export type Database = {
         | "active"
         | "inactive"
         | "rejected"
+        | "notice"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1218,6 +1278,7 @@ export const Constants = {
         "active",
         "inactive",
         "rejected",
+        "notice",
       ],
     },
   },
