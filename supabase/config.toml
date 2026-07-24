@@ -11,3 +11,10 @@ verify_jwt = false
 
 [functions.get-shared-document]
 verify_jwt = false
+
+[functions.submit-partner-application]
+verify_jwt = false
+
+[functions.run-commission-month]
+verify_jwt = false
+

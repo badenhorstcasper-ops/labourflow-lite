@@ -138,6 +138,21 @@ Deno.serve(async (req) => {
     return json({ error: "Please enter a valid email address before starting the trial." }, 400);
   }
 
+  // Referral code (optional). Validate against an active salesperson.
+  let referralCode: string | null = null;
+  const rawRef = typeof body.referralCode === "string" ? body.referralCode.trim().toUpperCase() : "";
+  if (rawRef && /^INR-[A-Z0-9]{4,12}$/.test(rawRef)) {
+    const probe = createClient(supabaseUrl, serviceKey);
+    const { data: sp } = await probe
+      .from("salespersons")
+      .select("id")
+      .eq("referral_code", rawRef)
+      .eq("status", "active")
+      .maybeSingle();
+    if (sp?.id) referralCode = rawRef;
+  }
+
+
   const mode = Deno.env.get("PAYFAST_MODE")?.toLowerCase() === "live" ? "live" : "sandbox";
   const merchantId = mode === "live"
     ? (Deno.env.get("PAYFAST_MERCHANT_ID") || LIVE_MERCHANT_ID).trim()
@@ -172,6 +187,7 @@ Deno.serve(async (req) => {
     amount,
     status: "pending",
     billing_date: billingDate,
+    referral_code: referralCode,
   });
 
   if (txError) {
@@ -179,26 +195,27 @@ Deno.serve(async (req) => {
     return json({ error: "Checkout could not start. Please try again." }, 500);
   }
 
-  const fields = await signFields(
-    {
-      merchant_id: merchantId,
-      merchant_key: merchantKey,
-      return_url: `${origin}/payment-success?m=${encodeURIComponent(mPaymentId)}`,
-      cancel_url: `${origin}/payment-cancelled?m=${encodeURIComponent(mPaymentId)}`,
-      notify_url: notifyUrl,
-      email_address: email,
-      m_payment_id: mPaymentId,
-      amount: "0.00",
-      item_name: `iNRECO ${planName} Plan - 7-day free trial`,
-      item_description: "iNRECO subscription access",
-      subscription_type: "1",
-      billing_date: billingDate,
-      recurring_amount: amount.toFixed(2),
-      frequency: "3",
-      cycles: "0",
-    },
-    passphrase,
-  );
+  const baseFields: Record<string, string> = {
+    merchant_id: merchantId,
+    merchant_key: merchantKey,
+    return_url: `${origin}/payment-success?m=${encodeURIComponent(mPaymentId)}`,
+    cancel_url: `${origin}/payment-cancelled?m=${encodeURIComponent(mPaymentId)}`,
+    notify_url: notifyUrl,
+    email_address: email,
+    m_payment_id: mPaymentId,
+    amount: "0.00",
+    item_name: `iNRECO ${planName} Plan - 7-day free trial`,
+    item_description: "iNRECO subscription access",
+    subscription_type: "1",
+    billing_date: billingDate,
+    recurring_amount: amount.toFixed(2),
+    frequency: "3",
+    cycles: "0",
+  };
+  if (referralCode) baseFields.custom_str1 = referralCode;
+
+  const fields = await signFields(baseFields, passphrase);
+
 
   return json({
     actionUrl: mode === "live" ? "https://www.payfast.co.za/eng/process" : "https://sandbox.payfast.co.za/eng/process",

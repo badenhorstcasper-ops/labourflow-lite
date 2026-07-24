@@ -821,7 +821,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
   </div>
 </div>
 
-<footer class="app-footer"><a href="/terms" style="color:inherit;text-decoration:underline">Terms</a> · <a href="/privacy" style="color:inherit;text-decoration:underline">Privacy</a> · <a href="/disclaimer" style="color:inherit;text-decoration:underline">Disclaimer</a></footer>
+<footer class="app-footer"><a href="/terms" style="color:inherit;text-decoration:underline">Terms</a> · <a href="/privacy" style="color:inherit;text-decoration:underline">Privacy</a> · <a href="/disclaimer" style="color:inherit;text-decoration:underline">Disclaimer</a> · <a href="/partner/apply" style="color:inherit;text-decoration:underline">Become a partner</a></footer>
 
 <script type="module">
 // React owns these routes — skip the legacy bootstrap entry below.
@@ -831,7 +831,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
 // React, leaving /terms /privacy /disclaimer blank on the live site.
 window.__IS_REACT_ROUTE__ = (() => {
   const p = window.location.pathname;
-  return p.startsWith('/d/') || p.startsWith('/account-app') || p.startsWith('/share/') || p === '/terms' || p === '/privacy' || p === '/disclaimer' || p === '/pricing' || p === '/auth' || p === '/contact' || p === '/payment-success' || p === '/payment-cancelled' || p === '/dashboard' || p === '/settings' || p === '/app' || p === '/admin';
+  return p.startsWith('/d/') || p.startsWith('/account-app') || p.startsWith('/share/') || p.startsWith('/partner') || p.startsWith('/admin') || p === '/terms' || p === '/privacy' || p === '/disclaimer' || p === '/pricing' || p === '/auth' || p === '/contact' || p === '/payment-success' || p === '/payment-cancelled' || p === '/dashboard' || p === '/settings' || p === '/app';
 })();
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';

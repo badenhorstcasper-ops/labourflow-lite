@@ -23,7 +23,9 @@ type PayfastTransaction = {
   plan_name: string;
   amount: number | string;
   billing_date: string | null;
+  referral_code: string | null;
 };
+
 
 let ipCache: { ips: Set<string>; at: number } = { ips: new Set(), at: 0 };
 
@@ -217,9 +219,10 @@ Deno.serve(async (req) => {
 
     const { data: txData } = await supabase
       .from("payfast_transactions")
-      .select("id, user_id, email, plan_name, amount, billing_date")
+      .select("id, user_id, email, plan_name, amount, billing_date, referral_code")
       .eq("m_payment_id", mPaymentId)
       .maybeSingle();
+
     const tx = txData as PayfastTransaction | null;
 
     if (!tx) {
@@ -315,8 +318,33 @@ Deno.serve(async (req) => {
       await supabase.from("subscriptions").insert(subscriptionRow);
     }
 
+    // Attribute referral if one was captured at checkout.
+    if (tx.referral_code) {
+      try {
+        const { data: sp } = await supabase
+          .from("salespersons")
+          .select("id")
+          .eq("referral_code", tx.referral_code)
+          .maybeSingle();
+        if (sp?.id) {
+          await supabase.from("referrals").upsert(
+            {
+              subscriber_user_id: tx.user_id,
+              subscriber_email: tx.email,
+              salesperson_id: sp.id,
+              referral_code: tx.referral_code,
+            },
+            { onConflict: tx.user_id ? "subscriber_user_id" : "subscriber_email" },
+          );
+        }
+      } catch (e) {
+        console.error("referral attribution failed", e);
+      }
+    }
+
     await logAttempt(supabase, { ...txLog, outcome: "accepted" });
     return ok();
+
   } catch (error) {
     console.error("PayFast callback failed", error);
     await logAttempt(supabase, { ...baseLog, outcome: "error", reason: String(error).slice(0, 200) });

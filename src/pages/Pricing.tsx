@@ -168,13 +168,26 @@ const Pricing = () => {
   const [searchParams] = useSearchParams();
   const reason = searchParams.get("reason");
   const reasonMessage = reason ? REASON_MESSAGES[reason] : null;
+  const [referralCode, setReferralCode] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setUserId(data.user?.id ?? null);
       setUserEmail(data.user?.email ?? "");
     });
-  }, []);
+    // Capture ?ref= or use previously stored code
+    const urlRef = searchParams.get("ref");
+    if (urlRef && /^INR-[A-Z0-9]{4,12}$/i.test(urlRef)) {
+      const up = urlRef.toUpperCase();
+      try { localStorage.setItem("inreco.ref", up); } catch (_) {}
+      setReferralCode(up);
+    } else {
+      try {
+        const stored = localStorage.getItem("inreco.ref");
+        if (stored) setReferralCode(stored);
+      } catch (_) {}
+    }
+  }, [searchParams]);
 
   const checkoutEmail = userEmail || guestEmail.trim().toLowerCase();
   const canSubmit = Boolean(checkoutEmail);
@@ -190,7 +203,7 @@ const Pricing = () => {
     setCheckoutError(null);
     try {
       const { data, error } = await supabase.functions.invoke<CheckoutResponse>("payfast-checkout", {
-        body: { planName: plan.name, email: checkoutEmail },
+        body: { planName: plan.name, email: checkoutEmail, referralCode: referralCode || undefined },
       });
       if (error) throw new Error(await functionErrorMessage(error));
       if (!data?.actionUrl || !data.fields) {
@@ -212,6 +225,7 @@ const Pricing = () => {
       setBusyPlan(null);
     }
   }
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -244,6 +258,12 @@ const Pricing = () => {
             .
           </p>
           <div className="mt-5 flex justify-center"><InstallAppButton /></div>
+          {referralCode && (
+            <p className="mt-3 text-xs text-primary">
+              Referred by partner code <span className="font-mono">{referralCode}</span>
+            </p>
+          )}
+
         </header>
 
         {!userId && (

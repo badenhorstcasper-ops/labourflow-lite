@@ -1,4 +1,6 @@
+import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
 import Index from "@/pages/Index";
@@ -24,13 +26,33 @@ import Disclaimer from "@/pages/Disclaimer";
 import ContrastAudit from "@/components/dev/ContrastAudit";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import RequireSubscription from "@/components/RequireSubscription";
+import PartnerApply from "@/pages/PartnerApply";
+import PartnerPortal from "@/pages/PartnerPortal";
+import AdminCommissions from "@/pages/AdminCommissions";
+import AdminSalespersonNew from "@/pages/AdminSalespersonNew";
 
 const queryClient = new QueryClient();
 
 const gated = (el: React.ReactNode) => <RequireSubscription>{el}</RequireSubscription>;
 
+function useCaptureRef() {
+  const search = typeof window !== "undefined" ? window.location.search : "";
+  React.useEffect(() => {
+    try {
+      const p = new URLSearchParams(search);
+      const ref = p.get("ref");
+      if (ref && /^INR-[A-Z0-9]{4,12}$/i.test(ref)) {
+        localStorage.setItem("inreco.ref", ref.toUpperCase());
+      }
+    } catch (_) {}
+  }, [search]);
+}
+
+
 function AppRoutes() {
   usePageView();
+  useCaptureRef();
+
   return (
     <Routes>
       {/* Open routes */}
@@ -47,6 +69,13 @@ function AppRoutes() {
 
       {/* Admin (role-gated inside the page) */}
       <Route path="/admin" element={<AdminPage />} />
+      <Route path="/admin/commissions" element={<AdminCommissions />} />
+      <Route path="/admin/salespersons/new" element={<AdminSalespersonNew />} />
+
+      {/* Partner routes */}
+      <Route path="/partner" element={<PartnerPortal />} />
+      <Route path="/partner/apply" element={<PartnerApply />} />
+
 
       {/* Subscription-gated routes */}
       <Route path="/app" element={gated(<CaraPage />)} />
