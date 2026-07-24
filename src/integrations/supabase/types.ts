@@ -351,6 +351,54 @@ export type Database = {
         }
         Relationships: []
       }
+      payfast_transactions: {
+        Row: {
+          amount: number
+          billing_date: string | null
+          created_at: string
+          email: string
+          id: string
+          m_payment_id: string
+          payfast_token: string | null
+          pf_payment_id: string | null
+          plan_name: string
+          raw_itn: Json | null
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          billing_date?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          m_payment_id: string
+          payfast_token?: string | null
+          pf_payment_id?: string | null
+          plan_name: string
+          raw_itn?: Json | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          billing_date?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          m_payment_id?: string
+          payfast_token?: string | null
+          pf_payment_id?: string | null
+          plan_name?: string
+          raw_itn?: Json | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       payfast_webhook_log: {
         Row: {
           amount_gross: number | null

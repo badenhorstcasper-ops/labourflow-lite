@@ -1,19 +1,84 @@
-## What I got wrong
+## What I checked
 
-Your PayFast screenshot clearly shows the merchant key is **`3xbkln8wrhwqj`** (13 characters, ending in **j**). I've been using `3xbkln8wrhwq` (12 characters) — missing the final `j`. That single missing letter is exactly why PayFast keeps replying "The merchant key must be 13 characters." You were right; I was wrong to keep questioning it.
+I compared this app with the working [GitHub Import Hub](/projects/13a3eb04-dd03-407e-b002-110d316820c1) PayFast setup.
 
-## Fix
+The working app does three important things differently:
 
-1. Update the saved backend key `PAYFAST_MERCHANT_KEY` from `3xbkln8wrhwq` to `3xbkln8wrhwqj`.
-2. Update the same key in the checkout helper file `supabase/functions/payfast-checkout/index.ts` (the built-in fallback value used when the saved key is missing).
-3. Re-publish the checkout helper so it uses the corrected key.
-4. Cross-check against your working "GitHub Import Hub" project to confirm Merchant ID, Merchant Key, passphrase presence, and live-mode setting all match this app.
-5. Do a real end-to-end trial signup on the live site with a fresh email to confirm PayFast now accepts the request and returns the user to the app, and the trial row is created.
-6. Revert the customer-facing "temporarily unavailable" message in `src/pages/Pricing.tsx` back to the normal PayFast error wording, since the underlying problem is resolved.
+1. It creates a pending payment record before sending the customer to PayFast.
+2. It sends PayFast a smaller, cleaner payment form.
+3. It signs the PayFast form using stricter formatting: values are trimmed, spaces are handled exactly the PayFast way, and the passphrase is trimmed before signing.
 
-## Nothing else changes
+Your current app is still sending customers to PayFast, but the latest error screenshot means PayFast is rejecting the form before checkout can start because the signature does not match. That fits the difference above.
 
-- No pricing, tier, routing, signup-linking, or webhook logic changes.
-- No PWA/manifest changes.
+I also checked the live payment records in this app: there is a recent pending Professional trial for `duvenhage.marcell@gmail.com`, but no PayFast confirmation has come back for it. That means the user reached the broken PayFast step, but PayFast did not accept the checkout.
 
-Approve and I'll apply the fix and run the live trial check.
+## Fix plan
+
+### 1. Copy the proven PayFast signing method
+
+Update this app’s PayFast checkout helper so it signs the form the same way as the working project:
+
+- trim the PayFast passphrase before using it
+- trim each value before signing
+- use PayFast-style encoding exactly like the working app
+- keep the field order stable
+- remove anything from the signature that PayFast should not receive
+
+### 2. Make the PayFast form simpler and safer
+
+Change the checkout handover to match the working pattern more closely:
+
+- create one unique payment number first
+- store the selected plan, email, amount, and status before redirecting
+- send PayFast only the required payment fields
+- keep plan/user details in our own payment record instead of overloading PayFast fields
+
+### 3. Add a proper payment tracking table
+
+Add a small backend table for PayFast attempts, like the working app uses.
+
+It will store:
+
+- payment number
+- email
+- user if already signed in
+- selected plan
+- amount
+- PayFast payment number once received
+- PayFast subscription token once received
+- payment status
+
+This gives us a clear trail when someone clicks a free trial button, instead of guessing from incomplete subscription rows.
+
+### 4. Update the PayFast callback to use the payment record
+
+Change the PayFast confirmation handler so it:
+
+- finds the stored payment record using the payment number
+- confirms the plan and amount
+- marks the payment complete when PayFast confirms it
+- activates the 7-day trial
+- saves the PayFast subscription token for later cancellation
+
+### 5. Improve the success page
+
+After PayFast returns the customer to the app:
+
+- show a clear “confirming your trial” screen
+- check the stored payment record for up to about 30 seconds
+- if PayFast is slow, tell the user their access will activate automatically
+- if they are not signed in yet, guide them to create the account using the same email
+
+### 6. Re-publish the PayFast helpers and test the flow
+
+After the code and backend change are approved, I will:
+
+- publish the checkout helper
+- publish the PayFast confirmation helper
+- test the live pricing page up to the PayFast handover
+- confirm the PayFast form no longer produces the signature error
+- confirm the app records the payment attempt before PayFast opens
+
+## Important note
+
+I will not change prices, plan names, trial length, or app access rules. This is only to replace the broken PayFast handover with the working pattern from your other project.

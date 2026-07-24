@@ -43,6 +43,23 @@ Deno.serve(async (req) => {
 
   if (existingUserSub?.id) return json({ linked: true });
 
+  const { data: completedTx } = await admin
+    .from("payfast_transactions")
+    .select("id")
+    .is("user_id", null)
+    .ilike("email", email)
+    .eq("status", "complete")
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (completedTx?.id) {
+    await admin
+      .from("payfast_transactions")
+      .update({ user_id: userId, updated_at: new Date().toISOString() })
+      .eq("id", completedTx.id);
+  }
+
   const { data: pendingSub } = await admin
     .from("subscriptions")
     .select("id")
