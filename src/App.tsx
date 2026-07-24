@@ -69,6 +69,13 @@ function AppRoutes() {
 
       {/* Admin (role-gated inside the page) */}
       <Route path="/admin" element={<AdminPage />} />
+      <Route path="/admin/commissions" element={<AdminCommissions />} />
+      <Route path="/admin/salespersons/new" element={<AdminSalespersonNew />} />
+
+      {/* Partner routes */}
+      <Route path="/partner" element={<PartnerPortal />} />
+      <Route path="/partner/apply" element={<PartnerApply />} />
+
 
       {/* Subscription-gated routes */}
       <Route path="/app" element={gated(<CaraPage />)} />
