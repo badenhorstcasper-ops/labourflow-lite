@@ -6,8 +6,21 @@ import { supabase } from "@/integrations/supabase/client";
 const Index = () => {
   const navigate = useNavigate();
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      navigate(data.session ? "/app" : "/pricing", { replace: true });
+    supabase.auth.getSession().then(async ({ data }) => {
+      if (!data.session) {
+        navigate("/pricing", { replace: true });
+        return;
+      }
+      try {
+        if (localStorage.getItem("inreco.pendingEmail")) {
+          await supabase.functions.invoke("link-subscription", { body: {} });
+          localStorage.removeItem("inreco.pendingEmail");
+          localStorage.removeItem("inreco.pendingPlan");
+        }
+      } catch (_) {
+        // Continue into the app; the trial record can still be linked after PayFast confirms.
+      }
+      navigate("/app", { replace: true });
     });
   }, [navigate]);
   return (

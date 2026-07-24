@@ -283,8 +283,20 @@ Deno.serve(async (req) => {
       return ok();
     }
 
-    // 5. Idempotency
-    if (mPaymentId) {
+    // 5. Idempotency. Recurring payments can reuse the same m_payment_id, so
+    // pf_payment_id is the safest duplicate key when PayFast provides it.
+    if (pfPaymentId) {
+      const { data: existing } = await supabase
+        .from("payfast_webhook_log")
+        .select("id, outcome")
+        .eq("pf_payment_id", pfPaymentId)
+        .eq("outcome", "accepted")
+        .maybeSingle();
+      if (existing) {
+        await logAttempt(supabase, { ...baseLog, outcome: "duplicate", reason: "already_processed" });
+        return ok();
+      }
+    } else if (mPaymentId) {
       const { data: existing } = await supabase
         .from("payfast_webhook_log")
         .select("id, outcome")
@@ -333,7 +345,16 @@ Deno.serve(async (req) => {
       : null;
 
     let existingId: string | null = null;
-    if (userId) {
+    if (subToken) {
+      const { data: row } = await supabase
+        .from("subscriptions")
+        .select("id")
+        .eq("payfast_token", subToken)
+        .limit(1)
+        .maybeSingle();
+      existingId = row?.id ?? null;
+    }
+    if (!existingId && userId) {
       const { data: row } = await supabase
         .from("subscriptions")
         .select("id")
@@ -346,8 +367,8 @@ Deno.serve(async (req) => {
       const { data: row } = await supabase
         .from("subscriptions")
         .select("id")
-        .is("user_id", null)
         .ilike("email", email)
+        .order("updated_at", { ascending: false })
         .limit(1)
         .maybeSingle();
       existingId = row?.id ?? null;

@@ -1,36 +1,66 @@
-# Revised diagnosis
+## Updated plan
 
-You're right to push back. If the same key `3xbkln8wrhwq` + merchant ID `12090292` works on your other live app, the key itself is fine. PayFast's "must be 13 characters" message is what it shows when the field arrives **empty or missing** — not literally when it's 12 chars.
+You are right: you gave me the PayFast details, and I should not ask you for them again unless PayFast still rejects them.
 
-So the real cause is almost certainly this: the merchant key is stored in the app's settings file (`.env`) as `VITE_PAYFAST_MERCHANT_KEY`, and that value has to be baked into the site **at the moment the site is built for the live web**. On your other app the key is likely written directly into the code, so it always ships. On this app it depends on the settings file being present during the build — and on the live site it's landing empty, which is why PayFast complains.
+I checked the working app you named. Its PayFast flow is safer than this app’s current flow: it does **not** let the pricing page build the whole PayFast form by itself. It first asks the app’s backend to prepare the PayFast handover, including the PayFast signature. I will copy that approach into this app.
 
-The other app "just works" for exactly this reason: nothing to inject, nothing to go missing.
+## What I will build
 
-# The fix (one small change, no user action needed)
+1. **Create a proper PayFast trial-start step**
+   - The pricing page will send the chosen plan and email address to the app backend first.
+   - The backend will prepare the PayFast handover using the same live PayFast account:
+     - Merchant ID: `12090292`
+     - Merchant Key: `3xbkln8wrhwq`
+     - Live mode
+     - Existing PayFast passphrase already saved in the app
+   - The backend will add the PayFast signature before sending the user to PayFast.
 
-The merchant ID and merchant key are **public values** — they travel inside the checkout form that every visitor's browser can already see. They are safe to write straight into the code, the same way your working app does.
+2. **Make PayFast collect card/bank details for the free trial**
+   - The PayFast handover will be a recurring subscription setup, not a once-off payment.
+   - It will send:
+     - `amount = 0.00` so there is no charge today
+     - `subscription_type = 1` so PayFast collects card/account details
+     - `billing_date = today + 7 days`
+     - `recurring_amount = the selected plan price`
+     - `frequency = monthly`
+     - `cycles = 0` so it keeps running until cancelled
+   - This is what allows the first debit to happen automatically after the 7-day free trial if the user does not cancel.
 
-I will:
+3. **Create the trial record before sending the user away**
+   - When someone enters an email and clicks “Start 7-day free trial”, the app will create a pending trial record first.
+   - That means the app already knows which email and plan the PayFast checkout belongs to.
+   - When PayFast confirms the setup, the app will update that same record to trialing.
 
-1. **Write the live merchant ID (`12090292`) and merchant key (`3xbkln8wrhwq`) directly into the pricing page code** (`src/pages/Pricing.tsx`), replacing the settings-file lookup. This guarantees they ship with the live site every time, regardless of build settings.
-2. **Keep the live/sandbox switch** so you can still flip back to sandbox later if you ever need to test — but default to live.
-3. **Remove the now-unused `VITE_PAYFAST_MERCHANT_KEY` line from `.env`** so nothing points at the old, empty-on-live path.
+4. **Fix the account-linking gap**
+   - After PayFast success, if the user creates an account with the same email, the app will link that account to the pending/trial subscription.
+   - This avoids losing users when PayFast confirms slightly before or after account creation.
 
-# Then I'll test end-to-end on the live site
+5. **Keep cancellation working**
+   - The PayFast confirmation should store the PayFast subscription token.
+   - The cancel button under Account Settings will use that token to stop future PayFast debits.
+   - If cancellation happens during the free trial, no first debit should happen.
 
-Using an incognito window on `app.inreco.co.za`:
+6. **Fix both entry points**
+   - Main landing page pricing buttons will still go to `/pricing`.
+   - `/pricing` will be the one clean place where users enter their email and start the free trial.
+   - Any old in-app PayFast checkout code will be aligned so it does not use sandbox or a different setup.
 
-- **Pricing page**: enter an email, click "Start 7-day free trial" on **Solo**, **Business**, and **Professional** — confirm PayFast now shows the R0 signup screen (not the 400 error), with the correct plan name and 31 July 2026 first-debit date.
-- **Landing site entry points**: click every button on the home page and any "inrecoapp" link that funnels people in, and confirm each lands on `/pricing`.
-- **Footer & header links** on `/pricing`: Terms, Privacy, Disclaimer, Sign in, Contact, "Install iNRECO on your device" — confirm each opens the right page or install prompt.
-- **After payment**: land on `/payment-success`, click "Open CARA", confirm the app hub loads.
-- **Install / shortcut**: on mobile and desktop, use the "Install iNRECO on your device" button, confirm the app installs with the correct iNRECO logo and name, and that tapping the installed shortcut opens the app.
-- **Sign-in flow**: sign in with an existing account, confirm redirect to the app hub.
+7. **Check app install/download flow**
+   - Confirm the install button and home-screen shortcut use the iNRECO name and logo.
+   - Confirm the shortcut opens the app/sign-in flow, not a dead or confusing page.
 
-I'll come back with a short pass/fail list for every item above so you know exactly what a new visitor experiences.
+## Testing I will do before calling it fixed
 
-# What this will not change
+- Test `/pricing` with a new email address.
+- Test Solo, Business and Professional trial buttons.
+- Confirm the app sends PayFast a signed recurring subscription setup.
+- Confirm the first debit date is exactly 7 days ahead.
+- Confirm PayFast is asked to collect card/account details for the recurring subscription.
+- Confirm PayFast no longer opens the “merchant key must be 13 characters” error.
+- Confirm PayFast success leads the user to account creation/opening the app.
+- Confirm a newly created account gets linked to the trial.
+- Confirm cancelled trial users lose access and future debits are stopped.
 
-- No pricing, plan features, or database changes.
-- No changes to the PayFast webhook, cancellation flow, or trial logic — those are already correct.
-- Your other app is unaffected.
+## Important guardrail
+
+If PayFast still rejects the exact merchant key you gave after this backend handover is in place, I will stop and show you the clear reason. I will not let visitors keep landing on a PayFast error page.
