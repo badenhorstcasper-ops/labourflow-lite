@@ -3,5 +3,11 @@ project_id = "ckjevliuwlijfvdjxmmp"
 [functions.payfast-webhook]
 verify_jwt = false
 
+[functions.payfast-checkout]
+verify_jwt = false
+
+[functions.link-subscription]
+verify_jwt = false
+
 [functions.get-shared-document]
 verify_jwt = false
