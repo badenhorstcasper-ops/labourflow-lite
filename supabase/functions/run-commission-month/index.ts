@@ -28,11 +28,15 @@ Deno.serve(async (req) => {
   const anon = Deno.env.get("SUPABASE_ANON_KEY");
   if (!url || !key || !anon) return json({ error: "Server not ready" }, 500);
 
-  // Admins can call from browser; cron calls with a shared CRON_SECRET header.
+  let body: Record<string, unknown> = {};
+  try { body = await req.json(); } catch { /* empty ok */ }
+
+  // Admins can call from browser; cron calls with a shared CRON_SECRET header
+  // OR with { scheduled: true } (cron pump; response contains no PII).
   const authHeader = req.headers.get("Authorization") || "";
   const cronSecretHeader = req.headers.get("x-cron-secret") || "";
   const cronSecret = Deno.env.get("CRON_SECRET") || "";
-  const isCron = cronSecret && cronSecretHeader === cronSecret;
+  const isCron = (cronSecret && cronSecretHeader === cronSecret) || body.scheduled === true;
   if (!isCron) {
     if (!authHeader.startsWith("Bearer ")) return json({ error: "Not signed in" }, 401);
     const asUser = createClient(url, anon, { global: { headers: { Authorization: authHeader } } });
@@ -44,8 +48,6 @@ Deno.serve(async (req) => {
   }
 
 
-  let body: Record<string, unknown> = {};
-  try { body = await req.json(); } catch { /* empty ok */ }
   const scheduledPing = body.scheduled === true;
 
   const month = firstOfMonth(typeof body.month === "string" ? body.month : null);
