@@ -46,6 +46,8 @@ Deno.serve(async (req) => {
 
   let body: Record<string, unknown> = {};
   try { body = await req.json(); } catch { /* empty ok */ }
+  const scheduledPing = body.scheduled === true;
+
   const month = firstOfMonth(typeof body.month === "string" ? body.month : null);
   const monthStart = new Date(`${month}T00:00:00Z`);
   const monthEnd = new Date(monthStart);
