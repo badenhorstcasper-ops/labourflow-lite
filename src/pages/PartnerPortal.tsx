@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 
-type SP = { id: string; full_name: string; email: string; phone: string | null; referral_code: string | null; status: string };
+type SP = { id: string; full_name: string; email: string; phone: string | null; referral_code: string | null; status: string; notice_end_date?: string | null };
 type Calc = { id: string; calendar_month: string; active_subs_count: number; cancellations_count: number; gross_commission_zar: number; status: string; paid_at: string | null };
 
 export default function PartnerPortal() {
@@ -49,7 +49,7 @@ export default function PartnerPortal() {
     </div>
   );
 
-  if (sp.status !== "active") return (
+  if (sp.status !== "active" && sp.status !== "notice") return (
     <div className="max-w-xl mx-auto p-8 text-center space-y-4">
       <h1 className="text-2xl font-bold">Application {sp.status.replace("_", " ")}</h1>
       <p className="text-muted-foreground">We'll email you once your partner account is approved.</p>
@@ -68,6 +68,17 @@ export default function PartnerPortal() {
         </div>
       </header>
       <main className="container mx-auto max-w-5xl px-4 py-8 space-y-6">
+        {sp.status === "notice" && (
+          <div className="rounded-md border-l-4 border-amber-500 bg-amber-500/10 p-4 text-sm">
+            <p className="font-semibold text-amber-700 dark:text-amber-400">Notice period active</p>
+            <p className="mt-1">
+              Your partnership will end on <b>{sp.notice_end_date}</b>. Commission earned before that date
+              will still be paid on the next scheduled payout. If this is a mistake, email{" "}
+              <a className="underline" href="mailto:info@inreco.co.za">info@inreco.co.za</a>.
+            </p>
+          </div>
+        )}
+
         <Card>
           <CardHeader><CardTitle>Your referral code</CardTitle></CardHeader>
           <CardContent className="space-y-3">
@@ -78,6 +89,9 @@ export default function PartnerPortal() {
               <a className="w-full" href={`https://wa.me/?text=${encodeURIComponent(`Try iNRECO for South African labour law: ${shareLink}`)}`} target="_blank" rel="noreferrer"><Button className="w-full" variant="outline">Share on WhatsApp</Button></a>
               <a className="w-full" href={`mailto:?subject=${encodeURIComponent("iNRECO — 7-day free trial")}&body=${encodeURIComponent(`Try iNRECO: ${shareLink}`)}`}><Button className="w-full" variant="outline">Share via email</Button></a>
             </div>
+            <Link to="/partner/marketing" className="block">
+              <Button className="w-full">Open marketing kit →</Button>
+            </Link>
           </CardContent>
         </Card>
 
