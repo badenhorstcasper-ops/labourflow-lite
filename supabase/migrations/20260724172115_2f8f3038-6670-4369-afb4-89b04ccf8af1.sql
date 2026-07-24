@@ -1,0 +1,2 @@
+ALTER TABLE public.payfast_transactions ADD COLUMN IF NOT EXISTS referral_code text;
+CREATE INDEX IF NOT EXISTS payfast_transactions_referral_idx ON public.payfast_transactions(referral_code) WHERE referral_code IS NOT NULL;

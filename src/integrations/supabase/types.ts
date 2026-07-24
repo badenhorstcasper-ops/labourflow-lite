@@ -527,6 +527,7 @@ export type Database = {
           pf_payment_id: string | null
           plan_name: string
           raw_itn: Json | null
+          referral_code: string | null
           status: string
           updated_at: string
           user_id: string | null
@@ -542,6 +543,7 @@ export type Database = {
           pf_payment_id?: string | null
           plan_name: string
           raw_itn?: Json | null
+          referral_code?: string | null
           status?: string
           updated_at?: string
           user_id?: string | null
@@ -557,6 +559,7 @@ export type Database = {
           pf_payment_id?: string | null
           plan_name?: string
           raw_itn?: Json | null
+          referral_code?: string | null
           status?: string
           updated_at?: string
           user_id?: string | null
