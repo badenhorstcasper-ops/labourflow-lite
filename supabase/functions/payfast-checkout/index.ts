@@ -132,8 +132,9 @@ Deno.serve(async (req) => {
   const merchantId = mode === "live"
     ? (Deno.env.get("PAYFAST_MERCHANT_ID") || LIVE_MERCHANT_ID).trim()
     : SANDBOX_MERCHANT_ID;
+  const envKey = (Deno.env.get("PAYFAST_MERCHANT_KEY") || "").trim();
   const merchantKey = mode === "live"
-    ? (Deno.env.get("PAYFAST_MERCHANT_KEY") || LIVE_MERCHANT_KEY).trim()
+    ? (envKey.length === 13 ? envKey : LIVE_MERCHANT_KEY)
     : SANDBOX_MERCHANT_KEY;
   const passphrase = Deno.env.get("PAYFAST_PASSPHRASE") || "";
 
