@@ -138,6 +138,21 @@ Deno.serve(async (req) => {
     return json({ error: "Please enter a valid email address before starting the trial." }, 400);
   }
 
+  // Referral code (optional). Validate against an active salesperson.
+  let referralCode: string | null = null;
+  const rawRef = typeof body.referralCode === "string" ? body.referralCode.trim().toUpperCase() : "";
+  if (rawRef && /^INR-[A-Z0-9]{4,12}$/.test(rawRef)) {
+    const probe = createClient(supabaseUrl, serviceKey);
+    const { data: sp } = await probe
+      .from("salespersons")
+      .select("id")
+      .eq("referral_code", rawRef)
+      .eq("status", "active")
+      .maybeSingle();
+    if (sp?.id) referralCode = rawRef;
+  }
+
+
   const mode = Deno.env.get("PAYFAST_MODE")?.toLowerCase() === "live" ? "live" : "sandbox";
   const merchantId = mode === "live"
     ? (Deno.env.get("PAYFAST_MERCHANT_ID") || LIVE_MERCHANT_ID).trim()
