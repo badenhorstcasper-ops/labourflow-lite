@@ -15,16 +15,16 @@ import {
 import InstallAppButton from "@/components/InstallAppButton";
 
 
-// Live vs sandbox is controlled by VITE_PAYFAST_LIVE in project env.
-const IS_LIVE = import.meta.env.VITE_PAYFAST_LIVE === "true";
+// PayFast merchant credentials are PUBLIC (they travel in the checkout form
+// that every visitor's browser can already see). Hardcoding guarantees they
+// ship with the live site every build, independent of env injection.
+// Flip IS_LIVE to false only to test against the PayFast sandbox.
+const IS_LIVE = true;
 const PAYFAST_URL = IS_LIVE
   ? "https://www.payfast.co.za/eng/process"
   : "https://sandbox.payfast.co.za/eng/process";
 const MERCHANT_ID = IS_LIVE ? "12090292" : "10000100";
-// Merchant key is public (it travels in the form). Live key comes from env.
-const MERCHANT_KEY = IS_LIVE
-  ? (import.meta.env.VITE_PAYFAST_MERCHANT_KEY as string | undefined) || ""
-  : "46f0cd694581a";
+const MERCHANT_KEY = IS_LIVE ? "3xbkln8wrhwq" : "46f0cd694581a";
 const RETURN_URL = "https://app.inreco.co.za/payment-success";
 const CANCEL_URL = "https://app.inreco.co.za/payment-cancelled";
 const NOTIFY_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/payfast-webhook`;
