@@ -13,7 +13,7 @@ const PLAN_PRICES: Record<PlanName, number> = {
 const PLAN_NAMES = new Set<PlanName>(["Solo", "Business", "Professional"]);
 const TRIAL_DAYS = 7;
 const LIVE_MERCHANT_ID = "12090292";
-const LIVE_MERCHANT_KEY = "3xbkln8wrhwq";
+const LIVE_MERCHANT_KEY = "3xbkln8wrhwqj";
 const SANDBOX_MERCHANT_ID = "10000100";
 const SANDBOX_MERCHANT_KEY = "46f0cd694581a";
 
@@ -132,8 +132,9 @@ Deno.serve(async (req) => {
   const merchantId = mode === "live"
     ? (Deno.env.get("PAYFAST_MERCHANT_ID") || LIVE_MERCHANT_ID).trim()
     : SANDBOX_MERCHANT_ID;
+  const envKey = (Deno.env.get("PAYFAST_MERCHANT_KEY") || "").trim();
   const merchantKey = mode === "live"
-    ? (Deno.env.get("PAYFAST_MERCHANT_KEY") || LIVE_MERCHANT_KEY).trim()
+    ? (envKey.length === 13 ? envKey : LIVE_MERCHANT_KEY)
     : SANDBOX_MERCHANT_KEY;
   const passphrase = Deno.env.get("PAYFAST_PASSPHRASE") || "";
 
