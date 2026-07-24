@@ -258,6 +258,12 @@ const Pricing = () => {
             .
           </p>
           <div className="mt-5 flex justify-center"><InstallAppButton /></div>
+          {referralCode && (
+            <p className="mt-3 text-xs text-primary">
+              Referred by partner code <span className="font-mono">{referralCode}</span>
+            </p>
+          )}
+
         </header>
 
         {!userId && (
