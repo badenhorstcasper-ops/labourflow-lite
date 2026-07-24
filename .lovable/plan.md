@@ -1,84 +1,119 @@
-## What I checked
 
-I compared this app with the working [GitHub Import Hub](/projects/13a3eb04-dd03-407e-b002-110d316820c1) PayFast setup.
+# Referral Salesperson & Commission Engine
 
-The working app does three important things differently:
+Fixed commission per active paid subscription per month:
+Solo R50 · Business R90 · Professional R250 · Enterprise R900.
+No clawback on cancellations (past commissions stay earned).
 
-1. It creates a pending payment record before sending the customer to PayFast.
-2. It sends PayFast a smaller, cleaner payment form.
-3. It signs the PayFast form using stricter formatting: values are trimmed, spaces are handled exactly the PayFast way, and the passphrase is trimmed before signing.
+## 1. Database (new tables)
 
-Your current app is still sending customers to PayFast, but the latest error screenshot means PayFast is rejecting the form before checkout can start because the signature does not match. That fits the difference above.
+All in Lovable Cloud, RLS enforced.
 
-I also checked the live payment records in this app: there is a recent pending Professional trial for `duvenhage.marcell@gmail.com`, but no PayFast confirmation has come back for it. That means the user reached the broken PayFast step, but PayFast did not accept the checkout.
+- **salespersons** — full_name, email, phone, id_number (restricted), banking_details jsonb (restricted), referral_code (unique, auto `INR-XXXX`, server-generated with retry), status (`pending_approval` / `active` / `inactive`), user_id (nullable, links to auth account for portal), approved_at, approved_by.
+- **salesperson_access_log** — every read of id_number or banking_details (who, when, which record) for POPIA.
+- **commission_rates** — plan_name unique, amount_zar, active_from, active_to (seeded with the 4 amounts above; admin editable).
+- **referrals** — links a subscriber (subscriptions.user_id) to a salesperson_id, attributed_at. Set when someone signs up via a referral code.
+- **commission_calculations** — salesperson_id + calendar_month unique, active_subs_count, cancellations_count, gross_commission_zar, status (`pending`/`paid`), paid_at, paid_by, notes.
+- **commission_line_items** — one row per (calculation, subscription) with plan_name and amount used, for the audit trail and salesperson email breakdown.
+- **public_holidays** — date, name (seed ZA holidays for 2026/2027, admin editable).
+- **notification_log** — recipient_email, type, related_month, status, sent_at.
 
-## Fix plan
+RLS summary:
+- salesperson can `SELECT` only their own row and their own calculations/line items (via `user_id = auth.uid()`), and never sees `id_number` or `banking_details` (column-level: split into a private view + revoke).
+- admin (existing `has_role(...,'admin')`) has full read incl. banking, and is the only role that can `mark_as_paid` or approve applications.
+- inserts to `salespersons` from the public wizard go through an edge function using service role, always with `status='pending_approval'`.
 
-### 1. Copy the proven PayFast signing method
+## 2. Referral capture
 
-Update this app’s PayFast checkout helper so it signs the form the same way as the working project:
+- Landing page and `/pricing` accept `?ref=INR-XXXX` — store code in `localStorage` (`inreco_ref`).
+- `payfast-checkout` edge function reads the stored code from the request body, validates it against `salespersons` (must be `active`), and stamps `referrals(subscriber_user_id, salesperson_id)` after PayFast confirms in `payfast-webhook`.
+- If subscriber cancels later, `referrals` row is kept — historical commission still valid.
 
-- trim the PayFast passphrase before using it
-- trim each value before signing
-- use PayFast-style encoding exactly like the working app
-- keep the field order stable
-- remove anything from the signature that PayFast should not receive
+## 3. Monthly commission job
 
-### 2. Make the PayFast form simpler and safer
+Scheduled edge function `run-commission-month` (pg_cron on the 1st of each month at 02:00 SAST, also manually runnable by admin):
 
-Change the checkout handover to match the working pattern more closely:
+For each salesperson:
+1. Find all subscriptions attributed to them where `status IN ('active','past_due','cancelled')` AND had a paid PayFast transaction with `collected_date` in the target calendar month (from `payfast_transactions`).
+2. For each such subscription, look up the `commission_rates` row active on the transaction's collected_date for that plan.
+3. Upsert one `commission_calculations` row keyed on (salesperson_id, calendar_month) — idempotent re-run safe. Insert matching `commission_line_items`.
+4. Count `subscriptions.status='cancelled' AND cancellation_date` in month for cancellations column.
+5. Salespeople with zero activity still get a zero-value row so their "we ran the report" email goes out.
 
-- create one unique payment number first
-- store the selected plan, email, amount, and status before redirecting
-- send PayFast only the required payment fields
-- keep plan/user details in our own payment record instead of overloading PayFast fields
+## 4. Notifications (Lovable Emails — free, no Resend)
 
-### 3. Add a proper payment tracking table
+Uses built-in transactional email infra (needs email domain setup — I'll flag if not done).
 
-Add a small backend table for PayFast attempts, like the working app uses.
+- `send-commission-emails` edge function, triggered right after the calc job:
+  - **To each salesperson**: their code, active subs count, cancellations under their code (subscriber first-name + last-4 of email only, no other PII), total commission, expected payout date (last day of month + 3 SA business days, skipping holidays from `public_holidays`).
+  - **To admin** (`casperbadenhorst77@outlook.com` + `badenhorst.casper@gmail.com`): full monthly summary with every salesperson, their referral code, counts, and amount owed. Banking details NOT in email — dashboard only.
+- Zero-activity salespeople still receive the summary.
 
-It will store:
+## 5. Admin dashboard — `/admin/commissions`
 
-- payment number
-- email
-- user if already signed in
-- selected plan
-- amount
-- PayFast payment number once received
-- PayFast subscription token once received
-- payment status
+Gated on `has_role(uid,'admin')`. Tabs:
 
-This gives us a clear trail when someone clicks a free trial button, instead of guessing from incomplete subscription rows.
+- **This month / History**: table of every salesperson × month with counts, gross owed, status. "Mark as paid" button per row → sets `paid_at`, `paid_by=auth.uid()`, logs to access log. "Run calculation now" button for the current or prior month.
+- **Salespeople**: list all, filter by status. Approve/reject pending applications. Click through to full detail (banking + ID visible here, and only here — access is logged automatically).
+- **Applications**: pending approvals with approve/reject.
+- **Rates**: edit the 4 plan amounts, with historical rows kept.
+- **Public holidays**: manage the ZA holidays list.
 
-### 4. Update the PayFast callback to use the payment record
+## 6. Admin intake — `/admin/salespersons/new`
 
-Change the PayFast confirmation handler so it:
+Simple form: full name, ID number, email, phone, banking block. On save: server generates referral code, sets `status='active'` immediately (admin is trusted), sends welcome email with code + shareable link `https://app.inreco.co.za/?ref=INR-XXXX`.
 
-- finds the stored payment record using the payment number
-- confirms the plan and amount
-- marks the payment complete when PayFast confirms it
-- activates the 7-day trial
-- saves the PayFast subscription token for later cancellation
+## 7. Public sign-up wizard — `/partner/apply`
 
-### 5. Improve the success page
+4-step wizard (mobile-first, big buttons):
 
-After PayFast returns the customer to the app:
+1. **About you** — name, email, phone.
+2. **ID + banking** — ID number, bank name, account holder, account number, branch code, account type. Explain in plain words why it's needed and that it's encrypted.
+3. **Confirm** — review + accept partner terms.
+4. **Submitted** — "Thanks, we'll email you within 2 business days when your unique referral code is active."
 
-- show a clear “confirming your trial” screen
-- check the stored payment record for up to about 30 seconds
-- if PayFast is slow, tell the user their access will activate automatically
-- if they are not signed in yet, guide them to create the account using the same email
+Backend `submit-partner-application` edge function creates the `salespersons` row (`pending_approval`, no referral code yet). Admins get a notification email.
 
-### 6. Re-publish the PayFast helpers and test the flow
+## 8. Partner portal — `/partner`
 
-After the code and backend change are approved, I will:
+- Sign in with email/password or Google (same auth as main app).
+- On first login after approval, if the auth user's email matches a `salespersons.email` with `status='active'`, link `user_id`.
+- Portal shows:
+  - Their referral code + copy button + share links (WhatsApp, email, "copy pricing link with ref").
+  - This month so far: subscribers under their code, cancellations, projected commission.
+  - Payout history table (all past months, amounts, paid/pending).
+  - Their profile + banking (last-4 masked view, "request change" button that emails admin — they can't edit banking directly for fraud protection).
 
-- publish the checkout helper
-- publish the PayFast confirmation helper
-- test the live pricing page up to the PayFast handover
-- confirm the PayFast form no longer produces the signature error
-- confirm the app records the payment attempt before PayFast opens
+## 9. Landing / pricing tweaks
 
-## Important note
+Small "Earn commission — become a partner" link in the footer pointing to `/partner/apply`. No other changes to the buying flow.
 
-I will not change prices, plan names, trial length, or app access rules. This is only to replace the broken PayFast handover with the working pattern from your other project.
+## 10. Security & POPIA
+
+- `id_number` and `banking_details` protected by:
+  - Column privileges revoked from `authenticated`; only accessible through security-definer functions or service role.
+  - Every read from admin dashboard writes to `salesperson_access_log`.
+  - Masked helper (`****1234`) for any non-admin surface.
+- Wizard rate-limited (5 submissions/hour per IP via a simple table).
+- All new tables: RLS enabled + explicit GRANTs; migration follows the required order.
+
+## Cost
+
+Zero new costs: Lovable Cloud tables/functions/cron, Lovable Emails (free tier), same PayFast pipeline. No Resend, no external services.
+
+## Technical notes
+
+- Migration adds all tables, seeds rates + 2026/2027 ZA public holidays.
+- `payfast-webhook` extended to write `referrals` when the checkout carried a valid ref code.
+- `payfast-checkout` extended to accept and persist the ref code.
+- Cron: `select cron.schedule('monthly-commissions','0 0 1 * *', $$ ... net.http_post to run-commission-month ...$$)` — inserted via the insert tool (contains project URL + anon key), not migration.
+- Email templates live under `supabase/functions/_shared/transactional-email-templates/` per the transactional email pattern; `email_domain--setup_email_infra` will run first if not already set up.
+
+## Rollout order
+
+1. Migration: tables, RLS, grants, seeds.
+2. Referral capture (`?ref=` handling + checkout/webhook wiring).
+3. Admin dashboard + intake form.
+4. Public wizard + partner portal.
+5. Commission job + emails + cron.
+6. Manual smoke test on a fake salesperson before announcing.
