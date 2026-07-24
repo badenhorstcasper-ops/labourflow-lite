@@ -117,6 +117,140 @@ export type Database = {
           },
         ]
       }
+      commission_calculations: {
+        Row: {
+          active_subs_count: number
+          calendar_month: string
+          cancellations_count: number
+          created_at: string
+          gross_commission_zar: number
+          id: string
+          notes: string | null
+          paid_at: string | null
+          paid_by: string | null
+          salesperson_id: string
+          status: Database["public"]["Enums"]["commission_status"]
+          updated_at: string
+        }
+        Insert: {
+          active_subs_count?: number
+          calendar_month: string
+          cancellations_count?: number
+          created_at?: string
+          gross_commission_zar?: number
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          paid_by?: string | null
+          salesperson_id: string
+          status?: Database["public"]["Enums"]["commission_status"]
+          updated_at?: string
+        }
+        Update: {
+          active_subs_count?: number
+          calendar_month?: string
+          cancellations_count?: number
+          created_at?: string
+          gross_commission_zar?: number
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          paid_by?: string | null
+          salesperson_id?: string
+          status?: Database["public"]["Enums"]["commission_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_calculations_salesperson_id_fkey"
+            columns: ["salesperson_id"]
+            isOneToOne: false
+            referencedRelation: "salespersons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commission_line_items: {
+        Row: {
+          amount_zar: number
+          calculation_id: string
+          collected_date: string | null
+          created_at: string
+          id: string
+          plan_name: string
+          salesperson_id: string
+          subscriber_email: string | null
+          subscriber_user_id: string | null
+          transaction_ref: string | null
+        }
+        Insert: {
+          amount_zar: number
+          calculation_id: string
+          collected_date?: string | null
+          created_at?: string
+          id?: string
+          plan_name: string
+          salesperson_id: string
+          subscriber_email?: string | null
+          subscriber_user_id?: string | null
+          transaction_ref?: string | null
+        }
+        Update: {
+          amount_zar?: number
+          calculation_id?: string
+          collected_date?: string | null
+          created_at?: string
+          id?: string
+          plan_name?: string
+          salesperson_id?: string
+          subscriber_email?: string | null
+          subscriber_user_id?: string | null
+          transaction_ref?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_line_items_calculation_id_fkey"
+            columns: ["calculation_id"]
+            isOneToOne: false
+            referencedRelation: "commission_calculations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_line_items_salesperson_id_fkey"
+            columns: ["salesperson_id"]
+            isOneToOne: false
+            referencedRelation: "salespersons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commission_rates: {
+        Row: {
+          active_from: string
+          active_to: string | null
+          amount_zar: number
+          created_at: string
+          id: string
+          plan_name: string
+        }
+        Insert: {
+          active_from?: string
+          active_to?: string | null
+          amount_zar: number
+          created_at?: string
+          id?: string
+          plan_name: string
+        }
+        Update: {
+          active_from?: string
+          active_to?: string | null
+          amount_zar?: number
+          created_at?: string
+          id?: string
+          plan_name?: string
+        }
+        Relationships: []
+      }
       company_profiles: {
         Row: {
           accent_color: string
@@ -321,6 +455,36 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_log: {
+        Row: {
+          error: string | null
+          id: string
+          recipient_email: string
+          related_month: string | null
+          sent_at: string
+          status: string
+          type: string
+        }
+        Insert: {
+          error?: string | null
+          id?: string
+          recipient_email: string
+          related_month?: string | null
+          sent_at?: string
+          status?: string
+          type: string
+        }
+        Update: {
+          error?: string | null
+          id?: string
+          recipient_email?: string
+          related_month?: string | null
+          sent_at?: string
+          status?: string
+          type?: string
+        }
+        Relationships: []
+      }
       page_views: {
         Row: {
           created_at: string
@@ -447,6 +611,148 @@ export type Database = {
           plan_name?: string | null
           reason?: string | null
           source_ip?: string | null
+        }
+        Relationships: []
+      }
+      public_holidays: {
+        Row: {
+          created_at: string
+          date: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          attributed_at: string
+          created_at: string
+          id: string
+          referral_code: string
+          salesperson_id: string
+          subscriber_email: string | null
+          subscriber_user_id: string | null
+        }
+        Insert: {
+          attributed_at?: string
+          created_at?: string
+          id?: string
+          referral_code: string
+          salesperson_id: string
+          subscriber_email?: string | null
+          subscriber_user_id?: string | null
+        }
+        Update: {
+          attributed_at?: string
+          created_at?: string
+          id?: string
+          referral_code?: string
+          salesperson_id?: string
+          subscriber_email?: string | null
+          subscriber_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_salesperson_id_fkey"
+            columns: ["salesperson_id"]
+            isOneToOne: false
+            referencedRelation: "salespersons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      salesperson_access_log: {
+        Row: {
+          created_at: string
+          field_viewed: string
+          id: string
+          salesperson_id: string
+          viewer_email: string | null
+          viewer_user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          field_viewed: string
+          id?: string
+          salesperson_id: string
+          viewer_email?: string | null
+          viewer_user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          field_viewed?: string
+          id?: string
+          salesperson_id?: string
+          viewer_email?: string | null
+          viewer_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "salesperson_access_log_salesperson_id_fkey"
+            columns: ["salesperson_id"]
+            isOneToOne: false
+            referencedRelation: "salespersons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      salespersons: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          banking_details: Json | null
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          id_number: string | null
+          notes: string | null
+          phone: string | null
+          referral_code: string | null
+          status: Database["public"]["Enums"]["salesperson_status"]
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          banking_details?: Json | null
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          id_number?: string | null
+          notes?: string | null
+          phone?: string | null
+          referral_code?: string | null
+          status?: Database["public"]["Enums"]["salesperson_status"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          banking_details?: Json | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          id_number?: string | null
+          notes?: string | null
+          phone?: string | null
+          referral_code?: string | null
+          status?: Database["public"]["Enums"]["salesperson_status"]
+          updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -730,7 +1036,16 @@ export type Database = {
         }[]
       }
       accept_team_invite: { Args: { _token: string }; Returns: Json }
+      commission_payout_date: { Args: { _month: string }; Returns: string }
       current_account_owner: { Args: never; Returns: string }
+      generate_referral_code: { Args: never; Returns: string }
+      get_salesperson_sensitive: {
+        Args: { _salesperson_id: string }
+        Returns: {
+          banking_details: Json
+          id_number: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -760,6 +1075,12 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      commission_status: "pending" | "paid"
+      salesperson_status:
+        | "pending_approval"
+        | "active"
+        | "inactive"
+        | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -888,6 +1209,13 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      commission_status: ["pending", "paid"],
+      salesperson_status: [
+        "pending_approval",
+        "active",
+        "inactive",
+        "rejected",
+      ],
     },
   },
 } as const
