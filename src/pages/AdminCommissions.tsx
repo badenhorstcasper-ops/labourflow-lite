@@ -172,7 +172,7 @@ export default function AdminCommissions() {
           <CardContent>
             <table className="w-full text-sm">
               <thead className="text-left text-muted-foreground border-b">
-                <tr><th className="py-2">Name</th><th>Email</th><th>Code</th><th>Status</th><th></th></tr>
+                <tr><th className="py-2">Name</th><th>Email</th><th>Code</th><th>Status</th><th>Notice ends</th><th></th></tr>
               </thead>
               <tbody>
                 {salespeople.map(s => (
@@ -181,9 +181,18 @@ export default function AdminCommissions() {
                     <td>{s.email}</td>
                     <td className="font-mono text-xs">{s.referral_code || "—"}</td>
                     <td>{s.status}</td>
-                    <td className="space-x-2">
+                    <td className="text-xs">{s.notice_end_date || "—"}</td>
+                    <td className="space-x-2 space-y-1">
                       <Button size="sm" variant="outline" onClick={() => viewSensitive(s.id, s.full_name)}>View ID/Bank</Button>
-                      {s.status === "active" && <Button size="sm" variant="outline" onClick={() => decide(s.id, "deactivate")}>Deactivate</Button>}
+                      {s.status === "active" && (
+                        <>
+                          <Button size="sm" variant="outline" onClick={() => terminateNotice(s.id, s.full_name)}>1-month notice</Button>
+                          <Button size="sm" variant="destructive" onClick={() => terminateImmediate(s.id, s.full_name)}>Terminate now (breach)</Button>
+                        </>
+                      )}
+                      {s.status === "notice" && (
+                        <Button size="sm" variant="outline" onClick={() => decide(s.id, "deactivate")}>End notice now</Button>
+                      )}
                       {s.status === "inactive" && <Button size="sm" variant="outline" onClick={() => decide(s.id, "reactivate")}>Reactivate</Button>}
                     </td>
                   </tr>
