@@ -21,10 +21,27 @@ const Auth = () => {
 
   async function linkPendingSubscription() {
     try {
-      await supabase.functions.invoke("link-subscription", { body: {} });
+      const { data } = await supabase.functions.invoke<{ linked?: boolean }>("link-subscription", { body: {} });
+      return !!data?.linked;
     } catch (_) {
       // The app can still open; the backend will retry linking when payment confirms.
+      return false;
     }
+  }
+
+  function clearPendingSubscription() {
+    localStorage.removeItem("inreco.pendingEmail");
+    localStorage.removeItem("inreco.pendingPlan");
+    localStorage.removeItem("inreco.pendingPayment");
+  }
+
+  function nextPathAfterAuth(linked: boolean) {
+    const pendingPayment = localStorage.getItem("inreco.pendingPayment");
+    if (linked) {
+      clearPendingSubscription();
+      return "/app";
+    }
+    return pendingPayment ? `/payment-success?m=${encodeURIComponent(pendingPayment)}` : "/app";
   }
 
   useEffect(() => {
@@ -35,11 +52,8 @@ const Auth = () => {
     // If already signed in, link any trial started before signup, then open the app.
     supabase.auth.getSession().then(({ data }) => {
       if (!data.session) return;
-      linkPendingSubscription().finally(() => {
-        localStorage.removeItem("inreco.pendingEmail");
-        localStorage.removeItem("inreco.pendingPlan");
-        localStorage.removeItem("inreco.pendingPayment");
-        navigate("/app", { replace: true });
+      linkPendingSubscription().then((linked) => {
+        navigate(nextPathAfterAuth(linked), { replace: true });
       });
     });
   }, [navigate]);
@@ -66,19 +80,13 @@ const Auth = () => {
         // Auto-confirm is on, so sign them in immediately.
         const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
         if (signInErr) throw signInErr;
-        await linkPendingSubscription();
-        localStorage.removeItem("inreco.pendingEmail");
-        localStorage.removeItem("inreco.pendingPlan");
-        localStorage.removeItem("inreco.pendingPayment");
-        navigate("/app", { replace: true });
+        const linked = await linkPendingSubscription();
+        navigate(nextPathAfterAuth(linked), { replace: true });
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        await linkPendingSubscription();
-        localStorage.removeItem("inreco.pendingEmail");
-        localStorage.removeItem("inreco.pendingPlan");
-        localStorage.removeItem("inreco.pendingPayment");
-        navigate("/app", { replace: true });
+        const linked = await linkPendingSubscription();
+        navigate(nextPathAfterAuth(linked), { replace: true });
       }
     } catch (err) {
       toast({
@@ -112,11 +120,8 @@ const Auth = () => {
     }
     if (!result?.redirected) {
       // Got tokens directly; go to dashboard
-      await linkPendingSubscription();
-      localStorage.removeItem("inreco.pendingEmail");
-      localStorage.removeItem("inreco.pendingPlan");
-      localStorage.removeItem("inreco.pendingPayment");
-      navigate("/app", { replace: true });
+      const linked = await linkPendingSubscription();
+      navigate(nextPathAfterAuth(linked), { replace: true });
     }
   }
 
