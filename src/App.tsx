@@ -51,6 +51,8 @@ function useCaptureRef() {
 
 function AppRoutes() {
   usePageView();
+  useCaptureRef();
+
   return (
     <Routes>
       {/* Open routes */}
