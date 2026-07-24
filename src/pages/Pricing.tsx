@@ -117,6 +117,7 @@ type CheckoutResponse = {
   actionUrl?: string;
   fields?: Record<string, string>;
   billingDate?: string;
+  mPaymentId?: string;
 };
 
 async function functionErrorMessage(error: unknown) {
@@ -200,6 +201,7 @@ const Pricing = () => {
         localStorage.setItem("inreco.pendingInstallPrompt", "1");
         localStorage.setItem("inreco.pendingEmail", checkoutEmail);
         localStorage.setItem("inreco.pendingPlan", plan.name);
+        if (data.mPaymentId) localStorage.setItem("inreco.pendingPayment", data.mPaymentId);
       } catch (_) {
         // Checkout still works if storage is blocked.
       }
