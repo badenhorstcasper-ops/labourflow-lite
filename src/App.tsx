@@ -24,10 +24,28 @@ import Disclaimer from "@/pages/Disclaimer";
 import ContrastAudit from "@/components/dev/ContrastAudit";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import RequireSubscription from "@/components/RequireSubscription";
+import PartnerApply from "@/pages/PartnerApply";
+import PartnerPortal from "@/pages/PartnerPortal";
+import AdminCommissions from "@/pages/AdminCommissions";
+import AdminSalespersonNew from "@/pages/AdminSalespersonNew";
 
 const queryClient = new QueryClient();
 
 const gated = (el: React.ReactNode) => <RequireSubscription>{el}</RequireSubscription>;
+
+function useCaptureRef() {
+  const search = typeof window !== "undefined" ? window.location.search : "";
+  React.useEffect(() => {
+    try {
+      const p = new URLSearchParams(search);
+      const ref = p.get("ref");
+      if (ref && /^INR-[A-Z0-9]{4,12}$/i.test(ref)) {
+        localStorage.setItem("inreco.ref", ref.toUpperCase());
+      }
+    } catch (_) {}
+  }, [search]);
+}
+
 
 function AppRoutes() {
   usePageView();
