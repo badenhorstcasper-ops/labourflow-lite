@@ -13,6 +13,10 @@ function clean(v: unknown, max = 200): string {
   return v.trim().slice(0, max);
 }
 
+function normalizeName(v: string): string {
+  return v.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
@@ -54,7 +58,7 @@ Deno.serve(async (req) => {
   if (!flags.agreement || !flags.not_employment || !flags.tax_and_ads) {
     return json({ error: "All three acceptance boxes must be ticked." }, 400);
   }
-  if (accepted_full_name.toLowerCase().trim() !== full_name.toLowerCase().trim()) {
+  if (normalizeName(accepted_full_name) !== normalizeName(full_name)) {
     return json({ error: "The signature name must match your full name." }, 400);
   }
 
