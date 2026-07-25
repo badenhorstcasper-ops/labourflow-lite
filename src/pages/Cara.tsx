@@ -203,19 +203,8 @@ export default function CaraPage() {
   return (
     <AppShell>
       <div className="flex flex-col gap-4">
-        {/* Topic chips */}
-        <div className="flex flex-wrap gap-2 justify-center">
-          {TOPICS.map((t) => (
-            <button
-              key={t.key}
-              onClick={() => send(t.prompt)}
-              disabled={busy}
-              className="px-3 py-1.5 rounded-full border bg-card hover:bg-muted text-sm transition disabled:opacity-50"
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
+        {/* Topic chips — AARTO and Foreign Nationals grouped to reduce clutter */}
+        <TopicChips busy={busy} onPick={(prompt) => send(prompt)} />
 
         {profileMissing && (
           <Card className="border-primary/40 bg-primary/10">
@@ -306,6 +295,64 @@ export default function CaraPage() {
 
       </div>
     </AppShell>
+  );
+}
+
+const AARTO_KEYS = ["aarto_overview", "licence_lost", "licence_hidden", "aarto_disclosure", "driver_policy", "driving_inherent_requirement"];
+const VISA_KEYS = ["visa_overview", "visa_expired", "asylum_permit", "visa_verification", "visa_dismissal_fairness"];
+
+function TopicChips({ busy, onPick }: { busy: boolean; onPick: (prompt: string) => void }) {
+  const [openGroup, setOpenGroup] = useState<null | "aarto" | "visa">(null);
+  const mainTopics = TOPICS.filter((t) => !AARTO_KEYS.includes(t.key) && !VISA_KEYS.includes(t.key));
+  const aartoTopics = TOPICS.filter((t) => AARTO_KEYS.includes(t.key));
+  const visaTopics = TOPICS.filter((t) => VISA_KEYS.includes(t.key));
+
+  const chipCls = "px-3 py-1.5 rounded-full border bg-card hover:bg-muted text-sm transition disabled:opacity-50";
+  const groupCls = "px-3 py-1.5 rounded-full border border-primary/40 bg-primary/10 hover:bg-primary/20 text-sm font-medium transition disabled:opacity-50";
+  const subCls = "px-3 py-1.5 rounded-full border bg-background hover:bg-muted text-xs transition disabled:opacity-50";
+
+  const activeSubs = openGroup === "aarto" ? aartoTopics : openGroup === "visa" ? visaTopics : [];
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-wrap gap-2 justify-center">
+        {mainTopics.map((t) => (
+          <button key={t.key} onClick={() => onPick(t.prompt)} disabled={busy} className={chipCls}>
+            {t.label}
+          </button>
+        ))}
+        <button
+          onClick={() => setOpenGroup(openGroup === "aarto" ? null : "aarto")}
+          disabled={busy}
+          className={groupCls}
+          aria-expanded={openGroup === "aarto"}
+        >
+          Drivers / AARTO {openGroup === "aarto" ? "▲" : "▾"}
+        </button>
+        <button
+          onClick={() => setOpenGroup(openGroup === "visa" ? null : "visa")}
+          disabled={busy}
+          className={groupCls}
+          aria-expanded={openGroup === "visa"}
+        >
+          Foreign Nationals {openGroup === "visa" ? "▲" : "▾"}
+        </button>
+      </div>
+      {activeSubs.length > 0 && (
+        <div className="flex flex-wrap gap-2 justify-center rounded-lg border bg-muted/40 p-2">
+          {activeSubs.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => { onPick(t.prompt); setOpenGroup(null); }}
+              disabled={busy}
+              className={subCls}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
