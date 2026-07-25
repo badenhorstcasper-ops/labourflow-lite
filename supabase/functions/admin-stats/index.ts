@@ -44,12 +44,13 @@ Deno.serve(async (req) => {
     const totalSignups = (usersList as any)?.total ?? 0;
 
     const [
-      docs, payments, bookings, contacts, subs,
+      docs, paymentsSuccess, paymentsRejected, bookings, contacts, subs,
       pv1, pv7, pv30,
       recentDocs, recentErrors,
     ] = await Promise.all([
       count(admin.from("generated_documents").select("*", { count: "exact", head: true })),
-      count(admin.from("payfast_webhook_log").select("*", { count: "exact", head: true }).eq("payment_status", "COMPLETE")),
+      count(admin.from("payfast_webhook_log").select("*", { count: "exact", head: true }).eq("outcome", "accepted")),
+      count(admin.from("payfast_webhook_log").select("*", { count: "exact", head: true }).eq("outcome", "rejected")),
       count(admin.from("chairperson_bookings").select("*", { count: "exact", head: true })),
       count(admin.from("contact_messages").select("*", { count: "exact", head: true })),
       count(admin.from("subscriptions").select("*", { count: "exact", head: true }).eq("status", "active")),
@@ -82,11 +83,18 @@ Deno.serve(async (req) => {
     const topPaths = Object.entries(pathCounts).sort((a, b) => b[1] - a[1]).slice(0, 10)
       .map(([path, count]) => ({ path, count }));
 
+    const OWNER_EMAILS = new Set(["casperbadenhorst77@outlook.com", "badenhorst.casper@gmail.com"]);
+    const demoSignups = allUsers.filter((u: any) => OWNER_EMAILS.has((u.email ?? "").toLowerCase())).length;
+    const realSignups = Math.max(0, totalSignups - demoSignups);
+
     return json({
       totals: {
         signups: totalSignups,
+        signupsDemo: demoSignups,
+        signupsReal: realSignups,
         documents: docs,
-        payments,
+        payments: paymentsSuccess,
+        paymentsRejected,
         bookings,
         contacts,
         activeSubscriptions: subs,

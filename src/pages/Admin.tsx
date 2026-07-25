@@ -21,8 +21,11 @@ type ErrorRow = {
 type Stats = {
   totals: {
     signups: number;
+    signupsDemo: number;
+    signupsReal: number;
     documents: number;
     payments: number;
+    paymentsRejected: number;
     bookings: number;
     contacts: number;
     activeSubscriptions: number;
@@ -103,9 +106,10 @@ export default function AdminPage() {
       {stats && (
         <>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-            <Stat label="Signups" value={stats.totals.signups} />
+            <Stat label="Signups" value={stats.totals.signups} caption={`${stats.totals.signupsReal} real · ${stats.totals.signupsDemo} owner/demo`} />
             <Stat label="Active subscriptions" value={stats.totals.activeSubscriptions} />
-            <Stat label="Payments (completed)" value={stats.totals.payments} />
+            <Stat label="Successful payments" value={stats.totals.payments} caption="Accepted & matched by webhook" />
+            <Stat label="Rejected payment attempts" value={stats.totals.paymentsRejected} caption="Bad merchant id / amount mismatch" />
             <Stat label="Documents generated" value={stats.totals.documents} />
             <Stat label="Chairperson bookings" value={stats.totals.bookings} />
             <Stat label="Contact messages" value={stats.totals.contacts} />
@@ -213,12 +217,13 @@ export default function AdminPage() {
   );
 }
 
-function Stat({ label, value }: { label: string; value: number }) {
+function Stat({ label, value, caption }: { label: string; value: number; caption?: string }) {
   return (
     <Card>
       <CardContent className="pt-6">
         <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
         <div className="text-3xl font-bold mt-1">{value.toLocaleString()}</div>
+        {caption && <div className="text-xs text-muted-foreground mt-1">{caption}</div>}
       </CardContent>
     </Card>
   );
