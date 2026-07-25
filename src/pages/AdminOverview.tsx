@@ -64,7 +64,7 @@ export default function AdminOverview() {
 
   const { data, error, refreshing, updatedAt, refresh } = useLiveData<Data>(async () => {
     const [{ data: ov, error: ovErr }, { data: pend }] = await Promise.all([
-      supabase.functions.invoke("owner-overview", { headers: { "Cache-Control": "no-cache" } }),
+      supabase.functions.invoke("owner-overview"),
       supabase
         .from("salespersons")
         .select("id, full_name, email, created_at")
