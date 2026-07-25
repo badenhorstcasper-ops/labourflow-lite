@@ -543,20 +543,36 @@ function MessageBubble({
   );
 }
 
-// Tiny inline renderer for the **bold** segments and line breaks used by the
-// knowledge base. We deliberately avoid a heavy markdown lib.
+// Tiny inline renderer for **bold**, [label](url) links and line breaks.
+// We deliberately avoid a heavy markdown lib.
 function renderMarkdownLite(text: string) {
   const lines = text.split("\n");
+  // Combined tokenizer: bold OR markdown link
+  const tokenRe = /(\*\*[^*]+\*\*|\[[^\]]+\]\(https?:\/\/[^\s)]+\))/g;
   return lines.map((line, i) => (
     <div key={i}>
-      {line.split(/(\*\*[^*]+\*\*)/g).map((part, j) =>
-        part.startsWith("**") && part.endsWith("**") ? (
-          <strong key={j}>{part.slice(2, -2)}</strong>
-        ) : (
-          <span key={j}>{part}</span>
-        )
-      )}
+      {line.split(tokenRe).map((part, j) => {
+        if (part.startsWith("**") && part.endsWith("**")) {
+          return <strong key={j}>{part.slice(2, -2)}</strong>;
+        }
+        const linkMatch = /^\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)$/.exec(part);
+        if (linkMatch) {
+          return (
+            <a
+              key={j}
+              href={linkMatch[2]}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline text-primary hover:opacity-80 break-all"
+            >
+              {linkMatch[1]}
+            </a>
+          );
+        }
+        return <span key={j}>{part}</span>;
+      })}
       {line === "" ? <span>&nbsp;</span> : null}
     </div>
   ));
 }
+
