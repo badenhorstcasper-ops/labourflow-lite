@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
+import BackHomeBar from "@/components/BackHomeBar";
 
 // ============================================================================
 // EDIT: Company details (used in all three legal pages).
@@ -52,6 +53,7 @@ export function LegalLayout({
         </div>
       </header>
       <main className="container mx-auto max-w-3xl px-4 py-10">
+        <BackHomeBar homeTo="/" />
         <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Last updated: {COMPANY.lastUpdated}

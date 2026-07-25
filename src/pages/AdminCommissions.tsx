@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import BackHomeBar from "@/components/BackHomeBar";
 
 type SP = { id: string; full_name: string; email: string; phone: string | null; referral_code: string | null; status: string; created_at: string; notice_end_date?: string | null; terminated_reason?: string | null };
 type Calc = { id: string; salesperson_id: string; calendar_month: string; active_subs_count: number; cancellations_count: number; gross_commission_zar: number; status: string; paid_at: string | null };
@@ -98,6 +99,7 @@ export default function AdminCommissions() {
 
   return (
     <div className="container mx-auto max-w-6xl p-6 space-y-6">
+      <BackHomeBar homeTo="/app" />
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Commissions</h1>
         <div className="flex gap-2">

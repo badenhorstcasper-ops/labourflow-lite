@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import BackHomeBar from "@/components/BackHomeBar";
 
 export default function AdminSalespersonNew() {
   const nav = useNavigate();
@@ -52,6 +53,7 @@ export default function AdminSalespersonNew() {
 
   return (
     <div className="container mx-auto max-w-2xl p-6">
+      <BackHomeBar homeTo="/app" />
       <h1 className="text-2xl font-bold mb-4">Add salesperson</h1>
       <Card>
         <CardHeader><CardTitle>Details</CardTitle></CardHeader>

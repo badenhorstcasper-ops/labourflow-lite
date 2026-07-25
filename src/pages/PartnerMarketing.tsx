@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import BackHomeBar from "@/components/BackHomeBar";
 
 type Asset = { name: string; size: number };
 
@@ -68,6 +69,7 @@ export default function PartnerMarketing() {
       </header>
 
       <main className="container mx-auto max-w-4xl px-4 py-8 space-y-6">
+        <BackHomeBar homeTo="/partner" />
         <div>
           <h1 className="text-3xl font-bold">Marketing kit</h1>
           <p className="text-muted-foreground mt-1">

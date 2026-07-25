@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, RefreshCw } from "lucide-react";
+import BackHomeBar from "@/components/BackHomeBar";
 
 type LeagueRow = {
   id: string;
@@ -80,6 +81,7 @@ export default function AdminOverview() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <BackHomeBar homeTo="/app" />
       <div className="flex items-center justify-between mb-6 gap-2 flex-wrap">
         <div>
           <h1 className="text-3xl font-bold">Owner overview</h1>

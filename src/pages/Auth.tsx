@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import BackHomeBar from "@/components/BackHomeBar";
 
 type Mode = "signup" | "login";
 
@@ -126,7 +127,8 @@ const Auth = () => {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
+      <div className="w-full max-w-md"><BackHomeBar homeTo="/" /></div>
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>{mode === "signup" ? "Create your account" : "Welcome back"}</CardTitle>

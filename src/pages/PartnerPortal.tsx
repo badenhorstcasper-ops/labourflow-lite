@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import BackHomeBar from "@/components/BackHomeBar";
 
 type SP = { id: string; full_name: string; email: string; phone: string | null; referral_code: string | null; status: string; notice_end_date?: string | null; approved_at?: string | null; demo_revoked_at?: string | null };
 type Calc = { id: string; calendar_month: string; active_subs_count: number; cancellations_count: number; gross_commission_zar: number; status: string; paid_at: string | null };
@@ -53,17 +54,23 @@ export default function PartnerPortal() {
   if (loading) return <div className="p-8 text-center">Loading…</div>;
 
   if (!sp) return (
-    <div className="max-w-xl mx-auto p-8 text-center space-y-4">
-      <h1 className="text-2xl font-bold">No partner account found</h1>
-      <p className="text-muted-foreground">This email isn't linked to an active iNRECO partner. Apply below to become one.</p>
-      <Link to="/partner/apply"><Button>Apply to become a partner</Button></Link>
+    <div className="max-w-xl mx-auto p-8 space-y-4">
+      <BackHomeBar homeTo="/" />
+      <div className="text-center space-y-4">
+        <h1 className="text-2xl font-bold">No partner account found</h1>
+        <p className="text-muted-foreground">This email isn't linked to an active iNRECO partner. Apply below to become one.</p>
+        <Link to="/partner/apply"><Button>Apply to become a partner</Button></Link>
+      </div>
     </div>
   );
 
   if (sp.status !== "active" && sp.status !== "notice") return (
-    <div className="max-w-xl mx-auto p-8 text-center space-y-4">
-      <h1 className="text-2xl font-bold">Application {sp.status.replace("_", " ")}</h1>
-      <p className="text-muted-foreground">We'll email you once your partner account is approved.</p>
+    <div className="max-w-xl mx-auto p-8 space-y-4">
+      <BackHomeBar homeTo="/" />
+      <div className="text-center space-y-4">
+        <h1 className="text-2xl font-bold">Application {sp.status.replace("_", " ")}</h1>
+        <p className="text-muted-foreground">We'll email you once your partner account is approved.</p>
+      </div>
     </div>
   );
 
@@ -79,6 +86,7 @@ export default function PartnerPortal() {
         </div>
       </header>
       <main className="container mx-auto max-w-5xl px-4 py-8 space-y-6">
+        <BackHomeBar homeTo="/" />
         {sp.status === "notice" && (
           <div className="rounded-md border-l-4 border-amber-500 bg-amber-500/10 p-4 text-sm">
             <p className="font-semibold text-amber-700 dark:text-amber-400">Notice period active</p>

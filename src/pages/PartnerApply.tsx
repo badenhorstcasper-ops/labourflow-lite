@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import BackHomeBar from "@/components/BackHomeBar";
 import { buildApplicationMailto, type ApplicationSummary } from "@/lib/partnerMail";
 import {
   CLAUSE_ACCEPTANCE_LABELS,
@@ -143,6 +144,7 @@ export default function PartnerApply() {
         </div>
       </header>
       <main className="container mx-auto max-w-2xl px-4 py-8">
+        <BackHomeBar homeTo="/" />
         <h1 className="text-3xl font-bold mb-2">Become an iNRECO Partner</h1>
         <p className="text-muted-foreground mb-6">
           Earn a monthly commission for every business that signs up with your referral code.
