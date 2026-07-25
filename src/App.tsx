@@ -32,6 +32,8 @@ import PartnerAgreement from "@/pages/PartnerAgreement";
 import PartnerMarketing from "@/pages/PartnerMarketing";
 import AdminCommissions from "@/pages/AdminCommissions";
 import AdminSalespersonNew from "@/pages/AdminSalespersonNew";
+import AdminOverview from "@/pages/AdminOverview";
+import AdminPartnerDecision from "@/pages/AdminPartnerDecision";
 
 const queryClient = new QueryClient();
 
@@ -79,6 +81,8 @@ function AppRoutes() {
       <Route path="/partner/apply" element={<PartnerApply />} />
       <Route path="/partner/agreement" element={<PartnerAgreement />} />
       <Route path="/partner/marketing" element={<PartnerMarketing />} />
+      <Route path="/admin/overview" element={<AdminOverview />} />
+      <Route path="/admin/partner-decision" element={<AdminPartnerDecision />} />
 
 
 
