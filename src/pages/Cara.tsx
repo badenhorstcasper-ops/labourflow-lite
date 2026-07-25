@@ -300,13 +300,16 @@ export default function CaraPage() {
 
 const AARTO_KEYS = ["aarto_overview", "licence_lost", "licence_hidden", "aarto_disclosure", "driver_policy", "driving_inherent_requirement"];
 const VISA_KEYS = ["visa_overview", "visa_expired", "asylum_permit", "visa_verification", "visa_dismissal_fairness"];
+const GOV_KEYS = ["gov_tools_overview", "ufiling", "compensation_fund", "employment_equity_reports", "essa_public_employment", "labour_complaint", "labour_market_stats", "esa_bill_2026"];
 
 function TopicChips({ busy, onPick }: { busy: boolean; onPick: (prompt: string) => void }) {
-  const [openGroup, setOpenGroup] = useState<null | "aarto" | "visa">(null);
+  const [openGroup, setOpenGroup] = useState<null | "aarto" | "visa" | "gov">(null);
   const [query, setQuery] = useState("");
-  const mainTopics = TOPICS.filter((t) => !AARTO_KEYS.includes(t.key) && !VISA_KEYS.includes(t.key));
+  const mainTopics = TOPICS.filter((t) => !AARTO_KEYS.includes(t.key) && !VISA_KEYS.includes(t.key) && !GOV_KEYS.includes(t.key));
   const aartoTopics = TOPICS.filter((t) => AARTO_KEYS.includes(t.key));
   const visaTopics = TOPICS.filter((t) => VISA_KEYS.includes(t.key));
+  const govTopics = TOPICS.filter((t) => GOV_KEYS.includes(t.key));
+
 
   const chipCls = "px-3 py-1.5 rounded-full border bg-card hover:bg-muted text-sm transition disabled:opacity-50";
   const groupCls = "px-3 py-1.5 rounded-full border border-primary/40 bg-primary/10 hover:bg-primary/20 text-sm font-medium transition disabled:opacity-50";
