@@ -303,6 +303,7 @@ const VISA_KEYS = ["visa_overview", "visa_expired", "asylum_permit", "visa_verif
 
 function TopicChips({ busy, onPick }: { busy: boolean; onPick: (prompt: string) => void }) {
   const [openGroup, setOpenGroup] = useState<null | "aarto" | "visa">(null);
+  const [query, setQuery] = useState("");
   const mainTopics = TOPICS.filter((t) => !AARTO_KEYS.includes(t.key) && !VISA_KEYS.includes(t.key));
   const aartoTopics = TOPICS.filter((t) => AARTO_KEYS.includes(t.key));
   const visaTopics = TOPICS.filter((t) => VISA_KEYS.includes(t.key));
@@ -311,46 +312,114 @@ function TopicChips({ busy, onPick }: { busy: boolean; onPick: (prompt: string) 
   const groupCls = "px-3 py-1.5 rounded-full border border-primary/40 bg-primary/10 hover:bg-primary/20 text-sm font-medium transition disabled:opacity-50";
   const subCls = "px-3 py-1.5 rounded-full border bg-background hover:bg-muted text-xs transition disabled:opacity-50";
 
+  const q = query.trim().toLowerCase();
+  const isSearching = q.length > 0;
+  const matches = isSearching
+    ? TOPICS.filter((t) =>
+        t.label.toLowerCase().includes(q) ||
+        t.prompt.toLowerCase().includes(q) ||
+        (t.summary?.toLowerCase().includes(q) ?? false)
+      )
+    : [];
+
   const activeSubs = openGroup === "aarto" ? aartoTopics : openGroup === "visa" ? visaTopics : [];
+  const activeHelper =
+    openGroup === "aarto"
+      ? "For employers dealing with employee driving offences, fines, or lost licences. Pick the situation closest to yours."
+      : openGroup === "visa"
+      ? "For employers with foreign national staff — visa checks, expiry, and lawful next steps. Pick the situation closest to yours."
+      : "";
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex flex-wrap gap-2 justify-center">
-        {mainTopics.map((t) => (
-          <button key={t.key} onClick={() => onPick(t.prompt)} disabled={busy} className={chipCls}>
-            {t.label}
-          </button>
-        ))}
-        <button
-          onClick={() => setOpenGroup(openGroup === "aarto" ? null : "aarto")}
-          disabled={busy}
-          className={groupCls}
-          aria-expanded={openGroup === "aarto"}
-        >
-          Drivers / AARTO {openGroup === "aarto" ? "▲" : "▾"}
-        </button>
-        <button
-          onClick={() => setOpenGroup(openGroup === "visa" ? null : "visa")}
-          disabled={busy}
-          className={groupCls}
-          aria-expanded={openGroup === "visa"}
-        >
-          Foreign Nationals {openGroup === "visa" ? "▲" : "▾"}
-        </button>
+    <div className="flex flex-col gap-3">
+      {/* Start Here CTA */}
+      <Card className="border-primary/50 bg-primary/5">
+        <CardContent className="p-3 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-start gap-2">
+            <Sparkles className="h-4 w-4 mt-0.5 text-primary shrink-0" />
+            <div className="text-sm">
+              <span className="font-semibold">Start here:</span>{" "}
+              <span className="text-muted-foreground">
+                New to CARA? Tap a topic below, or describe your situation in your own words — CARA will guide you step by step.
+              </span>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            disabled={busy}
+            onClick={() => onPick("I'm not sure where to start. Walk me through how CARA can help me with staff issues in my business.")}
+          >
+            Show me how it works
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Search */}
+      <div className="flex justify-center">
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search topics (e.g. licence, visa, warning)…"
+          className="w-full max-w-md rounded-full border bg-background px-4 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        />
       </div>
-      {activeSubs.length > 0 && (
+
+      {isSearching ? (
         <div className="flex flex-wrap gap-2 justify-center rounded-lg border bg-muted/40 p-2">
-          {activeSubs.map((t) => (
-            <button
-              key={t.key}
-              onClick={() => { onPick(t.prompt); setOpenGroup(null); }}
-              disabled={busy}
-              className={subCls}
-            >
-              {t.label}
-            </button>
-          ))}
+          {matches.length === 0 ? (
+            <p className="text-xs text-muted-foreground py-1">No topics match "{query}". Try different words, or just ask CARA below.</p>
+          ) : (
+            matches.map((t) => (
+              <button key={t.key} onClick={() => { onPick(t.prompt); setQuery(""); }} disabled={busy} className={chipCls}>
+                {t.label}
+              </button>
+            ))
+          )}
         </div>
+      ) : (
+        <>
+          <div className="flex flex-wrap gap-2 justify-center">
+            {mainTopics.map((t) => (
+              <button key={t.key} onClick={() => onPick(t.prompt)} disabled={busy} className={chipCls}>
+                {t.label}
+              </button>
+            ))}
+            <button
+              onClick={() => setOpenGroup(openGroup === "aarto" ? null : "aarto")}
+              disabled={busy}
+              className={groupCls}
+              aria-expanded={openGroup === "aarto"}
+            >
+              Drivers / AARTO {openGroup === "aarto" ? "▲" : "▾"}
+            </button>
+            <button
+              onClick={() => setOpenGroup(openGroup === "visa" ? null : "visa")}
+              disabled={busy}
+              className={groupCls}
+              aria-expanded={openGroup === "visa"}
+            >
+              Foreign Nationals {openGroup === "visa" ? "▲" : "▾"}
+            </button>
+          </div>
+          {activeSubs.length > 0 && (
+            <div className="flex flex-col gap-2 rounded-lg border bg-muted/40 p-2">
+              <p className="text-xs text-muted-foreground text-center px-2">{activeHelper}</p>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {activeSubs.map((t) => (
+                  <button
+                    key={t.key}
+                    onClick={() => { onPick(t.prompt); setOpenGroup(null); }}
+                    disabled={busy}
+                    className={subCls}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
