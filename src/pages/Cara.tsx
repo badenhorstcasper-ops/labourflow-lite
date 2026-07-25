@@ -410,6 +410,15 @@ function TopicChips({ busy, onPick }: { busy: boolean; onPick: (prompt: string) 
             >
               Foreign Nationals {openGroup === "visa" ? "▲" : "▾"}
             </button>
+            <button
+              onClick={() => setOpenGroup(openGroup === "gov" ? null : "gov")}
+              disabled={busy}
+              className={groupCls}
+              aria-expanded={openGroup === "gov"}
+            >
+              Gov tools & links {openGroup === "gov" ? "▲" : "▾"}
+            </button>
+
           </div>
           {activeSubs.length > 0 && (
             <div className="flex flex-col gap-2 rounded-lg border bg-muted/40 p-2">
