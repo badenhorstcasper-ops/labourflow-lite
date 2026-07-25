@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { buildApplicationMailto, type ApplicationSummary } from "@/lib/partnerMail";
 import {
   CLAUSE_ACCEPTANCE_LABELS,
   PARTNER_AGREEMENT_CLAUSES,
@@ -20,6 +21,8 @@ export default function PartnerApply() {
   const nav = useNavigate();
   const [step, setStep] = useState<Step>(1);
   const [busy, setBusy] = useState(false);
+  const [mailtoHref, setMailtoHref] = useState("");
+  const [summaryText, setSummaryText] = useState("");
 
   const [full_name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -75,7 +78,7 @@ export default function PartnerApply() {
 
     setBusy(true);
     try {
-      const { error } = await supabase.functions.invoke("submit-partner-application", {
+      const { data, error } = await supabase.functions.invoke("submit-partner-application", {
         body: {
           full_name: full_name.trim(),
           email: email.trim(),
@@ -100,18 +103,34 @@ export default function PartnerApply() {
           },
         },
       });
-      if (error) {
-        const message = typeof error.message === "string" && error.message.trim()
-          ? error.message
-          : "Could not submit — please try again.";
-        toast.error(message);
+      const payload = data as { ok?: boolean; error?: string; application?: ApplicationSummary } | null;
+      if (error || payload?.error || !payload?.application) {
+        toast.error(payload?.error || error?.message || "Could not submit — please try again.");
         return;
       }
+      const href = buildApplicationMailto(payload.application);
+      setMailtoHref(href);
+      // Decoded fallback for copy-to-clipboard on the success screen.
+      try {
+        const url = new URL(href);
+        setSummaryText(decodeURIComponent(url.search.split("body=")[1] || ""));
+      } catch { /* no-op */ }
       setStep(4);
+      // Auto-open the user's email app with the message pre-filled.
+      setTimeout(() => { window.location.href = href; }, 300);
     } catch {
       toast.error("Could not submit — please try again.");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function copySummary() {
+    try {
+      await navigator.clipboard.writeText(summaryText);
+      toast.success("Copied — paste into any email to info@inreco.co.za");
+    } catch {
+      toast.error("Could not copy — please email info@inreco.co.za manually.");
     }
   }
 
@@ -262,11 +281,31 @@ export default function PartnerApply() {
             {step === 4 && (
               <div className="text-center space-y-4 py-4">
                 <div className="text-5xl">✅</div>
-                <p>Thanks {full_name.split(" ")[0]}! Your application is in.</p>
-                <p className="text-sm text-muted-foreground">
-                  We'll email you within 2 business days with your unique referral code and a link to the Partner Portal.
+                <p className="font-medium">Thanks {full_name.split(" ")[0]}! Your application is saved.</p>
+                <div className="rounded-md border bg-muted/30 p-4 text-sm text-left space-y-2">
+                  <p className="font-semibold">One last step</p>
+                  <p>
+                    Your email app should have opened with a ready-to-send message to
+                    <span className="font-mono"> info@inreco.co.za</span>. Just tap <b>Send</b> —
+                    that's how iNRECO gets notified.
+                  </p>
+                  <p>If nothing opened, use one of the buttons below:</p>
+                </div>
+                <div className="flex flex-col gap-2">
+                  {mailtoHref && (
+                    <a href={mailtoHref}>
+                      <Button className="w-full">Open my email app now</Button>
+                    </a>
+                  )}
+                  <Button variant="outline" onClick={copySummary}>
+                    Copy the message instead
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  You'll get a welcome email with your unique referral code once your application is approved
+                  (usually within 2 business days).
                 </p>
-                <Button onClick={() => nav("/")}>Back to home</Button>
+                <Button variant="ghost" onClick={() => nav("/")}>Back to home</Button>
               </div>
             )}
           </CardContent>
