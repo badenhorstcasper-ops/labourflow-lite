@@ -21,8 +21,11 @@ type ErrorRow = {
 type Stats = {
   totals: {
     signups: number;
+    signupsDemo: number;
+    signupsReal: number;
     documents: number;
     payments: number;
+    paymentsRejected: number;
     bookings: number;
     contacts: number;
     activeSubscriptions: number;
