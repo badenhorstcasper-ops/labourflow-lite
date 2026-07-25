@@ -3,8 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, RefreshCw, Home } from "lucide-react";
+import { Loader2, Home } from "lucide-react";
 import BackHomeBar from "@/components/BackHomeBar";
+import { useLiveData } from "@/hooks/useLiveData";
+import LiveStatus from "@/components/LiveStatus";
 
 type ErrorRow = {
   id: string;
@@ -35,32 +37,8 @@ type Stats = {
 
 export default function AdminPage() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
+  const [checking, setChecking] = useState(true);
   const [authorized, setAuthorized] = useState(false);
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
-
-  async function load() {
-    setRefreshing(true);
-    setError(null);
-    const { data, error } = await supabase.functions.invoke("admin-stats");
-    if (error || (data as any)?.error) {
-      setError(error?.message || (data as any)?.error || "Failed to load");
-    } else {
-      setStats(data as Stats);
-    }
-    setRefreshing(false);
-  }
-
-  async function resolveError(id: string) {
-    const { error } = await supabase.functions.invoke("resolve-error", { body: { id } });
-    if (error) {
-      setError(error.message);
-      return;
-    }
-    setStats((s) => s ? { ...s, recentErrors: s.recentErrors.filter((e) => e.id !== id) } : s);
-  }
 
   useEffect(() => {
     (async () => {
@@ -72,18 +50,26 @@ export default function AdminPage() {
       });
       if (!isAdmin) { navigate("/"); return; }
       setAuthorized(true);
-      await load();
-      setLoading(false);
+      setChecking(false);
     })();
   }, [navigate]);
 
-  useEffect(() => {
-    if (!authorized) return;
-    const id = setInterval(load, 60_000);
-    return () => clearInterval(id);
-  }, [authorized]);
+  const { data: stats, error, refreshing, updatedAt, refresh } = useLiveData<Stats>(async () => {
+    const { data, error } = await supabase.functions.invoke("admin-stats", {
+      headers: { "Cache-Control": "no-cache" },
+    });
+    if (error) throw new Error(error.message);
+    if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
+    return data as Stats;
+  }, 30_000);
 
-  if (loading) {
+  async function resolveError(id: string) {
+    const { error } = await supabase.functions.invoke("resolve-error", { body: { id } });
+    if (error) return;
+    refresh();
+  }
+
+  if (checking || !authorized) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin" />
@@ -94,21 +80,20 @@ export default function AdminPage() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       <BackHomeBar homeTo="/app" />
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
         <div>
           <h1 className="text-3xl font-bold">Admin dashboard</h1>
           <p className="text-sm text-muted-foreground">Live usage across the app</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <a href="/app"><Button variant="outline" aria-label="Home"><Home className="h-4 w-4" /></Button></a>
           <a href="/admin/overview"><Button variant="outline">Owner overview →</Button></a>
           <a href="/admin/commissions"><Button variant="outline">Commissions →</Button></a>
           <a href="/admin/marketing"><Button variant="outline">Marketing →</Button></a>
-          <Button onClick={load} variant="outline" disabled={refreshing}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
-            Refresh
-          </Button>
         </div>
+      </div>
+      <div className="mb-6">
+        <LiveStatus updatedAt={updatedAt} refreshing={refreshing} onRefresh={refresh} />
       </div>
 
       {error && (
