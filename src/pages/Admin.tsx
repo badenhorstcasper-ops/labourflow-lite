@@ -55,9 +55,7 @@ export default function AdminPage() {
   }, [navigate]);
 
   const { data: stats, error, refreshing, updatedAt, refresh } = useLiveData<Stats>(async () => {
-    const { data, error } = await supabase.functions.invoke("admin-stats", {
-      headers: { "Cache-Control": "no-cache" },
-    });
+    const { data, error } = await supabase.functions.invoke("admin-stats");
     if (error) throw new Error(error.message);
     if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
     return data as Stats;
