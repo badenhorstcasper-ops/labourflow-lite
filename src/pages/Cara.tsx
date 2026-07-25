@@ -325,13 +325,19 @@ function TopicChips({ busy, onPick }: { busy: boolean; onPick: (prompt: string) 
       )
     : [];
 
-  const activeSubs = openGroup === "aarto" ? aartoTopics : openGroup === "visa" ? visaTopics : [];
+  const activeSubs =
+    openGroup === "aarto" ? aartoTopics :
+    openGroup === "visa" ? visaTopics :
+    openGroup === "gov" ? govTopics : [];
   const activeHelper =
     openGroup === "aarto"
       ? "For employers dealing with employee driving offences, fines, or lost licences. Pick the situation closest to yours."
       : openGroup === "visa"
       ? "For employers with foreign national staff — visa checks, expiry, and lawful next steps. Pick the situation closest to yours."
+      : openGroup === "gov"
+      ? "Official Department of Employment and Labour online services — uFiling, Compensation Fund, Employment Equity, ESSA, complaints — plus the new 2026 Amendment Bill on foreign nationals. Tap the closest one."
       : "";
+
 
   return (
     <div className="flex flex-col gap-3">
