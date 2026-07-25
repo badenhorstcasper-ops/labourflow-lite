@@ -44,12 +44,13 @@ Deno.serve(async (req) => {
     const totalSignups = (usersList as any)?.total ?? 0;
 
     const [
-      docs, payments, bookings, contacts, subs,
+      docs, paymentsSuccess, paymentsRejected, bookings, contacts, subs,
       pv1, pv7, pv30,
       recentDocs, recentErrors,
     ] = await Promise.all([
       count(admin.from("generated_documents").select("*", { count: "exact", head: true })),
-      count(admin.from("payfast_webhook_log").select("*", { count: "exact", head: true }).eq("payment_status", "COMPLETE")),
+      count(admin.from("payfast_webhook_log").select("*", { count: "exact", head: true }).eq("outcome", "accepted")),
+      count(admin.from("payfast_webhook_log").select("*", { count: "exact", head: true }).eq("outcome", "rejected")),
       count(admin.from("chairperson_bookings").select("*", { count: "exact", head: true })),
       count(admin.from("contact_messages").select("*", { count: "exact", head: true })),
       count(admin.from("subscriptions").select("*", { count: "exact", head: true }).eq("status", "active")),
