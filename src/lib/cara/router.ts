@@ -25,8 +25,16 @@ export type CaraAnswer =
 
 function renderTopic(t: KnowledgeTopic): string {
   const stepLines = t.steps.map((s, i) => `${i + 1}. ${s}`).join("\n");
-  return `**${t.label}**\n\n${t.summary}\n\n**What to do, in order:**\n${stepLines}`;
+  let out = `**${t.label}**\n\n${t.summary}\n\n**What to do, in order:**\n${stepLines}`;
+  if (t.officialLinks?.length) {
+    const linkLines = t.officialLinks
+      .map((l) => `- [${l.label}](${l.url})${l.note ? ` — ${l.note}` : ""}`)
+      .join("\n");
+    out += `\n\n**Official links (tap to open):**\n${linkLines}`;
+  }
+  return out;
 }
+
 
 const INTENT_WORDS = [
   "write", "draft", "create", "generate", "make", "send", "issue",
