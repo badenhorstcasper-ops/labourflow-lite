@@ -84,6 +84,7 @@ function AppRoutes() {
       <Route path="/partner/marketing" element={<PartnerMarketing />} />
       <Route path="/admin/overview" element={<AdminOverview />} />
       <Route path="/admin/partner-decision" element={<AdminPartnerDecision />} />
+      <Route path="/admin/marketing" element={<AdminMarketing />} />
 
 
 
