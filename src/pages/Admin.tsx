@@ -217,12 +217,13 @@ export default function AdminPage() {
   );
 }
 
-function Stat({ label, value }: { label: string; value: number }) {
+function Stat({ label, value, caption }: { label: string; value: number; caption?: string }) {
   return (
     <Card>
       <CardContent className="pt-6">
         <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
         <div className="text-3xl font-bold mt-1">{value.toLocaleString()}</div>
+        {caption && <div className="text-xs text-muted-foreground mt-1">{caption}</div>}
       </CardContent>
     </Card>
   );
