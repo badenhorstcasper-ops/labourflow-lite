@@ -103,6 +103,7 @@ export default function AdminPage() {
           <a href="/app"><Button variant="outline" aria-label="Home"><Home className="h-4 w-4" /></Button></a>
           <a href="/admin/overview"><Button variant="outline">Owner overview →</Button></a>
           <a href="/admin/commissions"><Button variant="outline">Commissions →</Button></a>
+          <a href="/admin/marketing"><Button variant="outline">Marketing →</Button></a>
           <Button onClick={load} variant="outline" disabled={refreshing}>
             <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
             Refresh

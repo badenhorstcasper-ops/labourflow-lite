@@ -66,6 +66,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 <span className="mx-1 h-4 w-px bg-border" aria-hidden />
                 <Link className={linkCls("/admin/overview")} to="/admin/overview">Owner</Link>
                 <Link className={linkCls("/admin/commissions")} to="/admin/commissions">Partners</Link>
+                <Link className={linkCls("/admin/marketing")} to="/admin/marketing">Marketing</Link>
                 <Link className={linkCls("/admin")} to="/admin">Admin</Link>
               </>
             )}
