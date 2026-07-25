@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, RefreshCw } from "lucide-react";
+import { Loader2, RefreshCw, Home } from "lucide-react";
 
 type ErrorRow = {
   id: string;
@@ -98,6 +98,7 @@ export default function AdminPage() {
           <p className="text-sm text-muted-foreground">Live usage across the app</p>
         </div>
         <div className="flex gap-2">
+          <a href="/app"><Button variant="outline" aria-label="Home"><Home className="h-4 w-4" /></Button></a>
           <a href="/admin/overview"><Button variant="outline">Owner overview →</Button></a>
           <a href="/admin/commissions"><Button variant="outline">Commissions →</Button></a>
           <Button onClick={load} variant="outline" disabled={refreshing}>
