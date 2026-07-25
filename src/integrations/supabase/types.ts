@@ -848,6 +848,7 @@ export type Database = {
           approved_by: string | null
           banking_details: Json | null
           created_at: string
+          demo_revoked_at: string | null
           email: string
           full_name: string
           id: string
@@ -866,6 +867,7 @@ export type Database = {
           approved_by?: string | null
           banking_details?: Json | null
           created_at?: string
+          demo_revoked_at?: string | null
           email: string
           full_name: string
           id?: string
@@ -884,6 +886,7 @@ export type Database = {
           approved_by?: string | null
           banking_details?: Json | null
           created_at?: string
+          demo_revoked_at?: string | null
           email?: string
           full_name?: string
           id?: string

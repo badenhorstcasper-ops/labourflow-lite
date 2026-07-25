@@ -1,0 +1,1 @@
+ALTER TABLE public.salespersons ADD COLUMN IF NOT EXISTS demo_revoked_at TIMESTAMPTZ;
