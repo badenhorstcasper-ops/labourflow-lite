@@ -61,7 +61,16 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <Link className={linkCls("/account-app/documents")} to="/account-app/documents">Documents</Link>
             <Link className={linkCls("/account-app/profile")} to="/account-app/profile">Profile</Link>
             <Link className={linkCls("/settings")} to="/settings">Billing</Link>
+            {isAdmin && (
+              <>
+                <span className="mx-1 h-4 w-px bg-border" aria-hidden />
+                <Link className={linkCls("/admin/overview")} to="/admin/overview">Owner</Link>
+                <Link className={linkCls("/admin/commissions")} to="/admin/commissions">Partners</Link>
+                <Link className={linkCls("/admin")} to="/admin">Admin</Link>
+              </>
+            )}
           </nav>
+
         </div>
       </header>
       <main className="container mx-auto max-w-5xl px-4 py-6 flex-1 pb-10">{children}</main>
