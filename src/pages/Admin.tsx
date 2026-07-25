@@ -106,9 +106,10 @@ export default function AdminPage() {
       {stats && (
         <>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-            <Stat label="Signups" value={stats.totals.signups} />
+            <Stat label="Signups" value={stats.totals.signups} caption={`${stats.totals.signupsReal} real · ${stats.totals.signupsDemo} owner/demo`} />
             <Stat label="Active subscriptions" value={stats.totals.activeSubscriptions} />
-            <Stat label="Payments (completed)" value={stats.totals.payments} />
+            <Stat label="Successful payments" value={stats.totals.payments} caption="Accepted & matched by webhook" />
+            <Stat label="Rejected payment attempts" value={stats.totals.paymentsRejected} caption="Bad merchant id / amount mismatch" />
             <Stat label="Documents generated" value={stats.totals.documents} />
             <Stat label="Chairperson bookings" value={stats.totals.bookings} />
             <Stat label="Contact messages" value={stats.totals.contacts} />
