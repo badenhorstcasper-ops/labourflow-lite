@@ -34,6 +34,7 @@ import AdminCommissions from "@/pages/AdminCommissions";
 import AdminSalespersonNew from "@/pages/AdminSalespersonNew";
 import AdminOverview from "@/pages/AdminOverview";
 import AdminPartnerDecision from "@/pages/AdminPartnerDecision";
+import AdminMarketing from "@/pages/AdminMarketing";
 
 const queryClient = new QueryClient();
 
