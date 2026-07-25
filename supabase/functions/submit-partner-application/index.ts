@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
     return json({ error: "You've already applied recently — we'll email you soon." }, 429);
   }
 
-  const { data: sp, error } = await admin.from("salespersons").insert({
+  let { data: sp, error } = await admin.from("salespersons").insert({
     full_name,
     email,
     phone,
@@ -81,6 +81,30 @@ Deno.serve(async (req) => {
     banking_details: banking,
     status: "pending_approval",
   }).select("id").maybeSingle();
+
+  if (error && (error as { code?: string }).code === "23505") {
+    // Existing application under this email — reuse it so the flow can continue.
+    const { data: existing, error: exErr } = await admin
+      .from("salespersons")
+      .select("id, status")
+      .ilike("email", email)
+      .maybeSingle();
+    if (exErr || !existing) {
+      console.error("lookup existing salesperson failed", exErr);
+      return json({ error: "An application already exists for this email. Please contact info@inreco.co.za." }, 409);
+    }
+    if (existing.status && existing.status !== "pending_approval") {
+      return json({ error: "An application already exists for this email. Please contact info@inreco.co.za." }, 409);
+    }
+    await admin.from("salespersons").update({
+      full_name,
+      phone,
+      id_number,
+      banking_details: banking,
+    }).eq("id", existing.id);
+    sp = { id: existing.id } as { id: string };
+    error = null;
+  }
 
   if (error || !sp) {
     console.error("insert salesperson failed", error);
