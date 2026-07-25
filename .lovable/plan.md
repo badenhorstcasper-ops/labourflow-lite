@@ -1,43 +1,17 @@
-## Goal
-Every owner/admin page shows numbers that are true at the moment of viewing — so you can tell at a glance whether sign-ups, subscriptions and partner activity are picking up.
+## What's wrong
 
-## What's there today
-- `/admin` (Admin dashboard) already fetches from the `admin-stats` server function and auto-refreshes every 60 seconds.
-- `/admin/overview` (Owner overview) fetches from `owner-overview` but ONLY on page load and when you click Refresh — no auto-refresh.
-- `/admin/commissions`, `/admin/marketing`, `/admin/partner-decision` load once and never refresh.
-- Cached data can also make a screen look stale even when the numbers on the server just changed.
+The Admin dashboard and Owner overview pages send an extra "don't use cached data" instruction to the backend. The backend wasn't told to accept that instruction, so the browser refuses to make the call and you see:
 
-## What I'll change
+> Failed to send a request to the Edge Function
 
-### 1. Always-fresh loading on every admin/owner page
-- Add a small shared hook (call it `useLiveData`) that:
-  - runs the fetch on mount,
-  - re-runs it every 30 seconds automatically,
-  - re-runs it whenever the browser tab becomes visible again (so switching back to the tab shows current numbers instantly),
-  - re-runs it when the browser regains internet,
-  - tells the server "don't give me a cached copy" so numbers are always straight from the database.
-- Wire this hook into: `/admin`, `/admin/overview`, `/admin/commissions`, `/admin/marketing`.
+The server already tells the browser not to cache the response, so the extra instruction from the page isn't needed anyway.
 
-### 2. Show when the data was last refreshed
-- On every admin/owner page, add a small "Updated a few seconds ago · refreshes automatically" line next to the Refresh button, so you can trust what you're seeing.
+## Fix
 
-### 3. Make the numbers themselves reflect "right now"
-- Owner overview will also include:
-  - sign-ups in the last 24 hours, last 7 days, last 30 days,
-  - subscriptions started in the last 24 hours / 7 days / 30 days,
-  - partner-attributed vs direct sign-ups for the last 24 hours / 7 days / 30 days (not just all-time),
-  - most recent 10 sign-ups and most recent 10 subscriptions with timestamps.
-- Admin dashboard will also include:
-  - active-in-last-24-hours page-view count,
-  - most recent 10 payments with amount and time.
+Remove the unnecessary "no-cache" header the two pages tack onto their requests. The backend keeps its own "don't cache" response header, so live/up-to-the-minute data still works exactly the same.
 
-### 4. Server-side freshness
-- Update the `admin-stats` and `owner-overview` server functions so they never send a cached response (add no-cache headers). Every call goes straight to the database.
+Files to change:
+- `src/pages/Admin.tsx` — drop the extra header on the `admin-stats` call.
+- `src/pages/AdminOverview.tsx` — drop the same extra header on the `owner-overview` call (if present).
 
-## Out of scope
-- No changes to landing/marketing pages, partner-facing pages, or any user-facing app screens.
-- No changes to how data is written — only how it's read and displayed on owner/admin screens.
-- No new database tables.
-
-## How you'll experience it
-Open any owner/admin page and the numbers are live. Leave the tab open — they refresh themselves every 30 seconds. Switch to another tab and come back — they refresh immediately. A small timestamp under the header tells you when the last refresh happened.
+No backend changes, no database changes. After the edit, the pages will load stats again on both `/admin` and `/admin/overview`.
