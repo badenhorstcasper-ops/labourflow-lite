@@ -1013,6 +1013,18 @@ async function afterLogin() {
     if (!ok) { return; } // device limit modal shown + signed out
   } catch (_) {}
 
+  // Hand off to the React app — that's the real product surface (admin nav,
+  // team invites, dashboards, etc.). Admins land on the owner overview.
+  try {
+    const { data: isAdmin } = await supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' });
+    window.location.href = isAdmin ? '/admin/overview' : '/app';
+    return;
+  } catch (_) {
+    window.location.href = '/app';
+    return;
+  }
+
+
   // If returning from a /join?token=… link, accept the invite.
   try {
     const token = localStorage.getItem('inreco.pendingInviteToken');
