@@ -83,11 +83,18 @@ Deno.serve(async (req) => {
     const topPaths = Object.entries(pathCounts).sort((a, b) => b[1] - a[1]).slice(0, 10)
       .map(([path, count]) => ({ path, count }));
 
+    const OWNER_EMAILS = new Set(["casperbadenhorst77@outlook.com", "badenhorst.casper@gmail.com"]);
+    const demoSignups = allUsers.filter((u: any) => OWNER_EMAILS.has((u.email ?? "").toLowerCase())).length;
+    const realSignups = Math.max(0, totalSignups - demoSignups);
+
     return json({
       totals: {
         signups: totalSignups,
+        signupsDemo: demoSignups,
+        signupsReal: realSignups,
         documents: docs,
-        payments,
+        payments: paymentsSuccess,
+        paymentsRejected,
         bookings,
         contacts,
         activeSubscriptions: subs,
