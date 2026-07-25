@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import BackHomeBar from "@/components/BackHomeBar";
 
 const FN_URL =
   (import.meta.env.VITE_SUPABASE_URL || "") + "/functions/v1/submit-contact";
@@ -67,6 +68,7 @@ export default function ContactPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto max-w-2xl px-4 py-12">
+        <BackHomeBar homeTo="/" />
         <header className="mb-8 text-center">
           <h1 className="text-3xl font-bold tracking-tight">Get in touch</h1>
           <p className="mt-2 text-sm text-muted-foreground">

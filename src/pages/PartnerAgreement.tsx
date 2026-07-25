@@ -5,6 +5,7 @@ import {
   PARTNER_AGREEMENT_VERSION,
 } from "@/lib/partnerAgreement";
 import { Button } from "@/components/ui/button";
+import BackHomeBar from "@/components/BackHomeBar";
 
 export default function PartnerAgreement() {
   return (
@@ -16,6 +17,7 @@ export default function PartnerAgreement() {
         </div>
       </header>
       <main className="container mx-auto max-w-3xl px-4 py-8 space-y-6">
+        <BackHomeBar homeTo="/" />
         <div>
           <h1 className="text-3xl font-bold">iNRECO Partner Agreement</h1>
           <p className="text-sm text-muted-foreground mt-1">

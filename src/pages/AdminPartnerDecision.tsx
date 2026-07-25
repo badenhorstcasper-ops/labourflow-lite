@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { buildRejectionMailto, buildWelcomeMailto } from "@/lib/partnerMail";
+import BackHomeBar from "@/components/BackHomeBar";
 
 type State = "checking" | "not_admin" | "confirm" | "working" | "done_approve" | "done_reject" | "error";
 
@@ -79,7 +80,8 @@ export default function AdminPartnerDecision() {
   }, [partner]);
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+      <div className="w-full max-w-lg"><BackHomeBar homeTo="/app" /></div>
       <Card className="max-w-lg w-full">
         <CardHeader>
           <CardTitle>

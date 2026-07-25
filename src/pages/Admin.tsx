@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, RefreshCw, Home } from "lucide-react";
+import BackHomeBar from "@/components/BackHomeBar";
 
 type ErrorRow = {
   id: string;
@@ -92,6 +93,7 @@ export default function AdminPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <BackHomeBar homeTo="/app" />
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold">Admin dashboard</h1>

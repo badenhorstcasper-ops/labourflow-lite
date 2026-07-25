@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import inrecoLogo from "@/assets/inreco-logo.png.asset.json";
+import BackHomeBar from "@/components/BackHomeBar";
 
 type ShareData = {
   title: string;
@@ -77,7 +78,8 @@ export default function SharePage() {
         <div className="font-semibold flex-1">{c.company_name || "Shared document"}</div>
         <img src={inrecoLogo.url} alt="iNRECO" className="h-10 w-auto" />
       </header>
-      <main className="flex-1 flex items-center justify-center p-6">
+      <main className="flex-1 flex flex-col items-center justify-center p-6">
+        <div className="w-full max-w-lg"><BackHomeBar homeTo="/" /></div>
         <Card className="max-w-lg w-full">
           <CardContent className="p-6 space-y-4">
             <div>

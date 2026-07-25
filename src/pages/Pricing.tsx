@@ -14,6 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import InstallAppButton from "@/components/InstallAppButton";
+import BackHomeBar from "@/components/BackHomeBar";
 
 const TRIAL_DAYS = 7;
 
@@ -231,11 +232,8 @@ const Pricing = () => {
     <div className="min-h-screen bg-background">
 
       <div className="container mx-auto max-w-7xl px-4 py-12">
-        <div className="mb-6">
-          <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-            <span aria-hidden>←</span> Back to home
-          </Link>
-        </div>
+        <BackHomeBar homeTo="/" />
+
 
         {reasonMessage && (
           <div className="mx-auto mb-6 max-w-2xl rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
