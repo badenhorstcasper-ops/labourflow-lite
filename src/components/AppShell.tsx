@@ -1,13 +1,26 @@
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Home } from "lucide-react";
 import ReportProblemButton from "@/components/ReportProblemButton";
 import { useSubscription } from "@/hooks/useSubscription";
+import { supabase } from "@/integrations/supabase/client";
+
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { status, daysLeft } = useSubscription();
+  const [isAdmin, setIsAdmin] = useState(false);
+  useEffect(() => {
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const { data } = await supabase.rpc("has_role", { _user_id: session.user.id, _role: "admin" });
+      setIsAdmin(!!data);
+    })();
+  }, []);
+
   const linkCls = (p: string) =>
     `px-3 py-1.5 rounded-md text-sm transition ${
       pathname === p
@@ -48,7 +61,16 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <Link className={linkCls("/account-app/documents")} to="/account-app/documents">Documents</Link>
             <Link className={linkCls("/account-app/profile")} to="/account-app/profile">Profile</Link>
             <Link className={linkCls("/settings")} to="/settings">Billing</Link>
+            {isAdmin && (
+              <>
+                <span className="mx-1 h-4 w-px bg-border" aria-hidden />
+                <Link className={linkCls("/admin/overview")} to="/admin/overview">Owner</Link>
+                <Link className={linkCls("/admin/commissions")} to="/admin/commissions">Partners</Link>
+                <Link className={linkCls("/admin")} to="/admin">Admin</Link>
+              </>
+            )}
           </nav>
+
         </div>
       </header>
       <main className="container mx-auto max-w-5xl px-4 py-6 flex-1 pb-10">{children}</main>
