@@ -11,6 +11,16 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { status, daysLeft } = useSubscription();
+  const [isAdmin, setIsAdmin] = useState(false);
+  useEffect(() => {
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const { data } = await supabase.rpc("has_role", { _user_id: session.user.id, _role: "admin" });
+      setIsAdmin(!!data);
+    })();
+  }, []);
+
   const linkCls = (p: string) =>
     `px-3 py-1.5 rounded-md text-sm transition ${
       pathname === p
