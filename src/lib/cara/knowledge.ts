@@ -583,6 +583,225 @@ export const TOPICS: KnowledgeTopic[] = [
     ],
     keywords: ["visa dismissal", "permit dismissal", "foreign dismissal", "statutory incapacity", "legal incapacity", "discovery health", "sibanda", "roots butchery", "kawalya-kagwa", "joel"],
   },
+
+  // ===================================================================
+  // Government online tools & services (Dept of Employment & Labour)
+  // Source: https://www.labour.gov.za/Online-Tools (verified July 2026)
+  // ===================================================================
+  {
+    key: "gov_tools_overview",
+    label: "Government online tools",
+    prompt: "What online tools and services does the Department of Employment and Labour have, and where do I find them?",
+    summary:
+      "The Department of Employment and Labour (DEL) runs a set of official online services for UIF, Compensation Fund, Employment Equity, public employment (job matching), and inspections. Use these official links directly — do not use unofficial third-party sites.",
+    steps: [
+      "Register once for a DEL account (SAP Diphetogo) — that login is reused across Inspection & Enforcement, Collective Bargaining, National Minimum Wage, BCEA and some UIF services.",
+      "For UIF contributions and benefit claims: use uFiling.",
+      "For workplace-injury (COIDA) claims and Letters of Good Standing: use ROE Online + CompEasy.",
+      "For annual Employment Equity reports (EEA2, EEA4, EEA12, EEA13): use the EE online portal.",
+      "For posting vacancies or registering job seekers: use ESSA (Public Employment Services).",
+      "For raising a complaint or tracking a call-centre query: use the Web Self-Service Ticketing system.",
+    ],
+    officialLinks: [
+      { label: "DEL Online Tools index", url: "https://www.labour.gov.za/Online-Tools" },
+      { label: "DEL account registration (SAP Diphetogo)", url: "https://crs.labour.gov.za/sap/bc/ui5_ui5/sap/zcommreg_new/index.html" },
+      { label: "uFiling (UIF)", url: "https://uifonline.labour.gov.za/uifOnline" },
+      { label: "ROE Online (Compensation Fund)", url: "https://www.labour.gov.za/Online-Tools/Pages/ROE-Online-(cfonline-labour-gov-za).aspx" },
+      { label: "CompEasy (COID claims)", url: "https://compeasy.labour.gov.za:44328/fiori" },
+      { label: "Employment Equity online reports", url: "https://ee.labour.gov.za/dmiso/" },
+      { label: "ESSA – Public Employment Services", url: "https://essa.labour.gov.za/EssaOnline/WebBeans/" },
+      { label: "Labour Market Info System (stats)", url: "https://de-lmis.labour.gov.za/" },
+      { label: "Contact-centre ticketing", url: "https://ccselfservice.labour.gov.za/#/sessions/signin" },
+    ],
+    followUps: [
+      "How do I register on uFiling?",
+      "Where do I submit my Return of Earnings?",
+      "How do I lodge a UIF claim?",
+    ],
+    keywords: ["gov tools", "government tools", "labour.gov", "labour gov", "online tools", "department of labour", "department of employment", "del portal", "official portal", "official links"],
+  },
+  {
+    key: "ufiling",
+    label: "UIF (uFiling)",
+    prompt: "How do I use uFiling for UIF contributions or a UIF claim?",
+    summary:
+      "uFiling is the UIF's official online portal. Employers use it to declare and pay monthly UIF contributions. Employees use it to claim unemployment, illness, maternity, adoption or dependant's benefits.",
+    steps: [
+      "Go to the official uFiling site — do not use lookalike third-party sites.",
+      "Employer: register your business, capture employees (UI-19), and submit/pay monthly UIF contributions on time (1% employer + 1% employee, up to the earnings ceiling).",
+      "Employee: register with your ID number, upload supporting documents (ID, bank confirmation, UI-19 from employer, medical certificate/birth certificate where relevant) and lodge the claim.",
+      "Track the claim inside uFiling. If it stalls, log a ticket via the Web Self-Service Ticketing system or phone the UIF call centre on 0800 030 007.",
+      "Claims should generally be lodged within 12 months of losing income — do not delay.",
+    ],
+    officialLinks: [
+      { label: "uFiling portal", url: "https://uifonline.labour.gov.za/uifOnline" },
+      { label: "Log a UIF query (ticket)", url: "https://ccselfservice.labour.gov.za/#/sessions/signin" },
+      { label: "UIF e-Compliance Certificate", url: "https://uifcompliance.labour.gov.za/acc/", note: "May be temporarily unavailable — retry or call 0800 030 007." },
+    ],
+    followUps: [
+      "What UI-19 information must I give my employee?",
+      "How long do UIF payments last?",
+      "How do I get a UIF compliance certificate for a tender?",
+    ],
+    keywords: ["ufiling", "u-filing", "uif", "unemployment insurance", "ui19", "ui-19", "uif claim", "uif contribution", "uif compliance"],
+  },
+  {
+    key: "compensation_fund",
+    label: "Compensation Fund (COIDA / ROE / CompEasy)",
+    prompt: "How do I register with the Compensation Fund, submit Return of Earnings, or claim for a workplace injury?",
+    summary:
+      "The Compensation Fund covers workplace injuries and diseases under COIDA. Employers must register, submit an annual Return of Earnings (ROE), and manage injury claims through CompEasy. A valid Letter of Good Standing (LOGS) is often needed for tenders and contracts.",
+    steps: [
+      "Register the organisation on the Compensation Fund online portal (once per business).",
+      "Submit the annual Return of Earnings (ROE) online — declares total employee earnings, on which the assessment is calculated.",
+      "Pay the assessment on time. Then apply for a Letter of Good Standing (LOGS) — download or verify it via the Verify LOGS site.",
+      "For any workplace injury or occupational disease: report it and lodge the claim through CompEasy (the Fund's claims system). Attach medical reports and the employer's report of the accident.",
+      "Keep support emails on file — ROEonlinesupport@labour.gov.za for ROE, CompEasySupport@labour.gov.za for CompEasy.",
+    ],
+    officialLinks: [
+      { label: "ROE Online hub", url: "https://www.labour.gov.za/Online-Tools/Pages/ROE-Online-(cfonline-labour-gov-za).aspx" },
+      { label: "Compensation Fund employer registration", url: "https://cfonline.labour.gov.za/OnlineSubmissions/wicket/bookmarkable/za.gov.labour.cf.RegisterOrganization" },
+      { label: "ROE submission portal", url: "https://cfonline.labour.gov.za/OnlineSubmissions" },
+      { label: "Verify Letter of Good Standing", url: "https://cfonline.labour.gov.za/VerifyLOGS/" },
+      { label: "CompEasy (COID claims)", url: "https://compeasy.labour.gov.za:44328/fiori" },
+      { label: "Employer obligations under COIDA", url: "http://www.labour.gov.za/compensation-fund-obligations-of-the-employer" },
+    ],
+    followUps: [
+      "How do I get a Letter of Good Standing?",
+      "When must I report a workplace injury?",
+      "What earnings must I include in the ROE?",
+    ],
+    keywords: ["compensation fund", "coida", "workman", "workmen", "workplace injury", "injury on duty", "iod", "roe", "return of earnings", "compeasy", "letter of good standing", "logs"],
+  },
+  {
+    key: "employment_equity_reports",
+    label: "Employment Equity online reporting",
+    prompt: "How do I submit our annual Employment Equity report?",
+    summary:
+      "Designated employers must submit annual Employment Equity reports (EEA2 and EEA4) online through the DEL's EE portal. The EE analysis (EEA12) and EE plan (EEA13) are submitted in a different window — follow the current-year deadlines shown on the portal.",
+    steps: [
+      "Register on the EE online portal. Activation links are sent to the CEO and the EE Manager — both must be captured correctly.",
+      "Log in and complete EEA2 (workforce profile, income differentials) and EEA4 (income data) for the reporting year.",
+      "Submit by the annual deadline shown on the portal (e.g. 15 January for the prior year's reports).",
+      "Submit EEA12 (analysis) and EEA13 (EE plan) in the separate reporting window — the portal shows current dates.",
+      "Keep the submission acknowledgement — you may be asked for it during a DEL inspection.",
+    ],
+    officialLinks: [
+      { label: "Employment Equity online portal", url: "https://ee.labour.gov.za/dmiso/" },
+      { label: "DEL Online Tools index", url: "https://www.labour.gov.za/Online-Tools" },
+    ],
+    followUps: [
+      "Am I a 'designated employer'?",
+      "What's the difference between EEA2, EEA4, EEA12 and EEA13?",
+      "What are the current EE numerical targets for my sector?",
+    ],
+    keywords: ["employment equity", "ee report", "eea2", "eea4", "eea12", "eea13", "designated employer", "ee plan", "equity report"],
+  },
+  {
+    key: "essa_public_employment",
+    label: "Public Employment Services (ESSA)",
+    prompt: "How do I register a vacancy on ESSA, or register as a job seeker?",
+    summary:
+      "ESSA (Employment Services of South Africa) is the DEL's free job-matching platform. Employers register an organisation and post vacancies; job seekers register a profile and are matched to opportunities. It's free.",
+    steps: [
+      "Individual (job seeker or employer contact person): register as an Individual on ESSA first.",
+      "Employer: after registering as an Individual, register your Organisation. You'll need to link it with a UIF reference number.",
+      "Post a vacancy with role, requirements and location. ESSA returns matched CVs.",
+      "Job seeker: upload your CV, keep contact details up to date, and apply for matched vacancies inside ESSA.",
+    ],
+    officialLinks: [
+      { label: "ESSA portal", url: "https://essa.labour.gov.za/EssaOnline/WebBeans/" },
+      { label: "DEL Online Tools index", url: "https://www.labour.gov.za/Online-Tools" },
+    ],
+    followUps: [
+      "Is ESSA really free for employers?",
+      "Do I have to be UIF-registered to post a vacancy?",
+      "What documents does a job seeker need?",
+    ],
+    keywords: ["essa", "public employment", "pes", "job seeker", "post vacancy", "advertise vacancy", "job matching", "employment services"],
+  },
+  {
+    key: "labour_complaint",
+    label: "Complaint / Inspection (IES)",
+    prompt: "How do I lodge a complaint with the Department of Employment and Labour, or track an inspection?",
+    summary:
+      "Complaints about labour-law compliance (BCEA, EEA, NMW, UIF, COIDA) are handled by DEL's Inspection and Enforcement Services (IES). Register a DEL account first, then log the complaint or query through the shared portal or the Web Self-Service Ticketing system.",
+    steps: [
+      "Register a DEL account (SAP Diphetogo) if you don't have one.",
+      "Log the complaint via the IES portal or the Web Self-Service Ticketing system — capture facts, dates and any documents.",
+      "Keep the reference number. Follow up in writing if there is no response within a reasonable time.",
+      "Serious matters (unfair dismissal, unfair labour practice) are usually referred to the CCMA, not IES — IES deals with compliance inspections and enforcement.",
+    ],
+    officialLinks: [
+      { label: "Inspection & Enforcement portal", url: "https://crs.labour.gov.za/crshome", note: "Landing page can be intermittent — log in via the DEL account portal if it fails." },
+      { label: "DEL account portal", url: "https://crs.labour.gov.za/sap/bc/ui5_ui5/sap/zcommreg_new/index.html" },
+      { label: "Web Self-Service Ticketing", url: "https://ccselfservice.labour.gov.za/#/sessions/signin" },
+    ],
+    followUps: [
+      "Should I go to IES or the CCMA?",
+      "How long does an inspection take?",
+      "Can I lodge a complaint anonymously?",
+    ],
+    keywords: ["complaint", "labour inspector", "ies", "inspection", "enforcement", "report employer", "labour department complaint", "del complaint"],
+  },
+  {
+    key: "labour_market_stats",
+    label: "Labour market statistics (LMIS)",
+    prompt: "Where can I find official South African labour market statistics?",
+    summary:
+      "The Labour Market Information System (LMIS) is DEL's public data portal — employment, unemployment, NEET, inspections, work stoppages and more. It's a data-viewing tool, not a transactional service.",
+    steps: [
+      "Open the LMIS portal.",
+      "Browse or search by indicator (employment, unemployment, sector, province).",
+      "Export or share the data you need for reports or planning.",
+    ],
+    officialLinks: [
+      { label: "Labour Market Information System", url: "https://de-lmis.labour.gov.za/" },
+    ],
+    followUps: [
+      "What's the current unemployment rate?",
+      "Where do I find sectoral employment data?",
+    ],
+    keywords: ["lmis", "labour statistics", "labour market data", "unemployment rate", "employment stats"],
+  },
+
+  // ===================================================================
+  // Employment Services Amendment Bill, 2026 (B 16—2026)
+  // Gazette 54743 of 26 May 2026 — NOT YET IN FORCE
+  // ===================================================================
+  {
+    key: "esa_bill_2026",
+    label: "Employment Services Amendment Bill 2026",
+    prompt: "What does the Employment Services Amendment Bill of 2026 mean for employers?",
+    summary:
+      "The Employment Services Amendment Bill, 2026 (B 16—2026, published in Government Gazette 54743 on 26 May 2026) will amend the Employment Services Act, 2014. It is NOT YET IN FORCE — it starts on a date the President proclaims in the Gazette. Its biggest impact is on employers of foreign nationals: skills-transfer plans, ministerial quotas per sector, and stricter enforcement.",
+    steps: [
+      "Wider scope: the Act will cover foreign nationals, private employment agencies that don't operate for gain, and 'workers' (a new, broader category than 'employee').",
+      "New definitions matter: 'asylum seeker', 'refugee', 'permanent resident', 'illegal foreigner', 'critical skills', 'worker' and 'employer' are inserted or expanded.",
+      "Foreign nationals: before recruiting a foreign national, employers may be required to show there is no South African, permanent resident or refugee available with suitable skills, and to make use of public employment services (ESSA) or a private agency to test the market.",
+      "Skills transfer plans: employers of foreign nationals may be required to prepare a skills transfer plan for each position filled by a foreign national. The Minister can exempt categories on the Board's advice.",
+      "Ministerial quotas: the Minister (after consulting the Employment Services Board) may set maximum quotas for the employment of foreign nationals in specified sectors, occupational categories or areas. Employers may apply for exemptions.",
+      "Enforcement: new offences and stronger enforcement powers relating to work by foreign nationals, in step with the Immigration Act and Refugees Act.",
+      "Supported Employment Enterprises: governance is restructured; the head reports to the Director-General (not the Minister).",
+      "What to do now: audit your foreign-national workforce, tighten visa verification (DHA or authorised verification), keep records showing you tried to recruit South Africans first, and start thinking about skills-transfer plans. Watch the Gazette for the commencement proclamation.",
+    ],
+    officialLinks: [
+      { label: "DEL — Employment Services", url: "https://www.labour.gov.za/" },
+      { label: "Parliament Bills tracker", url: "https://www.parliament.gov.za/bills-explained" },
+    ],
+    relatedTemplates: ["visa_expiry_procedure", "visa_reminder_letter", "visa_incapacity_notice"],
+    followUps: [
+      "How do quotas for foreign nationals work?",
+      "What must a skills transfer plan contain?",
+      "Is my current use of foreign nationals still legal?",
+      "When does the Bill come into force?",
+    ],
+    keywords: [
+      "employment services amendment", "esa bill", "esa amendment", "b 16", "b16-2026", "b16 2026", "gazette 54743",
+      "amendment bill 2026", "employment services bill", "labour migration bill", "foreign national quota",
+      "skills transfer plan", "supported employment enterprises",
+    ],
+  },
 ];
 
 export function findTopic(textOrKey: string): KnowledgeTopic | undefined {
