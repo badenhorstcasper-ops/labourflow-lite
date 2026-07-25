@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
   const admin = createClient(url, key);
   const { data: sp } = await admin
     .from("salespersons")
-    .select("id, email, referral_code, status")
+    .select("id, email, full_name, referral_code, status")
     .eq("id", id)
     .maybeSingle();
   if (!sp) return json({ error: "Not found" }, 404);
@@ -62,14 +62,13 @@ Deno.serve(async (req) => {
     update.status = "inactive";
   } else if (action === "reactivate") {
     update.status = "active";
+    update.demo_revoked_at = null;
     becameActive = true;
   }
 
   const { error } = await admin.from("salespersons").update(update).eq("id", id);
   if (error) return json({ error: error.message }, 500);
 
-  // Silent demo Solo access on the partner's email — 1 device max.
-  // Not advertised anywhere in the UI.
   if (becameActive && sp.email) {
     const email = sp.email.toLowerCase();
     const { data: existing } = await admin
@@ -89,16 +88,13 @@ Deno.serve(async (req) => {
         device_limit: 1,
       });
     } else if (existing.is_demo) {
-      // Re-activate an existing demo row (e.g. after reactivate)
       await admin
         .from("subscriptions")
         .update({ status: "active", plan_name: "Solo", device_limit: 1, updated_at: new Date().toISOString() })
         .eq("id", existing.id);
     }
-    // If they already have a real (non-demo) subscription, don't touch it.
   }
 
-  // On deactivate / reject — turn off demo access silently.
   if ((action === "deactivate" || action === "reject") && sp.email) {
     await admin
       .from("subscriptions")
@@ -107,5 +103,14 @@ Deno.serve(async (req) => {
       .eq("is_demo", true);
   }
 
-  return json({ ok: true, referral_code: update.referral_code ?? sp.referral_code });
+  const finalCode = (update.referral_code as string) ?? sp.referral_code;
+  return json({
+    ok: true,
+    referral_code: finalCode,
+    salesperson: {
+      full_name: sp.full_name,
+      email: sp.email,
+      referral_code: finalCode,
+    },
+  });
 });

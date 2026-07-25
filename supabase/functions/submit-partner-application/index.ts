@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
   const email = clean(body.email, 200).toLowerCase();
   const phone = clean(body.phone, 40);
   const id_number = clean(body.id_number, 20);
-  const banking = (body.banking_details && typeof body.banking_details === "object") ? body.banking_details : null;
+  const banking = (body.banking_details && typeof body.banking_details === "object") ? body.banking_details as Record<string, unknown> : null;
   const agreement = (body.agreement && typeof body.agreement === "object") ? body.agreement as Record<string, unknown> : null;
 
   if (!full_name || !email || !phone || !id_number || !banking) {
@@ -64,7 +64,6 @@ Deno.serve(async (req) => {
 
   const admin = createClient(url, key);
 
-  // Simple rate limit: max 3 applications from same email within 24h.
   const { count } = await admin
     .from("salespersons")
     .select("*", { count: "exact", head: true })
@@ -88,7 +87,6 @@ Deno.serve(async (req) => {
     return json({ error: "Could not save your application. Please try again." }, 500);
   }
 
-  // Capture caller IP for legal record
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
     ?? req.headers.get("cf-connecting-ip")
     ?? null;
@@ -104,9 +102,23 @@ Deno.serve(async (req) => {
   });
 
   await admin.from("notification_log").insert([
-    { recipient_email: "casperbadenhorst77@outlook.com", type: "partner_application", status: "queued" },
-    { recipient_email: "badenhorst.casper@gmail.com", type: "partner_application", status: "queued" },
+    { recipient_email: "info@inreco.co.za", type: "partner_application", status: "queued" },
   ]);
 
-  return json({ ok: true });
+  // Return an application summary so the browser can open the applicant's
+  // email client with a fully pre-filled message to info@inreco.co.za.
+  return json({
+    ok: true,
+    application: {
+      id: sp.id,
+      full_name,
+      email,
+      phone,
+      id_number,
+      banking,
+      agreement_version,
+      signed_name: accepted_full_name,
+      timestamp: new Date().toISOString(),
+    },
+  });
 });

@@ -97,10 +97,14 @@ export default function AdminPage() {
           <h1 className="text-3xl font-bold">Admin dashboard</h1>
           <p className="text-sm text-muted-foreground">Live usage across the app</p>
         </div>
-        <Button onClick={load} variant="outline" disabled={refreshing}>
-          <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
-          Refresh
-        </Button>
+        <div className="flex gap-2">
+          <a href="/admin/overview"><Button variant="outline">Owner overview →</Button></a>
+          <a href="/admin/commissions"><Button variant="outline">Commissions →</Button></a>
+          <Button onClick={load} variant="outline" disabled={refreshing}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {error && (
