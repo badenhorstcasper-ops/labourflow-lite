@@ -5,6 +5,8 @@
 // This is intentionally local + free to query. Only when no topic and no
 // template match do we fall back to the AI edge function.
 
+export type OfficialLink = { label: string; url: string; note?: string };
+
 export type KnowledgeTopic = {
   key: string;
   label: string;          // chip label, shown in the UI
@@ -20,6 +22,8 @@ export type KnowledgeTopic = {
   followUps?: string[];
   /** Keywords matched against free-text input. Lower-cased. */
   keywords: string[];
+  /** Official government / regulator URLs — rendered as clickable buttons. */
+  officialLinks?: OfficialLink[];
 };
 
 export const TOPICS: KnowledgeTopic[] = [
