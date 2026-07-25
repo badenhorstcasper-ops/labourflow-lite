@@ -1,39 +1,53 @@
 
-## What the dashboard is actually showing
+## Goal
 
-I pulled the raw data from your database to answer your question directly.
+Teach CARA two new bodies of knowledge so it can answer accurately (with exact official links, no guessing):
 
-### Who has signed up (besides you)
-Only **one** person other than you:
+1. Every online tool listed on **www.labour.gov.za/Online-Tools** (uFiling, Employment Equity online reporting, Compensation Fund / CompEasy, Public Employment Services / ESSA, complaints/inspection, trade union registration, etc.).
+2. The **Employment Services Amendment Bill, 2026** (B 16—2026, Gazette 54743 of 26 May 2026) — what it changes, who it affects, and the practical impact for employers of foreign nationals.
 
-- **duvenhage.marcell@gmail.com** — signed up 24 July 2026, started a **Professional** trial. Status is "pending" (payment not yet confirmed by PayFast).
+## What CARA will do differently
 
-Your own account (badenhorst.casper@gmail.com) is the other one, marked as a demo Solo account.
+- Users can search or tap topics like "UIF (uFiling)", "Report to Compensation Fund", "Register vacancies (ESSA)", "Employment Equity report" and get: what it is (plain language) → who uses it → the exact official URL → what documents/deadlines apply.
+- A new "Foreign nationals" sub-topic will warn about the **Employment Services Amendment Bill 2026**: skills transfer plans, ministerial quotas per sector, offences, and that the Bill is not yet in force (starts on a date the President proclaims). CARA will keep giving current-law guidance and flag the coming changes.
+- The AI fallback (`cara-chat`) is told to prefer the built-in links and never invent government URLs.
 
-That's it. Two total. The "Signups = 2" number is correct.
+## What we'll build
 
-### Why "Active subscriptions = 1"
-Only your demo counts as active. Marcell's is still "pending" (waiting for PayFast to confirm the first payment), so it doesn't count as active yet. This is correct too.
+**1. New knowledge entries in `src/lib/cara/knowledge.ts`**
+- One consolidated topic **"Government online tools & services"** listing every tool with its official link, purpose, and when-to-use note.
+- Individual sub-topics for the biggest ones so searches like "uFiling", "Compensation Fund claim", "Employment Equity report", "register a vacancy", "report unfair labour practice" match directly.
+- One topic **"Employment Services Amendment Bill 2026"** summarising: new definitions (worker, asylum seeker, refugee, illegal foreigner), skills transfer plans, quotas for foreign nationals, exemptions, offences, effective date rule.
+- Cross-links: the existing "Foreign nationals" topic gets a "Coming law change" note pointing to the Bill topic.
 
-### Why "Payments (completed) = 4" is misleading (the real bug)
-The dashboard counts every row in the PayFast webhook log where the status text says "COMPLETE". Looking at the actual rows, those 4 are **not real successful payments**:
+**2. New capsule on the CARA page (`src/pages/Cara.tsx`)**
+- Add a "Government tools & links" capsule (same expandable style as the AARTO and Foreign Nationals capsules) so users can find them without needing to search.
+- Add a small "Coming law change: Employment Services Amendment Bill 2026" line inside the Foreign Nationals capsule that opens the new topic.
 
-- 2 rows: old sandbox test payments from May 2026 (casperbadenhorst77@outlook.com, R259 each)
-- 2 rows: attempts we **rejected** in June because of an amount mismatch (someone tried to pay R0 for a R499 Business plan)
+**3. Update `cara-chat` system prompt (`supabase/functions/cara-chat/index.ts`)**
+- Add rules: "When answering about UIF, Compensation Fund, Employment Equity, ESSA, or any Dept of Employment and Labour online tool, use only the official URLs supplied in the grounding; do not invent URLs." and a short summary of the Amendment Bill so the AI stays consistent when a user asks a nuanced question.
 
-**You have received zero real live customer payments through PayFast.** That matches the fact that you've never got a PayFast notification email — because nothing real has come through. The dashboard number is just counting the wrong thing.
+**4. New downloadable reference (optional but useful)**
+- Save the uploaded Bill as a bundled asset so CARA can offer a "Download the Bill" link inside the topic.
 
-## The fix
+## What we will NOT change
 
-Change the "Payments (completed)" tile to only count payments we actually **accepted and matched to a real subscriber**, not raw webhook rows. Concretely:
+- No database changes, no new tables, no edge functions beyond the `cara-chat` prompt tweak.
+- No template/document changes — this is knowledge only.
+- No changes to pricing, admin, or partner flows.
 
-1. In the admin stats function, count PayFast webhook rows where `outcome = 'accepted'` (not just where the status text says "COMPLETE"). That excludes the rejected attempts and the test noise.
-2. Rename the tile from "Payments (completed)" to **"Successful payments"** so it's obvious what it means.
-3. Add a second small tile: **"Rejected payment attempts"** so you can still see when something suspicious hits the webhook (like the R0/R499 attempts), without it inflating the success number.
-4. Also add a tiny note under "Signups" showing how many are demo/owner accounts vs real customers, so at a glance you can see "0 real paying customers yet" instead of guessing.
+## Sources
 
-No other numbers on the page need to change — signups, active subscriptions, page views, chairperson bookings, documents generated and contact messages are all already accurate against the raw data.
+- All labour.gov.za entries will be sourced from the live pages (a background research task is already collecting them from `https://www.labour.gov.za/Online-Tools` and each linked sub-page). Only tools actually listed on those pages will be included — nothing invented.
+- The Bill entry will be based on the uploaded PDF (Employment Services Amendment Bill, 2026 — B 16—2026, Gazette 54743 of 26 May 2026).
 
-### Technical details
-- File: `supabase/functions/admin-stats/index.ts` — swap the `payfast_webhook_log` count filter from `.eq("payment_status","COMPLETE")` to `.eq("outcome","accepted")`, and add a second count with `.eq("outcome","rejected")`.
-- File: `src/pages/Admin.tsx` — rename the tile, add the "Rejected attempts" tile, and add the small "(x demo / x real)" caption under Signups. Real = signups whose email is not in the demo/owner allowlist we already use.
+## Verification before we call it done
+
+- Build passes.
+- On the CARA page, searching "uFiling", "Compensation Fund", "Employment Equity", "vacancy", "amendment bill" each returns the right entry with a clickable official link.
+- The Foreign Nationals capsule shows the "Coming law change" note.
+
+### Technical notes
+- File: `src/lib/cara/knowledge.ts` — add `KnowledgeTopic` entries with `label`, `keywords`, `summary`, `steps`, and a new optional `officialLinks: {label,url}[]` rendered by the router.
+- File: `src/lib/cara/router.ts` / `src/pages/Cara.tsx` — render `officialLinks` as underlined anchor tags (target `_blank`, `rel="noopener"`).
+- File: `supabase/functions/cara-chat/index.ts` — append rules and Bill summary to `SYSTEM_BASE`; redeploy.
