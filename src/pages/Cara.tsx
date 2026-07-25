@@ -203,19 +203,8 @@ export default function CaraPage() {
   return (
     <AppShell>
       <div className="flex flex-col gap-4">
-        {/* Topic chips */}
-        <div className="flex flex-wrap gap-2 justify-center">
-          {TOPICS.map((t) => (
-            <button
-              key={t.key}
-              onClick={() => send(t.prompt)}
-              disabled={busy}
-              className="px-3 py-1.5 rounded-full border bg-card hover:bg-muted text-sm transition disabled:opacity-50"
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
+        {/* Topic chips — AARTO and Foreign Nationals grouped to reduce clutter */}
+        <TopicChips busy={busy} onPick={(prompt) => send(prompt)} />
 
         {profileMissing && (
           <Card className="border-primary/40 bg-primary/10">
