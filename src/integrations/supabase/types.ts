@@ -649,6 +649,65 @@ export type Database = {
           },
         ]
       }
+      partner_marketing_submissions: {
+        Row: {
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          description: string | null
+          id: string
+          mime_type: string | null
+          reject_reason: string | null
+          salesperson_id: string
+          share_with_partners: boolean
+          size: number | null
+          status: Database["public"]["Enums"]["marketing_submission_status"]
+          storage_path: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          description?: string | null
+          id?: string
+          mime_type?: string | null
+          reject_reason?: string | null
+          salesperson_id: string
+          share_with_partners?: boolean
+          size?: number | null
+          status?: Database["public"]["Enums"]["marketing_submission_status"]
+          storage_path: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          description?: string | null
+          id?: string
+          mime_type?: string | null
+          reject_reason?: string | null
+          salesperson_id?: string
+          share_with_partners?: boolean
+          size?: number | null
+          status?: Database["public"]["Enums"]["marketing_submission_status"]
+          storage_path?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_marketing_submissions_salesperson_id_fkey"
+            columns: ["salesperson_id"]
+            isOneToOne: false
+            referencedRelation: "salespersons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payfast_transactions: {
         Row: {
           amount: number
@@ -1278,6 +1337,7 @@ export type Database = {
     Enums: {
       app_role: "admin" | "moderator" | "user"
       commission_status: "pending" | "paid"
+      marketing_submission_status: "pending" | "approved" | "rejected"
       salesperson_status:
         | "pending_approval"
         | "active"
@@ -1413,6 +1473,7 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "moderator", "user"],
       commission_status: ["pending", "paid"],
+      marketing_submission_status: ["pending", "approved", "rejected"],
       salesperson_status: [
         "pending_approval",
         "active",
