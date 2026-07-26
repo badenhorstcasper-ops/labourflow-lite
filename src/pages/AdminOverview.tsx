@@ -89,11 +89,14 @@ export default function AdminOverview() {
           <h1 className="text-3xl font-bold">Owner overview</h1>
           <p className="text-sm text-muted-foreground">Subscribers, direct vs partner-driven signups, and every partner's activity.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Link to="/admin"><Button variant="outline" size="sm">Full admin →</Button></Link>
+          <Link to="/admin/health"><Button variant="outline" size="sm">Live app health →</Button></Link>
         </div>
       </div>
+      <LiveHealthBanner />
       <div className="mb-6">
+
         <LiveStatus updatedAt={updatedAt} refreshing={refreshing} onRefresh={refresh} />
       </div>
 
