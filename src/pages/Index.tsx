@@ -1,28 +1,14 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 
-// Smart redirect at "/": signed-in users land on the CARA hub, others go to pricing.
+/**
+ * "/" belongs to the marketing landing page (rendered from index.html on a
+ * fresh page load). React only ever ends up here through an in-app link, so
+ * the only correct behaviour is a real page load back to the landing page.
+ */
 const Index = () => {
-  const navigate = useNavigate();
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data }) => {
-      if (!data.session) {
-        navigate("/pricing", { replace: true });
-        return;
-      }
-      try {
-        if (localStorage.getItem("inreco.pendingEmail")) {
-          await supabase.functions.invoke("link-subscription", { body: {} });
-          localStorage.removeItem("inreco.pendingEmail");
-          localStorage.removeItem("inreco.pendingPlan");
-        }
-      } catch (_) {
-        // Continue into the app; the trial record can still be linked after PayFast confirms.
-      }
-      navigate("/app", { replace: true });
-    });
-  }, [navigate]);
+    window.location.assign("/");
+  }, []);
   return (
     <div className="flex min-h-screen items-center justify-center bg-background text-sm text-muted-foreground">
       Loading…

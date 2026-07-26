@@ -457,6 +457,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
       <p class="hero-sub2">Built for South African employers. Always on. Always compliant.</p>
       <div class="btn-row">
         <button type="button" class="btn-primary" onclick="window.location.href='/pricing'">Get Started <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
+        <button type="button" id="heroOpenApp" class="btn-primary" style="display:none" onclick="window.location.href='/app'">Open the app</button>
         <a href="#features" class="btn-ghost">See Features</a>
       </div>
     <div style="margin-top:24px;display:flex;flex-wrap:wrap;gap:10px;align-items:center">
@@ -1099,7 +1100,7 @@ async function registerThisDevice() {
   });
   if (error) {
     if ((error.message || '').includes('device_limit_reached')) {
-      toast('This account is already signed in on the maximum number of devices for your plan. Remove a device under Account → Devices to use this one.', 'error', 7000);
+      toast("You've reached the number of devices included in your plan (Solo includes 2, e.g. a phone and a laptop). Remove a device under Account → Devices, or upgrade for more.", 'error', 8000);
       return false;
     }
 
@@ -2504,7 +2505,19 @@ window.removeDevice = removeDevice;
   const launchedAsApp = urlParams.get('app') === '1' || isStandalone();
   const { data: { session } } = await supabase.auth.getSession();
   if (session) {
-    await afterLogin();
+    // The landing page is ALWAYS the front door on the web. Never auto-forward
+    // a signed-in visitor into the app (that used to bounce people straight to
+    // /pricing?reason=no_subscription and hide the marketing site entirely).
+    // Only the installed phone app jumps straight in.
+    if (launchedAsApp) {
+      await afterLogin();
+    } else {
+      showScreen('welcome');
+      try {
+        const cta = document.getElementById('heroOpenApp');
+        if (cta) cta.style.display = '';
+      } catch (_) {}
+    }
     // If a paid plan was selected before sign-in, resume the PayFast checkout.
     try {
       const pending = localStorage.getItem('inreco.pendingPlan');
