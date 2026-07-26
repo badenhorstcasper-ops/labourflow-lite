@@ -67,12 +67,11 @@ export async function logError(
   if (inFlight > 4) return local; // throttle
   inFlight++;
   try {
-    const { data: u } = await supabase.auth.getUser();
+    // Who reported this is filled in by the database from the signed-in
+    // session, so we deliberately do not send an account id or email here.
     const { data, error } = await supabase
       .from("error_logs")
       .insert({
-        user_id: u.user?.id ?? null,
-        email: u.user?.email ?? null,
         route,
         message: local.message,
         stack: local.stack,
@@ -82,6 +81,7 @@ export async function logError(
       })
       .select("short_id")
       .single();
+
     if (!error && data?.short_id) {
       local.shortId = data.short_id as string;
       // Update the cached copy with server short_id
