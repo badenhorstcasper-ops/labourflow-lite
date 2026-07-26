@@ -90,6 +90,8 @@ function AppRoutes() {
       <Route path="/admin/overview" element={<AdminOverview />} />
       <Route path="/admin/partner-decision" element={<AdminPartnerDecision />} />
       <Route path="/admin/marketing" element={<AdminMarketing />} />
+      <Route path="/admin/health" element={<AdminHealth />} />
+
 
 
 
