@@ -22,7 +22,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }, []);
 
   const linkCls = (p: string) =>
-    `px-3 py-1.5 rounded-md text-sm transition ${
+    `shrink-0 px-3 py-1.5 rounded-md text-sm transition ${
       pathname === p
         ? "bg-primary text-primary-foreground"
         : "text-muted-foreground hover:text-foreground hover:bg-muted"
