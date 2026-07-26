@@ -1193,6 +1193,45 @@ export type Database = {
         }
         Relationships: []
       }
+      service_health_checks: {
+        Row: {
+          checked_at: string
+          detail: string | null
+          http_status: number | null
+          id: string
+          label: string
+          response_ms: number | null
+          run_id: string
+          service_name: string
+          status: string
+          triggered_by: string
+        }
+        Insert: {
+          checked_at?: string
+          detail?: string | null
+          http_status?: number | null
+          id?: string
+          label: string
+          response_ms?: number | null
+          run_id: string
+          service_name: string
+          status: string
+          triggered_by?: string
+        }
+        Update: {
+          checked_at?: string
+          detail?: string | null
+          http_status?: number | null
+          id?: string
+          label?: string
+          response_ms?: number | null
+          run_id?: string
+          service_name?: string
+          status?: string
+          triggered_by?: string
+        }
+        Relationships: []
+      }
       share_access_log: {
         Row: {
           created_at: string

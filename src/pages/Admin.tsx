@@ -7,6 +7,8 @@ import { Loader2, Home } from "lucide-react";
 import BackHomeBar from "@/components/BackHomeBar";
 import { useLiveData } from "@/hooks/useLiveData";
 import LiveStatus from "@/components/LiveStatus";
+import LiveHealthBanner from "@/components/LiveHealthBanner";
+
 
 type ErrorRow = {
   id: string;
@@ -91,11 +93,14 @@ export default function AdminPage() {
           <a href="/admin/overview"><Button variant="outline">Owner overview →</Button></a>
           <a href="/admin/commissions"><Button variant="outline">Commissions →</Button></a>
           <a href="/admin/marketing"><Button variant="outline">Marketing →</Button></a>
+          <a href="/admin/health"><Button variant="outline">Live app health →</Button></a>
         </div>
       </div>
+      <LiveHealthBanner />
       <div className="mb-6">
         <LiveStatus updatedAt={updatedAt} refreshing={refreshing} onRefresh={refresh} />
       </div>
+
 
       {error && (
         <div className="mb-6 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
