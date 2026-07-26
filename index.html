@@ -434,7 +434,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="iNRECO">
 <link rel="icon" type="image/png" href="/favicon.png">
-<link rel="apple-touch-icon" href="/favicon.png">
+<link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png">
 </head>
 <body>
 
@@ -2287,7 +2287,13 @@ if ('serviceWorker' in navigator && !isPreviewHost && !isInIframe) {
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredInstallPrompt = e;
+  window.deferredInstallPrompt = e;
+  if (window.__inrecoInstall) {
+    window.__inrecoInstall.event = e;
+    window.__inrecoInstall.listeners.forEach((fn) => { try { fn(); } catch (_) {} });
+  }
 });
+
 window.addEventListener('appinstalled', () => {
   deferredInstallPrompt = null;
   try { localStorage.setItem('inreco.pwaInstalled', '1'); } catch (_) {}

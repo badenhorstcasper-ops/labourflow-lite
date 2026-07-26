@@ -1,19 +1,13 @@
 import { useEffect, useState } from "react";
-
-type BIPEvent = Event & {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
-};
-
-const isStandalone = () =>
-  (typeof window !== "undefined" &&
-    window.matchMedia &&
-    window.matchMedia("(display-mode: standalone)").matches) ||
-  // @ts-expect-error iOS Safari
-  (typeof window !== "undefined" && window.navigator?.standalone === true);
+import {
+  getInstallPrompt,
+  isStandalone,
+  subscribeInstall,
+  triggerInstall,
+} from "@/lib/pwaInstall";
 
 const InstallAppButton = () => {
-  const [deferred, setDeferred] = useState<BIPEvent | null>(null);
+  const [canInstall, setCanInstall] = useState(() => !!getInstallPrompt());
   const [installed, setInstalled] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     if (isStandalone()) return true;
@@ -22,43 +16,28 @@ const InstallAppButton = () => {
   const [showFallback, setShowFallback] = useState(false);
 
   useEffect(() => {
-    const onBIP = (e: Event) => {
-      e.preventDefault();
-      setDeferred(e as BIPEvent);
+    const sync = () => {
+      setCanInstall(!!getInstallPrompt());
+      if (isStandalone() || localStorage.getItem("inreco.pwaInstalled") === "1") {
+        setInstalled(true);
+      }
     };
-    const onInstalled = () => {
-      setDeferred(null);
-      setInstalled(true);
-      try {
-        localStorage.setItem("inreco.pwaInstalled", "1");
-      } catch (_) {}
-    };
-    window.addEventListener("beforeinstallprompt", onBIP);
-    window.addEventListener("appinstalled", onInstalled);
-    return () => {
-      window.removeEventListener("beforeinstallprompt", onBIP);
-      window.removeEventListener("appinstalled", onInstalled);
-    };
+    sync();
+    return subscribeInstall(sync);
   }, []);
 
   if (installed) return null;
 
   const handleClick = async () => {
-    if (deferred) {
+    const result = await triggerInstall();
+    if (result === "accepted") {
       try {
-        await deferred.prompt();
-        const { outcome } = await deferred.userChoice;
-        if (outcome === "accepted") {
-          try {
-            localStorage.setItem("inreco.pwaInstalled", "1");
-          } catch (_) {}
-          setInstalled(true);
-        }
+        localStorage.setItem("inreco.pwaInstalled", "1");
       } catch (_) {}
-      setDeferred(null);
-    } else {
-      setShowFallback(true);
+      setInstalled(true);
+      return;
     }
+    if (result === "unavailable") setShowFallback(true);
   };
 
   const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
@@ -70,6 +49,14 @@ const InstallAppButton = () => {
       ? "Open your browser menu (⋮) and tap Install app or Add to Home screen."
       : "In your browser menu, choose Install app to add iNRECO to your device.";
 
+  // iPhone/iPad browsers never offer a one-tap install, so show the short
+  // steps straight away instead of a button that cannot do anything.
+  if (isIOS) {
+    return (
+      <p className="max-w-sm text-center text-xs text-muted-foreground">{fallbackMsg}</p>
+    );
+  }
+
   return (
     <div className="flex flex-col items-center gap-3">
       <button
@@ -77,10 +64,10 @@ const InstallAppButton = () => {
         onClick={handleClick}
         className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:opacity-90"
       >
-        <img src="/favicon.png" alt="" width={20} height={20} className="rounded" />
+        <img src="/icon-192.png" alt="" width={20} height={20} className="rounded" />
         Install iNRECO on your device
       </button>
-      {showFallback && (
+      {!canInstall && showFallback && (
         <p className="max-w-sm text-xs text-muted-foreground">{fallbackMsg}</p>
       )}
     </div>

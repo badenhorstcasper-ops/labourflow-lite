@@ -5,9 +5,13 @@ import App from "./App";
 // legacy vanilla app in index.html can produce branded PDF / Word downloads.
 import "./lib/documents/clientEntry";
 import { installGlobalErrorHandlers } from "./lib/errorLogger";
+import { initPwaInstall } from "./lib/pwaInstall";
 
 // Install global error catchers for ALL routes (legacy vanilla + React).
 installGlobalErrorHandlers();
+// Catch the browser's "installable" moment as early as possible.
+initPwaInstall();
+
 
 // The legacy vanilla app owns the document body and renders into existing
 // markup in index.html. React only takes over for specific app routes
