@@ -94,11 +94,28 @@ export default function CompanyProfilePage() {
 
   async function uploadLogo(file: File) {
     if (!ownerId) return;
-    const ext = file.name.split(".").pop() || "png";
+    const allowed: Record<string, string> = {
+      "image/png": "png",
+      "image/jpeg": "jpg",
+      "image/jpg": "jpg",
+      "image/webp": "webp",
+    };
+    const ext = allowed[file.type.toLowerCase()];
+    if (!ext) {
+      toast.error("That file isn't a picture. Please choose a PNG, JPG or WEBP image.");
+      return;
+    }
+    const MAX_MB = 5;
+    if (file.size > MAX_MB * 1024 * 1024) {
+      toast.error(`That image is too big (${(file.size / 1024 / 1024).toFixed(1)} MB). Please use one under ${MAX_MB} MB.`);
+      return;
+    }
     const path = `${ownerId}/logo.${ext}`;
+    const uploading = toast.loading("Uploading logo…");
     const { error } = await supabase.storage
       .from("company-logos")
       .upload(path, file, { upsert: true, contentType: file.type });
+    toast.dismiss(uploading);
     if (error) {
       toast.error("Couldn't upload that logo. The rest of your profile will still save. (" + error.message + ")");
       return;
@@ -108,6 +125,7 @@ export default function CompanyProfilePage() {
     setLogoPreview(await resolveLogoUrl(path));
     toast.success("Logo uploaded");
   }
+
 
   function removeLogo() {
     set("logo_url", "");
