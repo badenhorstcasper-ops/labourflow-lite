@@ -146,6 +146,8 @@ export function TeamManagement() {
 
   if (!userId) return null;
 
+  const isSolo = !isAdmin && (SEAT_LIMITS[planName] ?? 1) <= 1;
+
   return (
     <Card>
       <CardHeader>
@@ -156,6 +158,14 @@ export function TeamManagement() {
               Current plan: <span className="font-medium text-foreground">{planName}</span>
               {isAdmin ? (
                 <> · {seatsUsed} of unlimited (admin) seats used</>
+              ) : isSolo ? (
+                <>
+                  {" · "}
+                  Solo is a single-user plan. You can sign in on 2 of your own
+                  devices (for example a phone and a laptop), but you cannot add
+                  other people. Team members are included from the Business plan
+                  upwards.
+                </>
               ) : (
                 <>
                   {" · "}
@@ -169,6 +179,11 @@ export function TeamManagement() {
               )}
             </CardDescription>
           </div>
+          {isSolo ? (
+            <Button asChild variant="secondary">
+              <a href="/pricing">Upgrade to add people</a>
+            </Button>
+          ) : (
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button disabled={!isAdmin && seatsRemaining <= 0}>Invite Member</Button>
