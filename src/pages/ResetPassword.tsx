@@ -8,27 +8,72 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import BackHomeBar from "@/components/BackHomeBar";
 
-// Page the password-reset email link opens. Supabase puts a temporary
-// recovery session in the URL; we use it to set the new password.
+// Page the password-reset email link opens. The link carries a one-time code;
+// we turn it into a temporary session ONLY to let the person choose a new
+// password. Nobody gets into the app from this page until a new password is
+// actually saved.
 export default function ResetPassword() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
   const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    let active = true;
+
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (!active) return;
       if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") setReady(true);
     });
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) setReady(true);
-    });
-    return () => sub.subscription.unsubscribe();
+
+    (async () => {
+      // Newer links use ?code=..., older ones put tokens in the #hash.
+      const url = new URL(window.location.href);
+      const code = url.searchParams.get("code");
+      const hash = new URLSearchParams((window.location.hash || "").replace(/^#/, ""));
+      const accessToken = hash.get("access_token");
+      const refreshToken = hash.get("refresh_token");
+
+      try {
+        if (code) {
+          await supabase.auth.exchangeCodeForSession(code);
+        } else if (accessToken && refreshToken) {
+          await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+        }
+      } catch (_) {
+        // Handled by the "open this page from the link" message below.
+      }
+
+      // Clean the one-time code out of the address bar.
+      if (code || accessToken) {
+        window.history.replaceState({}, "", "/reset-password");
+      }
+
+      const { data } = await supabase.auth.getSession();
+      if (active && data.session) setReady(true);
+    })();
+
+    return () => {
+      active = false;
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (password !== confirm) {
+      toast({
+        title: "Passwords do not match",
+        description: "Type the same new password in both boxes.",
+        variant: "destructive",
+      });
+      return;
+    }
     setBusy(true);
     try {
       const { error } = await supabase.auth.updateUser({ password });
@@ -54,7 +99,7 @@ export default function ResetPassword() {
           <CardTitle>Set a new password</CardTitle>
           <CardDescription>
             {ready
-              ? "Choose a new password for your account."
+              ? "Choose a new password for your account. You must set it before you can carry on."
               : "Open this page from the reset link in your email."}
           </CardDescription>
         </CardHeader>
@@ -69,6 +114,18 @@ export default function ResetPassword() {
                 minLength={8}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
+              />
+            </div>
+            <div>
+              <Label htmlFor="confirm-password">Repeat new password</Label>
+              <Input
+                id="confirm-password"
+                type="password"
+                required
+                minLength={8}
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
                 autoComplete="new-password"
               />
             </div>

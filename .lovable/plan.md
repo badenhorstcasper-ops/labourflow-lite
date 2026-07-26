@@ -1,61 +1,35 @@
+## What's wrong right now
+
+1. **The reset link logs you straight in instead of asking for a new password.** The email link lands on the general app address, so the app treats it as a normal sign-in and jumps to the dashboard. The "Set a new password" screen never gets a chance to show.
+2. **Emails say "LabourFlow Lite".** That name isn't anywhere in the app's files — it's the *project name* stored on the Lovable side, which the built-in sign-up/reset emails use as the sender name.
+3. **PayFast shows "iNRECO Solo Plan – 7-day free trial"** rather than the trading name you want.
+
 ## What I'll do
 
-A hands-on audit of the whole app — clicking every page, button, link and form myself in a real browser signed in as you, then writing up a pass/fail report. Nothing is marked "pass" unless I actually saw it work.
+**1. Make the reset link always ask for a new password**
+- Send the reset email to the dedicated "Set a new password" page and make that page the only landing spot, so a recovery link can never drop someone into the dashboard.
+- On that page, block all navigation until a new password is actually saved, then send the person to the app.
+- Make the same page work when the link opens on a phone in a different browser.
 
-Test records will be created and left in place (you asked for this), clearly labelled with "QA TEST" so you can spot and delete them later.
+**2. Set your password on both of your email addresses**
+- `badenhorst.casper@gmail.com` and `casperbadenhorst77@outlook.com` both get the password you gave me, with the Outlook one created (already confirmed) if it doesn't exist yet.
+- Both keep full owner/admin access.
+- I'll do this with a small, locked, one-time admin task that only I can trigger, and remove it straight afterwards so nobody else can ever use it.
+- Note in plain words: you typed the password in chat, so it's worth changing it later from inside the app once you're in.
 
-## Scope
+**3. Fix the names**
+- PayFast will show **iNRECO Pocket Consultant – <plan> (7-day free trial)** on the payment page, the bank statement line and the receipt.
+- For the emails: the "LabourFlow Lite" name comes from the project title in Lovable, which I can't rename from here. I'll give you a 3-step, dead-simple instruction to rename the project to **iNRECO** (Settings → project name → save), which changes every future email immediately. Everything inside the app already says iNRECO / CARA.
 
-**Every page, in three groups**
+**4. Check it works**
+- Send myself a reset link, confirm it opens the "Set a new password" screen and refuses to continue until a new password is typed.
+- Sign in on the preview with both of your addresses and confirm owner/admin pages open.
+- Start a PayFast checkout and confirm the new name appears.
 
-- Open to everyone: home, pricing, sign-in, contact, terms, privacy, disclaimer, payment success, payment cancelled, shared-document link, partner apply, partner agreement, "page not found"
-- Needs a paid/trial account: CARA hub, dashboard, generate documents, verify sick note, documents library, company profile, billing/settings
-- Owner/partner only: owner overview, admin, partners/commissions, marketing, new partner, partner decision, partner portal, partner marketing, health & errors
+## Technical notes
 
-For each: does it load, is it blank, does it hang, are there errors behind the scenes, and does it correctly block or allow people who aren't signed in.
-
-**Every button and link**
-
-Each one clicked, with the page it actually lands on recorded. Links that leave the app (health-council registers, government labour tools, payment provider, contact links) get opened for real and the page that comes back is recorded — including any that are dead or redirect somewhere unexpected. Buttons that do nothing visible when clicked get flagged.
-
-**Every form**
-
-Submitted twice — once with sensible data, once with bad/missing data. Then I reload the page and check the data actually stuck, rather than trusting the "saved" message.
-
-**Saving and uploading files**
-
-Company logo, sick-note attachments, partner marketing uploads: upload, then reopen and re-download to confirm the file is real and not empty. Wrong file types and oversized files tested too.
-
-**Generating documents**
-
-Every template in the library, plus the sick-note charge sheets, generated as both PDF and Word — then opened and read to confirm no leftover placeholders, no blank fields, correct branding. Each one tested twice: with full details filled in, and with only the bare minimum.
-
-**Sharing**
-
-Share links generated, then opened in a clean browser session with no login, to confirm an outsider can actually see the document.
-
-**Owner analytics and error monitoring**
-
-I'll deliberately break something and cause an error, then check whether your owner/health dashboard notices it and shows it. I'll also cross-check the numbers on those dashboards against the real data. If the dashboard misses the error I planted, that gets recorded as a failure of the dashboard itself.
-
-## Two things I can't fully prove
-
-- **Payments**: I'll click the trial buttons and confirm the payment provider page opens with the right amount and details, then stop. No real money moves, so the part after payment is recorded as "not fully tested".
-- **Emails**: I can confirm the app tried to send and that the send was recorded, but I can't open your inbox. Those get recorded as "partly tested" with a note of exactly what to look for.
-
-## The report
-
-Delivered as a document you can download, containing:
-
-1. A summary table — how many pages, buttons/links, forms, and document functions were tested, with pass / fail / partly-working counts
-2. Every failure and partial, listed one by one: the exact page and button, what should have happened, what actually happened, and the likely cause
-3. A plain confirmation for each category that fully passed, naming exactly what was checked
-4. A clearly separated "Suggestions" section — my opinion only, not bugs — covering anything that could annoy or underwhelm a paying subscriber, ranked high/medium/low impact
-
-## Note on fixes
-
-This plan is the audit only — finding and recording problems. I won't change any app code while auditing, so the report reflects the app exactly as it is today. Once you've read it, tell me which items to fix and I'll do those as a separate round.
-
-## Technical detail
-
-Testing is driven through a real headless browser against the running app with your signed-in session restored, capturing console errors, network failures and screenshots per page. Generated files are opened and inspected page by page. Database checks confirm saved records exist. External links are fetched directly and the final resolved address recorded.
+- `src/pages/Auth.tsx`: `resetPasswordForEmail` redirect stays `/reset-password`; add recovery-token handling and guard.
+- `src/pages/ResetPassword.tsx`: detect `type=recovery` in the hash/query, exchange the code, prevent auto-redirect elsewhere, force `updateUser({ password })` before navigation.
+- `src/App.tsx` / `src/main.tsx`: ensure `/reset-password` is in the React-owned route list so the live domain serves it.
+- Passwords set via a temporary service-role edge function using the Auth admin API (`updateUserById` / `createUser` with `email_confirm: true`), guarded by `CRON_SECRET`, deleted after one run.
+- `supabase/functions/payfast-checkout/index.ts`: `item_name` → `iNRECO Pocket Consultant - <plan>`, `item_description` updated to match.
