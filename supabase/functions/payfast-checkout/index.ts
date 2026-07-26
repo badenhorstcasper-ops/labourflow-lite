@@ -6,7 +6,7 @@ type PlanName = "Solo" | "Business" | "Professional";
 
 const PLAN_PRICES: Record<PlanName, number> = {
   Solo: 259,
-  Business: 499,
+  Business: 599,
   Professional: 1499,
 };
 

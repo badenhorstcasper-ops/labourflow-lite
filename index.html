@@ -545,6 +545,30 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
   </div>
 </section>
 
+<section id="verify-sicknote" class="features-bg" style="border-top:1px solid rgba(148,163,184,.15)">
+  <div class="section-inner">
+    <p class="section-label" style="text-align:center">New in iNRECO</p>
+    <h2 style="text-align:center">Fake sick notes? Verify them in minutes.</h2>
+    <p class="section-desc" style="text-align:center;margin:0 auto 24px;max-width:760px">
+      Suspicious medical certificate on your desk? iNRECO walks you step-by-step through
+      checking the practitioner against the official HPCSA, PCNS and AHPCSA registers,
+      then tells you clearly whether the note is <strong>Verified</strong>,
+      <strong>Inconclusive</strong> or a <strong>Discrepancy</strong>. If fraud is
+      suspected, it drafts the disciplinary charge sheet and procedural fairness
+      checklist for you — ready to use at a hearing or the CCMA.
+    </p>
+    <div style="max-width:780px;margin:24px auto 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px">
+      <div class="why-point"><div><h3>Guided checks</h3><p>One-click links to each official register with plain-language instructions.</p></div></div>
+      <div class="why-point"><div><h3>POPIA-safe storage</h3><p>Uploads sit in a private, encrypted vault. Only you and your team see them.</p></div></div>
+      <div class="why-point"><div><h3>Locked audit trail</h3><p>Every check is time-stamped and locked — solid evidence for the CCMA.</p></div></div>
+      <div class="why-point"><div><h3>Ready-made charge sheet</h3><p>Auto-drafted primary and alternative charges you can download and serve.</p></div></div>
+    </div>
+    <div style="text-align:center;margin-top:32px">
+      <button type="button" class="btn-primary" onclick="window.location.href='/pricing'">Try it inside iNRECO</button>
+    </div>
+  </div>
+</section>
+
 <section id="pricing" class="features-bg">
   <div class="section-inner">
     <p class="section-label" style="text-align:center">Pricing</p>
@@ -572,7 +596,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
       <div class="price-card featured">
         <div class="price-badge">Most Popular</div>
         <p class="price-tier">Business</p><h3>Business</h3>
-        <div class="price-amount">R499</div><p class="price-note">per month &middot; up to 5 users</p>
+        <div class="price-amount">R599</div><p class="price-note">per month &middot; up to 5 users</p>
         <ul class="price-features">
           <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Unlimited questions</li>
           <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Up to 5 registered users</li>
@@ -806,7 +830,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
     <div class="modal-sub">Start a 7-day free trial on any plan. No charge during the trial, cancel anytime.</div>
     <div class="plans">
       <div class="plan"><h3>Solo</h3><div class="price">R259<small>/month</small></div><ul><li>CARA AI adviser</li><li>All documents</li><li>CCMA deadline tracker</li><li>1 user</li></ul><button onclick="selectPlan('Solo')">Start 7-day free trial</button></div>
-      <div class="plan featured"><h3>Business</h3><div class="price">R499<small>/month</small></div><ul><li>Unlimited questions</li><li>Up to 5 registered users</li><li>All documents</li><li>CARA AI adviser</li><li>CCMA tracker</li></ul><button onclick="selectPlan('Business')">Start 7-day free trial</button></div>
+      <div class="plan featured"><h3>Business</h3><div class="price">R599<small>/month</small></div><ul><li>Unlimited questions</li><li>Up to 5 registered users</li><li>All documents</li><li>CARA AI adviser</li><li>CCMA tracker</li></ul><button onclick="selectPlan('Business')">Start 7-day free trial</button></div>
       <div class="plan"><h3>Professional</h3><div class="price">R1,499<small>/month</small></div><ul><li>Everything in Business</li><li>Up to 10 registered users</li><li>CARA as your dedicated AI adviser</li><li>WhatsApp support</li></ul><button onclick="selectPlan('Professional')">Start 7-day free trial</button></div>
       <div class="plan"><h3>Enterprise</h3><div class="price">R3,999<small>/month</small></div><ul><li>Everything in Professional</li><li>Up to 15 registered users</li><li>CARA as always-on IR adviser</li><li>Annual option — pay 10 get 12</li><li>WhatsApp support</li></ul><button onclick="selectPlan('Enterprise')">Start 7-day free trial</button></div>
     </div>
@@ -2089,7 +2113,7 @@ function openUpgrade(){ $('upgradeModal').classList.add('show'); }
 function closeUpgrade(){ $('upgradeModal').classList.remove('show'); }
 
 // --- PayFast checkout (prepared by backend so live details stay consistent) ---
-const PLAN_AMOUNTS = { Solo: 259, Business: 499, Professional: 1499, Enterprise: 3999 };
+const PLAN_AMOUNTS = { Solo: 259, Business: 599, Professional: 1499, Enterprise: 3999 };
 
 function submitPayfastForm(actionUrl, fields) {
   const form = document.createElement('form');

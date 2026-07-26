@@ -54,8 +54,8 @@ const PLANS: Plan[] = [
   },
   {
     name: "Business",
-    amount: 499,
-    priceLabel: "R499",
+    amount: 599,
+    priceLabel: "R599",
     priceSuffix: "per month · up to 5 users",
     tagline: "per month · up to 5 users",
     description: "For small teams.",
