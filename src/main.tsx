@@ -23,9 +23,33 @@ installGlobalErrorHandlers();
 // can appear instead of the marketing page.
 const LEGACY_ROUTES = ["/", "", "/index.html"];
 
+// A password-reset (or other recovery) link from an email arrives at the home
+// address with the one-time code attached. The marketing page must NOT swallow
+// it, otherwise the person is silently signed in without ever choosing a new
+// password. Detect it and send them to the "Set a new password" screen.
+function isRecoveryLink() {
+  const hash = window.location.hash || "";
+  const search = window.location.search || "";
+  return (
+    hash.includes("type=recovery") ||
+    search.includes("type=recovery") ||
+    /[?&]code=/.test(search)
+  );
+}
+
 function shouldMountReact(pathname: string) {
+  if (isRecoveryLink()) return true;
   return !LEGACY_ROUTES.includes(pathname);
 }
+
+if (isRecoveryLink() && window.location.pathname !== "/reset-password") {
+  window.history.replaceState(
+    {},
+    "",
+    `/reset-password${window.location.search}${window.location.hash}`,
+  );
+}
+
 
 
 if (shouldMountReact(window.location.pathname)) {
