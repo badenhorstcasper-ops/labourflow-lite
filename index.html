@@ -1099,12 +1099,10 @@ async function registerThisDevice() {
   });
   if (error) {
     if ((error.message || '').includes('device_limit_reached')) {
-      toast('This account already has 2 active devices. Sign out elsewhere or remove a device from Account → Devices first.', 'error', 6000);
-      await supabase.auth.signOut();
-      currentUser = null; currentProfile = null;
-      showScreen('welcome');
+      toast('This account is already signed in on the maximum number of devices for your plan. Remove a device under Account → Devices to use this one.', 'error', 7000);
       return false;
     }
+
     console.warn('register_device error:', error.message);
   }
   return true;
