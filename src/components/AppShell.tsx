@@ -77,7 +77,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
         </div>
       </header>
-      <main className="container mx-auto max-w-5xl px-4 py-6 flex-1 pb-10">{children}</main>
+      <main className="container mx-auto max-w-7xl px-4 py-6 flex-1 pb-10">{children}</main>
       <div className="fixed bottom-10 right-3 z-50">
         <ReportProblemButton />
       </div>
