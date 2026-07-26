@@ -20,6 +20,7 @@ import CaraPage from "@/pages/Cara";
 import SharePage from "@/pages/Share";
 import ContactPage from "@/pages/Contact";
 import HealthPage from "@/pages/Health";
+import VerifyCertificatePage from "@/pages/VerifyCertificate";
 import Terms from "@/pages/Terms";
 import Privacy from "@/pages/Privacy";
 import Disclaimer from "@/pages/Disclaimer";
@@ -97,6 +98,9 @@ function AppRoutes() {
       <Route path="/account-app/documents" element={gated(<DocumentsPage />)} />
       <Route path="/account-app/generate" element={gated(<GeneratePage />)} />
       <Route path="/account-app/health" element={gated(<HealthPage />)} />
+      <Route path="/account-app/verify-certificate" element={gated(<VerifyCertificatePage />)} />
+
+
 
       <Route path="*" element={<NotFound />} />
     </Routes>

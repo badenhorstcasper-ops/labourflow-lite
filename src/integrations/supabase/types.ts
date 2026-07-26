@@ -542,6 +542,128 @@ export type Database = {
         }
         Relationships: []
       }
+      medical_cert_audit_events: {
+        Row: {
+          account_owner_id: string
+          action: string
+          actor_email: string | null
+          actor_user_id: string
+          created_at: string
+          id: string
+          snapshot: Json
+          verification_id: string
+        }
+        Insert: {
+          account_owner_id: string
+          action: string
+          actor_email?: string | null
+          actor_user_id: string
+          created_at?: string
+          id?: string
+          snapshot?: Json
+          verification_id: string
+        }
+        Update: {
+          account_owner_id?: string
+          action?: string
+          actor_email?: string | null
+          actor_user_id?: string
+          created_at?: string
+          id?: string
+          snapshot?: Json
+          verification_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medical_cert_audit_events_verification_id_fkey"
+            columns: ["verification_id"]
+            isOneToOne: false
+            referencedRelation: "medical_cert_verifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      medical_cert_verifications: {
+        Row: {
+          account_owner_id: string
+          cert_file_path: string | null
+          cert_issued_on: string | null
+          cert_submitted_on: string | null
+          created_at: string
+          created_by_user_id: string
+          employee_name: string
+          employee_number: string | null
+          hpcsa_status: string | null
+          id: string
+          incapacity_from: string | null
+          incapacity_to: string | null
+          locked_at: string | null
+          outcome: Database["public"]["Enums"]["mc_outcome"]
+          pcns_status: string | null
+          practice_address: string | null
+          practice_name: string | null
+          practice_number: string
+          practice_phone: string | null
+          practitioner_name: string
+          professional_category: string
+          reason_for_check: string | null
+          results_notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_owner_id: string
+          cert_file_path?: string | null
+          cert_issued_on?: string | null
+          cert_submitted_on?: string | null
+          created_at?: string
+          created_by_user_id: string
+          employee_name: string
+          employee_number?: string | null
+          hpcsa_status?: string | null
+          id?: string
+          incapacity_from?: string | null
+          incapacity_to?: string | null
+          locked_at?: string | null
+          outcome?: Database["public"]["Enums"]["mc_outcome"]
+          pcns_status?: string | null
+          practice_address?: string | null
+          practice_name?: string | null
+          practice_number: string
+          practice_phone?: string | null
+          practitioner_name: string
+          professional_category: string
+          reason_for_check?: string | null
+          results_notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_owner_id?: string
+          cert_file_path?: string | null
+          cert_issued_on?: string | null
+          cert_submitted_on?: string | null
+          created_at?: string
+          created_by_user_id?: string
+          employee_name?: string
+          employee_number?: string | null
+          hpcsa_status?: string | null
+          id?: string
+          incapacity_from?: string | null
+          incapacity_to?: string | null
+          locked_at?: string | null
+          outcome?: Database["public"]["Enums"]["mc_outcome"]
+          pcns_status?: string | null
+          practice_address?: string | null
+          practice_name?: string | null
+          practice_number?: string
+          practice_phone?: string | null
+          practitioner_name?: string
+          professional_category?: string
+          reason_for_check?: string | null
+          results_notes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notification_log: {
         Row: {
           error: string | null
@@ -1297,6 +1419,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_account_member: {
+        Args: { _owner: string; _user: string }
+        Returns: boolean
+      }
       move_to_dlq: {
         Args: {
           dlq_name: string
@@ -1338,6 +1464,7 @@ export type Database = {
       app_role: "admin" | "moderator" | "user"
       commission_status: "pending" | "paid"
       marketing_submission_status: "pending" | "approved" | "rejected"
+      mc_outcome: "pending" | "verified" | "inconclusive" | "discrepancy"
       salesperson_status:
         | "pending_approval"
         | "active"
@@ -1474,6 +1601,7 @@ export const Constants = {
       app_role: ["admin", "moderator", "user"],
       commission_status: ["pending", "paid"],
       marketing_submission_status: ["pending", "approved", "rejected"],
+      mc_outcome: ["pending", "verified", "inconclusive", "discrepancy"],
       salesperson_status: [
         "pending_approval",
         "active",

@@ -1,53 +1,98 @@
-
 ## Goal
 
-Teach CARA two new bodies of knowledge so it can answer accurately (with exact official links, no guessing):
+Add a new module that helps HR verify whether a sick note is from a real, registered practitioner, guides them to the official verification sites, records the outcome, and generates procedurally-fair next steps (including draft disciplinary charges when the check fails).
 
-1. Every online tool listed on **www.labour.gov.za/Online-Tools** (uFiling, Employment Equity online reporting, Compensation Fund / CompEasy, Public Employment Services / ESSA, complaints/inspection, trade union registration, etc.).
-2. The **Employment Services Amendment Bill, 2026** (B 16—2026, Gazette 54743 of 26 May 2026) — what it changes, who it affects, and the practical impact for employers of foreign nationals.
+## What the user will see
 
-## What CARA will do differently
+**New menu item "Verify Sick Note"** in the app's top navigation, available to the account owner and any active team member on the account.
 
-- Users can search or tap topics like "UIF (uFiling)", "Report to Compensation Fund", "Register vacancies (ESSA)", "Employment Equity report" and get: what it is (plain language) → who uses it → the exact official URL → what documents/deadlines apply.
-- A new "Foreign nationals" sub-topic will warn about the **Employment Services Amendment Bill 2026**: skills transfer plans, ministerial quotas per sector, offences, and that the Bill is not yet in force (starts on a date the President proclaims). CARA will keep giving current-law guidance and flag the coming changes.
-- The AI fallback (`cara-chat`) is told to prefer the built-in links and never invent government URLs.
+**Landing screen** at `/account-app/verify-certificate` with two tabs:
+- **New check** — start a verification
+- **History** — list of past checks on this account (read-only rows, newest first, filterable by employee name and outcome)
 
-## What we'll build
+### New check flow (single scrolling page, 3 steps)
 
-**1. New knowledge entries in `src/lib/cara/knowledge.ts`**
-- One consolidated topic **"Government online tools & services"** listing every tool with its official link, purpose, and when-to-use note.
-- Individual sub-topics for the biggest ones so searches like "uFiling", "Compensation Fund claim", "Employment Equity report", "register a vacancy", "report unfair labour practice" match directly.
-- One topic **"Employment Services Amendment Bill 2026"** summarising: new definitions (worker, asylum seeker, refugee, illegal foreigner), skills transfer plans, quotas for foreign nationals, exemptions, offences, effective date rule.
-- Cross-links: the existing "Foreign nationals" topic gets a "Coming law change" note pointing to the Bill topic.
+**Step 1 — POPIA notice + capture form**
 
-**2. New capsule on the CARA page (`src/pages/Cara.tsx`)**
-- Add a "Government tools & links" capsule (same expandable style as the AARTO and Foreign Nationals capsules) so users can find them without needing to search.
-- Add a small "Coming law change: Employment Services Amendment Bill 2026" line inside the Foreign Nationals capsule that opens the new topic.
+Short notice at the top: "This information is processed solely to verify the validity of the certificate and, where necessary, for disciplinary proceedings, in line with the company's POPIA policy and data retention schedule."
 
-**3. Update `cara-chat` system prompt (`supabase/functions/cara-chat/index.ts`)**
-- Add rules: "When answering about UIF, Compensation Fund, Employment Equity, ESSA, or any Dept of Employment and Labour online tool, use only the official URLs supplied in the grounding; do not invent URLs." and a short summary of the Amendment Bill so the AI stays consistent when a user asks a nuanced question.
+Only the fields actually needed to check the practitioner against the registers are compulsory. Everything else is optional so small employers or someone standing on the shop floor can still capture a check. Fields marked **required** show a red asterisk; the rest are plain.
 
-**4. New downloadable reference (optional but useful)**
-- Save the uploaded Bill as a bundled asset so CARA can offer a "Download the Bill" link inside the topic.
+- Employee name — **required**
+- Employee number — optional
+- Dates of incapacity (from / to) — optional
+- Date certificate issued — optional
+- Date submitted to employer — optional
+- Practitioner full name — **required**
+- Practitioner registration / practice number as printed — **required**
+- Professional category — **required** (dropdown: Medical Practitioner, Dentist, Psychologist, Physiotherapist, Chiropractor, Homeopath, Nurse, Other allied health — "Other allied health" pushes AHPCSA to the top of the verification buttons)
+- Practice name — optional
+- Practice address — optional
+- Practice phone — optional
+- Reason for check — optional (dropdown: Routine spot-check, Suspicious absence pattern, Follows a disciplinary/warning event, Certificate appears altered, Other)
+- Certificate upload (image or PDF, up to 10 MB) — optional
 
-## What we will NOT change
+"Save & continue" is enabled as soon as the four required fields are filled.
 
-- No database changes, no new tables, no edge functions beyond the `cara-chat` prompt tweak.
-- No template/document changes — this is knowledge only.
-- No changes to pricing, admin, or partner flows.
+**Step 2 — Guided verification**
 
-## Sources
+Instruction line: "These open the official verification portals in a new tab. Search using the practitioner's name and/or number as printed on the certificate, then record what you find below."
 
-- All labour.gov.za entries will be sourced from the live pages (a background research task is already collecting them from `https://www.labour.gov.za/Online-Tools` and each linked sub-page). Only tools actually listed on those pages will be included — nothing invented.
-- The Bill entry will be based on the uploaded PDF (Employment Services Amendment Bill, 2026 — B 16—2026, Gazette 54743 of 26 May 2026).
+Three external buttons (new tab, `rel="noopener noreferrer"`, do not affect app route):
+- Check HPCSA iRegister → https://hpcsaonline.custhelp.com/app/i_reg_form
+- Check PCNS Practice Number → https://www.pcns.co.za/Search/Verify
+- Check AHPCSA Register → https://ahpcsa.co.za/practitioners/
 
-## Verification before we call it done
+Results form (all optional except at least one status must be picked before continuing):
+- HPCSA/AHPCSA registration status found (dropdown: Verified / Active, Verified but Suspended / Inactive, Name found but number does not match, No match found, Could not complete check)
+- PCNS practice number status (same dropdown)
+- Notes (free text)
+- Timestamp + username auto-captured (shown, not editable)
 
-- Build passes.
-- On the CARA page, searching "uFiling", "Compensation Fund", "Employment Equity", "vacancy", "amendment bill" each returns the right entry with a clickable official link.
-- The Foreign Nationals capsule shows the "Coming law change" note.
+**Step 3 — Outcome + guidance**
 
-### Technical notes
-- File: `src/lib/cara/knowledge.ts` — add `KnowledgeTopic` entries with `label`, `keywords`, `summary`, `steps`, and a new optional `officialLinks: {label,url}[]` rendered by the router.
-- File: `src/lib/cara/router.ts` / `src/pages/Cara.tsx` — render `officialLinks` as underlined anchor tags (target `_blank`, `rel="noopener"`).
-- File: `supabase/functions/cara-chat/index.ts` — append rules and Bill summary to `SYSTEM_BASE`; redeploy.
+Auto-classified:
+- **Verified** — both statuses "Verified / Active"
+- **Inconclusive** — any "Could not complete check" without a hard mismatch
+- **Discrepancy / Suspected Fraud** — any "No match found", "number does not match", or "Suspended / Inactive"
+
+Each outcome shows the exact guidance text from the original spec. Only the Discrepancy outcome shows the **"Generate Suggested Charges"** button, which opens a panel with the primary charge, alternative charge, disclaimer, and Procedural Fairness Checklist, with Copy and Download-as-.docx (via the existing `generateDocument` house-style layout so it carries the company logo and branding).
+
+Once the outcome is saved the record is locked — no edits, only new timestamped notes can be appended.
+
+## Data & security
+
+New private storage bucket `medical-certificates` (owner-scoped, signed URLs, 30-min expiry).
+
+New tables:
+- `medical_cert_verifications` — one row per check. Optional fields stored as nullable; the four compulsory ones (employee name, practitioner name, practice number, category) are NOT NULL. Also holds file path, both status results, computed outcome, created_by, account_owner_id, locked_at.
+- `medical_cert_audit_events` — append-only log of every action (created, results saved, outcome computed, note appended, charges generated, file viewed) with actor, timestamp, action, and a JSON snapshot.
+
+Access rules (RLS):
+- Only the account owner and their active team members can read/insert rows on their own account.
+- After `locked_at` is set, a trigger blocks any update to the main row; only new rows in `medical_cert_audit_events` may be added.
+- Storage bucket policies mirror the same account-scoping.
+
+## Files to add / change
+
+- `src/pages/VerifyCertificate.tsx` — full flow (list + new check tabs)
+- `src/lib/verifyCertificate/outcome.ts` — pure classifier
+- `src/lib/verifyCertificate/charges.ts` — builds charge-sheet + checklist text
+- `src/lib/documents/templates/medicalCertCharges.ts` — new house-style template for the .docx download
+- `src/App.tsx` — add gated route `/account-app/verify-certificate`
+- `src/components/AppShell.tsx` — add "Verify Sick Note" nav link
+- `src/pages/Cara.tsx` — small chip under the Discipline area linking to the module
+- One migration: tables, GRANTs, RLS, immutability trigger, audit-insert trigger
+- One `supabase--storage_create_bucket` call for `medical-certificates` + follow-up RLS migration on `storage.objects`
+
+## Testing before handing back
+
+- Walk a dummy entry through Verified, Inconclusive, and Discrepancy — confirm correct guidance appears and Generate Charges only shows on Discrepancy.
+- Confirm the four required fields are the only blockers to Save & continue; leaving optional fields blank still works.
+- Confirm the three external links open in a new tab and the app stays put.
+- Confirm a signed-out user cannot reach the route and a team member of another account cannot see this account's records.
+- Confirm locked records cannot be edited (UI disabled + DB trigger rejects).
+- Confirm the audit log lists every step with actor + timestamp and cannot be edited.
+- Confirm the POPIA notice is visible before any field can be filled.
+
+I'll report a short summary of what was tested and anything odd before handing back.
