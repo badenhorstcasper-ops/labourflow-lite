@@ -53,7 +53,8 @@ Deno.serve(async (req) => {
       count(admin.from("payfast_webhook_log").select("*", { count: "exact", head: true }).eq("outcome", "rejected")),
       count(admin.from("chairperson_bookings").select("*", { count: "exact", head: true })),
       count(admin.from("contact_messages").select("*", { count: "exact", head: true })),
-      count(admin.from("subscriptions").select("*", { count: "exact", head: true }).eq("status", "active")),
+      // Match the Owner overview: paid subscribers only (exclude demo/partner comp accounts)
+      count(admin.from("subscriptions").select("*", { count: "exact", head: true }).eq("status", "active").not("is_demo", "is", true)),
       count(admin.from("page_views").select("*", { count: "exact", head: true }).gte("created_at", day)),
       count(admin.from("page_views").select("*", { count: "exact", head: true }).gte("created_at", week)),
       count(admin.from("page_views").select("*", { count: "exact", head: true }).gte("created_at", month)),
