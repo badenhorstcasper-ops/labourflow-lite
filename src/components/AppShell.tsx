@@ -58,6 +58,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <Link className={linkCls("/app")} to="/app">CARA</Link>
             <Link className={linkCls("/dashboard")} to="/dashboard">Dashboard</Link>
             <Link className={linkCls("/account-app/generate")} to="/account-app/generate">Generate Docs</Link>
+            <Link className={linkCls("/account-app/verify-certificate")} to="/account-app/verify-certificate">Verify Sick Note</Link>
             <Link className={linkCls("/account-app/documents")} to="/account-app/documents">Documents</Link>
             <Link className={linkCls("/account-app/profile")} to="/account-app/profile">Profile</Link>
             <Link className={linkCls("/settings")} to="/settings">Billing</Link>
