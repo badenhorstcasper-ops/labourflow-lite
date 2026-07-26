@@ -2505,7 +2505,19 @@ window.removeDevice = removeDevice;
   const launchedAsApp = urlParams.get('app') === '1' || isStandalone();
   const { data: { session } } = await supabase.auth.getSession();
   if (session) {
-    await afterLogin();
+    // The landing page is ALWAYS the front door on the web. Never auto-forward
+    // a signed-in visitor into the app (that used to bounce people straight to
+    // /pricing?reason=no_subscription and hide the marketing site entirely).
+    // Only the installed phone app jumps straight in.
+    if (launchedAsApp) {
+      await afterLogin();
+    } else {
+      showScreen('welcome');
+      try {
+        const cta = document.getElementById('heroOpenApp');
+        if (cta) cta.style.display = '';
+      } catch (_) {}
+    }
     // If a paid plan was selected before sign-in, resume the PayFast checkout.
     try {
       const pending = localStorage.getItem('inreco.pendingPlan');
