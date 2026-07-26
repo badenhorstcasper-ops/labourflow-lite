@@ -16,7 +16,7 @@ const corsHeaders = {
 const MERCHANT_ID = "12090292";
 const PAYFAST_MODE: "sandbox" | "live" =
   (Deno.env.get("PAYFAST_MODE")?.toLowerCase() === "live" ? "live" : "sandbox");
-const PAYFAST_PASSPHRASE = Deno.env.get("PAYFAST_PASSPHRASE") || "";
+const PAYFAST_PASSPHRASE = (Deno.env.get("PAYFAST_PASSPHRASE_V2") || Deno.env.get("PAYFAST_PASSPHRASE") || "").trim();
 const API_HOST = PAYFAST_MODE === "live" ? "api.payfast.co.za" : "sandbox.payfast.co.za";
 
 async function md5Hex(s: string): Promise<string> {

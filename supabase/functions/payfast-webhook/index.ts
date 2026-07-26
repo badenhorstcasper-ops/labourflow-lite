@@ -6,7 +6,7 @@ const MERCHANT_ID = "12090292";
 const SANDBOX_MERCHANT_ID = "10000100";
 const PAYFAST_MODE: "sandbox" | "live" =
   Deno.env.get("PAYFAST_MODE")?.toLowerCase() === "live" ? "live" : "sandbox";
-const PAYFAST_PASSPHRASE = (Deno.env.get("PAYFAST_PASSPHRASE") || "").trim();
+const PAYFAST_PASSPHRASE = (Deno.env.get("PAYFAST_PASSPHRASE_V2") || Deno.env.get("PAYFAST_PASSPHRASE") || "").trim();
 const PAYFAST_HOST = PAYFAST_MODE === "live" ? "www.payfast.co.za" : "sandbox.payfast.co.za";
 const VALIDATE_URL = `https://${PAYFAST_HOST}/eng/query/validate`;
 const PAYFAST_HOSTS = [
