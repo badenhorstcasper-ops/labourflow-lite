@@ -204,8 +204,9 @@ Deno.serve(async (req) => {
     email_address: email,
     m_payment_id: mPaymentId,
     amount: "0.00",
-    item_name: `iNRECO ${planName} Plan - 7-day free trial`,
-    item_description: "iNRECO subscription access",
+    item_name: `iNRECO Pocket Consultant - ${planName} (7-day free trial)`,
+    item_description: "iNRECO Pocket Consultant subscription access",
+
     subscription_type: "1",
     billing_date: billingDate,
     recurring_amount: amount.toFixed(2),
