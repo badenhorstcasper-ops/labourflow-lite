@@ -664,7 +664,7 @@ export const TOPICS: KnowledgeTopic[] = [
       { label: "ROE submission portal", url: "https://cfonline.labour.gov.za/OnlineSubmissions" },
       { label: "Verify Letter of Good Standing", url: "https://cfonline.labour.gov.za/VerifyLOGS/" },
       { label: "CompEasy (COID claims)", url: "https://compeasy.labour.gov.za:44328/fiori" },
-      { label: "Employer obligations under COIDA", url: "http://www.labour.gov.za/compensation-fund-obligations-of-the-employer" },
+      { label: "DEL document centre (COIDA forms & guides)", url: "https://www.labour.gov.za/DocumentCenter" },
     ],
     followUps: [
       "How do I get a Letter of Good Standing?",
