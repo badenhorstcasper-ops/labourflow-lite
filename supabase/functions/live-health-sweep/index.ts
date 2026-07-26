@@ -127,16 +127,19 @@ Deno.serve(async (req) => {
 
   const admin = createClient(supabaseUrl, serviceKey);
 
-  // Two ways in: an admin pressing the button, or the scheduled run.
+  // Two ways in: an admin pressing the button, or the scheduled nightly run.
   const sweepKey = req.headers.get("x-sweep-key");
   const expectedKey = Deno.env.get("HEALTH_SWEEP_KEY") || "";
+  const authHeader = req.headers.get("Authorization");
+  const bearer = authHeader?.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
   let triggeredBy = "scheduled";
 
-  if (!(expectedKey && sweepKey && sweepKey === expectedKey)) {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) return json({ error: "not_authenticated" }, 401);
+  const scheduled = (expectedKey && sweepKey && sweepKey === expectedKey) || (bearer && bearer === serviceKey);
+
+  if (!scheduled) {
+    if (!bearer) return json({ error: "not_authenticated" }, 401);
     const userClient = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } },
+      global: { headers: { Authorization: `Bearer ${bearer}` } },
     });
     const { data: userData, error: userErr } = await userClient.auth.getUser();
     if (userErr || !userData?.user) return json({ error: "not_authenticated" }, 401);
@@ -147,6 +150,7 @@ Deno.serve(async (req) => {
     if (!isAdmin) return json({ error: "forbidden" }, 403);
     triggeredBy = "manual";
   }
+
 
   const runId = crypto.randomUUID();
   const checkedAt = new Date().toISOString();
