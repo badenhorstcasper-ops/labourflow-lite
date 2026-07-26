@@ -18,11 +18,15 @@ installGlobalErrorHandlers();
 // as raw HSL triplets and would otherwise clobber the legacy app's
 // hex-valued tokens of the same name in index.html, breaking contrast
 // across the chat / signup / onboarding / plans screens.
-const REACT_ROUTES = ["/d/", "/account-app", "/share/", "/terms", "/privacy", "/disclaimer", "/pricing", "/auth", "/contact", "/payment-success", "/payment-cancelled", "/dashboard", "/settings", "/app", "/admin", "/partner"];
+// The legacy marketing page owns ONLY the home address ("/"). React handles
+// every other address, including unknown ones so the "page not found" screen
+// can appear instead of the marketing page.
+const LEGACY_ROUTES = ["/", "", "/index.html"];
 
 function shouldMountReact(pathname: string) {
-  return REACT_ROUTES.some((p) => pathname === p || pathname.startsWith(p));
+  return !LEGACY_ROUTES.includes(pathname);
 }
+
 
 if (shouldMountReact(window.location.pathname)) {
   void (async () => {
