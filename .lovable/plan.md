@@ -1,47 +1,38 @@
-## What I confirmed by checking the live sites and the database
+## Why this happened (so the fix makes sense)
 
-- **app.inreco.co.za** is the real, current app (it already shows R599).
-- **inrecoapp.inreco.co.za** is a **completely different, stale copy** hosted on GitHub Pages, last updated 25 July, still showing **R499**. It is not the same site, which is why buttons behave differently. It is a separate project I cannot edit from here.
-- **Landing page being skipped:** the landing page has a start-up rule that, if you are already signed in, throws you straight into the app. If that account has no plan, the app then bounces you to pricing with the "no subscription" note. That whole chain happens in under a second, so you never see the landing page.
-- **Back/Home on the pricing page:** the Home button navigates "inside" the app to `/`, where React (not the landing page) takes over and immediately runs the same jump-into-the-app rule — so you bounce right back to pricing. Back does the same. That's the loop you hit.
-- **The account you were signed in as tonight** (`info@inreco.co.za`, created at 19:26) genuinely has no plan, which is why pricing said "no subscription".
-- **Sign-in:** the failed attempts logged tonight were simply password mismatches. Your Outlook owner account exists and already has full owner rights.
-- **Devices:** the current rule gives every account a minimum of 2 devices — which matches what you want for Solo. What's missing is the hard stop and the clear message on the 3rd device, and blocking Solo from inviting other people.
-- **Payments:** checkout is reaching PayFast (5 attempts recorded tonight, all left "pending"), so the failure is happening on PayFast's side, not in the app. That needs one live test to pin down.
+There are two copies of your app: the **preview** you watch me build in, and the **live** site your customers use. The visible pages go live when you press Publish. The behind-the-scenes services go live on their own, separately. A batch of them never arrived on the live copy, and nothing checked. My earlier "end-to-end" checks only ever touched the preview, so they passed while live was broken.
 
-## What I will do
+The fix has to be a permanent, visible check — not a promise from me to be more careful.
 
-**1. Landing page must always be the front door**
-Remove the auto-jump. A signed-in visitor sees the normal landing page with a clear "Open the app" button. Only the installed phone app keeps going straight in.
+## 1. A real live check, right now
 
-**2. Fix Back and Home everywhere**
-Home will do a genuine page load to the landing page instead of an internal jump, so it can never bounce back. Back will do the same when there's no sensible page to return to. I'll check this on pricing, auth, admin, partner and the "page not found" screen.
+I open the actual live site (app.inreco.co.za), not the preview, and for every behind-the-scenes service I confirm it answers there. Twenty services. Each one gets a plain PASS or FAIL with what I did to test it.
 
-**3. Solo devices: 2 allowed, 3rd blocked with a clear message**
-- Solo keeps exactly 2 devices (e.g. phone + laptop). Business 5, Professional 10, Enterprise 15. Owner/admin unlimited.
-- Trying a 3rd device shows a plain message: "You've reached the 2 devices included in Solo. Remove a device under Account → Devices, or upgrade for more users." No silent sign-out.
-- **Solo cannot invite other people at all.** The "Invite team member" option will be hidden and blocked on Solo, with a short line explaining team seats come with Business and above. This is enforced in the database too, so it can't be bypassed.
+Then I walk the live site as a stranger would, in a fresh browser with no login: landing page, pricing, start a trial, sign up, sign in, CARA, documents, sick-note verification, company profile, settings, team invites, partner sign-up, contact form. Same PASS/FAIL treatment, no summarising.
 
-**4. Your owner passwords**
-Set both `badenhorst.casper@gmail.com` and `casperbadenhorst77@outlook.com` to `Casper@771103`, then actually sign in with each in the preview and confirm.
+You get one list. Anything that fails, I fix and re-test on live.
 
-**5. Make the two web addresses behave identically**
-The cleanest fix is to **point inrecoapp.inreco.co.za at this same app** (add it as a second address for the live app), so both addresses serve exactly the same pages and buttons and there is no second copy to keep in sync. I'll give you dead-simple steps for the one change needed at your domain provider. If you'd rather keep the old GitHub copy alive, the alternative is a redirect file that sends every visitor from the old address to app.inreco.co.za — tell me which you prefer and I'll set it up.
+## 2. A permanent health page you control
 
-**6. PayFast**
-Run a real checkout from the server side and read back exactly what is being sent (merchant number, live-vs-test setting, whether a passphrase is attached, and the R0.00 first charge). The three usual causes of that error page are: test merchant details left in place, a passphrase that doesn't match the one saved in your PayFast account, or PayFast refusing a R0.00 first charge on a live account. Fix whichever it is, and tell you plainly if something must change inside your PayFast account.
+A new page inside your admin area, visible only to you. One button: **Check live app now**. It contacts every behind-the-scenes service on the *live* site and shows a green or red line for each, with the time of the check.
 
-**7. Then properly test — signed out, signed in, and on a phone-sized screen**
-Landing → each pricing button → sign-up → payment → first sign-in → every app page → back/home on every page → 2-device limit → 3rd device blocked → Solo invite blocked. I'll report each as pass or fail with what I actually saw, not a summary.
+This means you never have to take my word for it again. Publish, open the page, press the button. Green means the whole thing is working. Red tells you exactly which piece isn't, in plain language ("Team invites — not responding").
 
-## One question
+## 3. An automatic check every time you publish
 
-For inrecoapp.inreco.co.za: point it at this same app (recommended), or leave the old page there and auto-redirect visitors to app.inreco.co.za?
+After each publish, the same sweep runs by itself and the result gets written to that health page. If anything is red, the page shows a warning banner the next time you open the admin area, so a silent failure can't sit unnoticed for a month.
+
+## 4. Something you can use on your other apps
+
+I'll write you a short, plain-English instruction you can paste into any other Lovable project of yours. It tells that project's assistant to test the **live** site specifically — not the preview — service by service, and to report PASS/FAIL with evidence rather than a summary. One paste per app, no long back-and-forth, so checking the other apps and the client's app costs you very little.
+
+## 5. A standing rule for this project
+
+I'll record a permanent instruction for myself in this project: never describe anything as tested, working, or end-to-end unless it was verified on the live site, and always say plainly which copy was tested. That rule survives between sessions.
 
 ## Technical notes
 
-- Entry loop: `afterLogin()` in `index.html` sets `window.location.href = '/app'` on boot when a session exists; `/app` is wrapped in `RequireSubscription`, which redirects to `/pricing?reason=no_subscription`. `src/pages/Index.tsx` does the same for React-mounted `/`. Both get changed to stop auto-forwarding.
-- `BackHomeBar` uses react-router `Link to="/"`, which never leaves the SPA; will switch to a hard `window.location.assign('/')`.
-- Device rule lives in the `register_device` database function (`GREATEST(COALESCE(MIN(device_limit),2),2)`); will map limits per plan with Solo = 2 and keep the admin bypass, returning a friendly error code the UI shows as a message.
-- Seat rule lives in `accept_team_invite` (Solo cap already 1) plus `invite-team-member`; the invite UI in `TeamManagement.tsx` will be gated on plan.
-- PayFast diagnosis targets `supabase/functions/payfast-checkout/index.ts`: live/sandbox switch, merchant id/key, signature+passphrase construction, `amount: "0.00"` with `subscription_type: 1`.
+- The live check calls each deployed edge function's health path directly against the production project and records status, response time and error text.
+- The health page is a new admin-only route reading from a small `service_health_checks` table (admin-only read, service-role write), populated by a `live-health-sweep` edge function.
+- The post-publish sweep runs on a schedule shortly after each deploy and on demand from the button.
+- No changes to payments, auth, RLS or any customer-facing behaviour are part of this work.
