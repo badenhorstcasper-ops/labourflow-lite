@@ -95,6 +95,9 @@ function AppRoutes() {
       <Route path="/app" element={gated(<CaraPage />)} />
       <Route path="/dashboard" element={gated(<Dashboard />)} />
       <Route path="/settings" element={gated(<Settings />)} />
+      {/* Older links/bookmarks pointed at this address for billing. */}
+      <Route path="/account-app/billing" element={<Navigate to="/settings" replace />} />
+      <Route path="/account-app/settings" element={<Navigate to="/settings" replace />} />
       <Route path="/account-app" element={gated(<CompanyProfilePage />)} />
       <Route path="/account-app/profile" element={gated(<CompanyProfilePage />)} />
       <Route path="/account-app/documents" element={gated(<DocumentsPage />)} />
