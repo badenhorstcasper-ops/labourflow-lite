@@ -37,6 +37,8 @@ import AdminSalespersonNew from "@/pages/AdminSalespersonNew";
 import AdminOverview from "@/pages/AdminOverview";
 import AdminPartnerDecision from "@/pages/AdminPartnerDecision";
 import AdminMarketing from "@/pages/AdminMarketing";
+import AdminHealth from "@/pages/AdminHealth";
+
 
 const queryClient = new QueryClient();
 
