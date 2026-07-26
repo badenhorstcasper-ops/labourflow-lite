@@ -34,7 +34,12 @@ function isValidEmail(email: string) {
 }
 
 function pfEncode(value: string) {
+  // Must match PHP's urlencode(), which PayFast uses to build the signature:
+  // spaces become "+", and !'()*~ are escaped too (encodeURIComponent leaves
+  // them alone, which silently broke the signature for item names containing
+  // brackets, e.g. "... (7-day free trial)").
   return encodeURIComponent(value.trim())
+    .replace(/[!'()*~]/g, (c) => "%" + c.charCodeAt(0).toString(16).toUpperCase())
     .replace(/%[0-9a-f]{2}/g, (match) => match.toUpperCase())
     .replace(/%20/g, "+");
 }
@@ -161,7 +166,7 @@ Deno.serve(async (req) => {
   const merchantKey = mode === "live"
     ? (envKey.length === 13 ? envKey : LIVE_MERCHANT_KEY)
     : SANDBOX_MERCHANT_KEY;
-  const passphrase = (Deno.env.get("PAYFAST_PASSPHRASE") || "").trim();
+  const passphrase = (Deno.env.get("PAYFAST_PASSPHRASE_V2") || Deno.env.get("PAYFAST_PASSPHRASE") || "").trim();
 
   if (mode === "live" && merchantKey.length !== 13) {
     return json(

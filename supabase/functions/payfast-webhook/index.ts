@@ -6,7 +6,7 @@ const MERCHANT_ID = "12090292";
 const SANDBOX_MERCHANT_ID = "10000100";
 const PAYFAST_MODE: "sandbox" | "live" =
   Deno.env.get("PAYFAST_MODE")?.toLowerCase() === "live" ? "live" : "sandbox";
-const PAYFAST_PASSPHRASE = (Deno.env.get("PAYFAST_PASSPHRASE") || "").trim();
+const PAYFAST_PASSPHRASE = (Deno.env.get("PAYFAST_PASSPHRASE_V2") || Deno.env.get("PAYFAST_PASSPHRASE") || "").trim();
 const PAYFAST_HOST = PAYFAST_MODE === "live" ? "www.payfast.co.za" : "sandbox.payfast.co.za";
 const VALIDATE_URL = `https://${PAYFAST_HOST}/eng/query/validate`;
 const PAYFAST_HOSTS = [
@@ -73,7 +73,9 @@ async function md5Hex(input: string) {
 }
 
 function pfEncode(value: string) {
+  // Must match PHP's urlencode() used by PayFast.
   return encodeURIComponent(value.trim())
+    .replace(/[!'()*~]/g, (c) => "%" + c.charCodeAt(0).toString(16).toUpperCase())
     .replace(/%[0-9a-f]{2}/g, (match) => match.toUpperCase())
     .replace(/%20/g, "+");
 }
