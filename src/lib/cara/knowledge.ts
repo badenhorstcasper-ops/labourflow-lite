@@ -787,7 +787,7 @@ export const TOPICS: KnowledgeTopic[] = [
     ],
     officialLinks: [
       { label: "DEL — Employment Services", url: "https://www.labour.gov.za/" },
-      { label: "Parliament Bills tracker", url: "https://www.parliament.gov.za/bills-explained" },
+      { label: "Parliament Bills tracker", url: "https://www.parliament.gov.za/bills" },
     ],
     relatedTemplates: ["visa_expiry_procedure", "visa_reminder_letter", "visa_incapacity_notice"],
     followUps: [
