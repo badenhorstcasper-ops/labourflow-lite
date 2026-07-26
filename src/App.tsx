@@ -8,6 +8,7 @@ import AdminPage from "@/pages/Admin";
 import { usePageView } from "@/hooks/usePageView";
 import Pricing from "@/pages/Pricing";
 import Auth from "@/pages/Auth";
+import ResetPassword from "@/pages/ResetPassword";
 import Dashboard from "@/pages/Dashboard";
 import Settings from "@/pages/Settings";
 import PaymentSuccess from "@/pages/PaymentSuccess";
@@ -65,6 +66,7 @@ function AppRoutes() {
       <Route path="/" element={<Index />} />
       <Route path="/pricing" element={<Pricing />} />
       <Route path="/auth" element={<Auth />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/payment-success" element={<PaymentSuccess />} />
       <Route path="/payment-cancelled" element={<PaymentCancelled />} />
       <Route path="/d/:token" element={<SharePage />} />

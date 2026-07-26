@@ -100,6 +100,36 @@ const Auth = () => {
     }
   }
 
+  async function handleForgotPassword() {
+    if (!email) {
+      toast({
+        title: "Enter your email first",
+        description: "Type the email address of your account, then tap the link again.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast({
+        title: "Reset link sent",
+        description: "Check your inbox (and spam) for the link to set a new password.",
+      });
+    } catch (err) {
+      toast({
+        title: "Could not send reset link",
+        description: err instanceof Error ? err.message : "Unknown error",
+        variant: "destructive",
+      });
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function handleGoogle() {
     if (mode === "signup" && !acceptedTerms) {
       toast({
@@ -185,7 +215,18 @@ const Auth = () => {
             <Button type="submit" className="w-full" disabled={busy}>
               {busy ? "Please wait…" : mode === "signup" ? "Create account" : "Sign in"}
             </Button>
+            {mode === "login" && (
+              <button
+                type="button"
+                className="w-full text-center text-xs text-muted-foreground underline"
+                onClick={handleForgotPassword}
+                disabled={busy}
+              >
+                Forgot your password?
+              </button>
+            )}
           </form>
+
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
