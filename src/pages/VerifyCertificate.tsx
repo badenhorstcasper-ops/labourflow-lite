@@ -299,7 +299,7 @@ function NewCheckFlow({
       actor_user_id: userId,
       actor_email: userEmail,
       action,
-      snapshot,
+      snapshot: snapshot as never,
     });
   }
 
