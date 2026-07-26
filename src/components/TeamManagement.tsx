@@ -222,6 +222,7 @@ export function TeamManagement() {
               </form>
             </DialogContent>
           </Dialog>
+          )}
         </div>
       </CardHeader>
       <CardContent>
