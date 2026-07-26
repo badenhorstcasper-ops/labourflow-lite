@@ -855,13 +855,17 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
 // React, leaving /terms /privacy /disclaimer blank on the live site.
 window.__IS_REACT_ROUTE__ = (() => {
   const p = window.location.pathname;
-  return p.startsWith('/d/') || p.startsWith('/account-app') || p.startsWith('/share/') || p.startsWith('/partner') || p.startsWith('/admin') || p === '/terms' || p === '/privacy' || p === '/disclaimer' || p === '/pricing' || p === '/auth' || p === '/contact' || p === '/payment-success' || p === '/payment-cancelled' || p === '/dashboard' || p === '/settings' || p === '/app';
+  // The legacy marketing page owns ONLY the home address. Everything else is
+  // handled by the React app (including unknown addresses, so the built-in
+  // "page not found" screen can show instead of the marketing page).
+  return !(p === '/' || p === '' || p === '/index.html');
 })();
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const SUPABASE_URL = 'https://ckjevliuwlijfvdjxmmp.supabase.co';
-const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNramV2bGl1d2xpamZ2ZGp4bW1wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwNjgzMzMsImV4cCI6MjA5MzY0NDMzM30.ipCCqFvjr_m2LNwqnRu0kRarrSPrfVZ_BZ1QN3bwyYw';
+const SUPABASE_URL = 'https://riqswihuzclbyjemynyd.supabase.co';
+const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJpcXN3aWh1emNsYnlqZW15bnlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MzgyMTUsImV4cCI6MjA5NTMxNDIxNX0.4wPTPMJutT9m020OxPOu72GFzbxpOzr5_rHxIeVNsOg';
+
 const ENDPOINT = SUPABASE_URL + '/functions/v1/super-endpoint';
 const FREE_LIMIT = 0;
 // Dev override: these accounts bypass the free-tier limit so we can test paid-tier flows
