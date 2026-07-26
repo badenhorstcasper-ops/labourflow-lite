@@ -1,37 +1,61 @@
-## 1. Feature the Sick Note Verifier on the landing page
+## What I'll do
 
-The landing page in this project is `index.html` (served at the marketing URL). I'll add a new "Verify Sick Notes" section between the existing feature area and the pricing block. It will include:
+A hands-on audit of the whole app — clicking every page, button, link and form myself in a real browser signed in as you, then writing up a pass/fail report. Nothing is marked "pass" unless I actually saw it work.
 
-- A short punchy headline: "Fake sick notes? Verify them in minutes."
-- 2–3 sentences of plain-language copy explaining that iNRECO walks you through checking the certificate against the HPCSA, PCNS and AHPCSA registers, classifies the result as Verified / Inconclusive / Discrepancy, and — if fraud is suspected — auto-drafts a charge sheet and procedural fairness checklist.
-- A bullet list of the selling points (guided verification, POPIA-safe private storage, locked audit trail for CCMA, ready-to-use charge sheet).
-- A "Try it inside iNRECO" button linking to `/pricing` (same styling as existing CTAs).
+Test records will be created and left in place (you asked for this), clearly labelled with "QA TEST" so you can spot and delete them later.
 
-Same visual language as the rest of the page (iNRECO blue, existing card/section classes) so no design retheming.
+## Scope
 
-Note: the separate `inrecoapp.inreco.co.za` landing repo (`badenhorstcasper-ops/inreco-app-landing`) is not part of this project — I'll write the section here, and you can either copy the block across or ask me in that repo to mirror it.
+**Every page, in three groups**
 
-## 2. Raise Business tier from R499 to R599
+- Open to everyone: home, pricing, sign-in, contact, terms, privacy, disclaimer, payment success, payment cancelled, shared-document link, partner apply, partner agreement, "page not found"
+- Needs a paid/trial account: CARA hub, dashboard, generate documents, verify sick note, documents library, company profile, billing/settings
+- Owner/partner only: owner overview, admin, partners/commissions, marketing, new partner, partner decision, partner portal, partner marketing, health & errors
 
-Update every place the R499 price appears so PayFast, the pricing page, and the checkout all agree:
+For each: does it load, is it blank, does it hang, are there errors behind the scenes, and does it correctly block or allow people who aren't signed in.
 
-- `src/pages/Pricing.tsx` — change the Business plan `amount` from `499` to `599` and `priceLabel` from `"R499"` to `"R599"`.
-- `supabase/functions/payfast-checkout/index.ts` — change `PLAN_PRICES.Business` from `499` to `599` so the recurring PayFast debit is signed at the new amount.
-- `index.html` — update any Business price mention in the landing/pricing copy from R499 to R599.
+**Every button and link**
 
-Existing customers already on a signed PayFast subscription at R499 will keep debiting at R499 (PayFast recurring amounts are locked when the token is created). Only new sign-ups from the moment of deploy pay R599. If you want existing R499 subscribers moved to R599, that's a manual cancel-and-re-sign in PayFast — say the word and I'll add a short admin note in the plan.
+Each one clicked, with the page it actually lands on recorded. Links that leave the app (health-council registers, government labour tools, payment provider, contact links) get opened for real and the page that comes back is recorded — including any that are dead or redirect somewhere unexpected. Buttons that do nothing visible when clicked get flagged.
 
-## 3. What I will not change
+**Every form**
 
-- No changes to Solo (R259), Professional (R1,499) or Enterprise (R3,999).
-- No changes to the verifier module itself — this is landing-page marketing only.
-- No changes to the separate landing repo (out of scope for this project).
+Submitted twice — once with sensible data, once with bad/missing data. Then I reload the page and check the data actually stuck, rather than trusting the "saved" message.
+
+**Saving and uploading files**
+
+Company logo, sick-note attachments, partner marketing uploads: upload, then reopen and re-download to confirm the file is real and not empty. Wrong file types and oversized files tested too.
+
+**Generating documents**
+
+Every template in the library, plus the sick-note charge sheets, generated as both PDF and Word — then opened and read to confirm no leftover placeholders, no blank fields, correct branding. Each one tested twice: with full details filled in, and with only the bare minimum.
+
+**Sharing**
+
+Share links generated, then opened in a clean browser session with no login, to confirm an outsider can actually see the document.
+
+**Owner analytics and error monitoring**
+
+I'll deliberately break something and cause an error, then check whether your owner/health dashboard notices it and shows it. I'll also cross-check the numbers on those dashboards against the real data. If the dashboard misses the error I planted, that gets recorded as a failure of the dashboard itself.
+
+## Two things I can't fully prove
+
+- **Payments**: I'll click the trial buttons and confirm the payment provider page opens with the right amount and details, then stop. No real money moves, so the part after payment is recorded as "not fully tested".
+- **Emails**: I can confirm the app tried to send and that the send was recorded, but I can't open your inbox. Those get recorded as "partly tested" with a note of exactly what to look for.
+
+## The report
+
+Delivered as a document you can download, containing:
+
+1. A summary table — how many pages, buttons/links, forms, and document functions were tested, with pass / fail / partly-working counts
+2. Every failure and partial, listed one by one: the exact page and button, what should have happened, what actually happened, and the likely cause
+3. A plain confirmation for each category that fully passed, naming exactly what was checked
+4. A clearly separated "Suggestions" section — my opinion only, not bugs — covering anything that could annoy or underwhelm a paying subscriber, ranked high/medium/low impact
+
+## Note on fixes
+
+This plan is the audit only — finding and recording problems. I won't change any app code while auditing, so the report reflects the app exactly as it is today. Once you've read it, tell me which items to fix and I'll do those as a separate round.
 
 ## Technical detail
 
-Files touched:
-- `index.html` (add feature section + update Business price mention if present)
-- `src/pages/Pricing.tsx` (Business amount + label)
-- `supabase/functions/payfast-checkout/index.ts` (`PLAN_PRICES.Business = 599`)
-
-The edge function change triggers an auto-redeploy. No database migration, no new secrets, no auth changes.
+Testing is driven through a real headless browser against the running app with your signed-in session restored, capturing console errors, network failures and screenshots per page. Generated files are opened and inspected page by page. Database checks confirm saved records exist. External links are fetched directly and the final resolved address recorded.
