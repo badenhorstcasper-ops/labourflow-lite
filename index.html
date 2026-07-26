@@ -1100,7 +1100,7 @@ async function registerThisDevice() {
   });
   if (error) {
     if ((error.message || '').includes('device_limit_reached')) {
-      toast('This account is already signed in on the maximum number of devices for your plan. Remove a device under Account → Devices to use this one.', 'error', 7000);
+      toast("You've reached the number of devices included in your plan (Solo includes 2, e.g. a phone and a laptop). Remove a device under Account → Devices, or upgrade for more.", 'error', 8000);
       return false;
     }
 
