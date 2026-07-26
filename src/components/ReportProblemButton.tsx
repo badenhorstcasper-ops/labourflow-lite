@@ -18,16 +18,16 @@ export default function ReportProblemButton({ variant = "ghost" as const, classN
     }
     setBusy(true);
     try {
-      const { data: u } = await supabase.auth.getUser();
       const last = getLastError();
+      // The database records who sent this from the signed-in session, so we
+      // deliberately do not send an account id or email from the browser.
       const { error } = await supabase.from("bug_reports").insert({
-        user_id: u.user?.id ?? null,
-        email: u.user?.email ?? null,
         route: window.location.pathname + window.location.search,
         description: desc.trim().slice(0, 4000),
         user_agent: navigator.userAgent,
         // last_error_id not set — short_id lives elsewhere; admin page links by time
       });
+
       if (error) throw error;
       toast.success("Thanks — your report was sent");
       setDesc("");
