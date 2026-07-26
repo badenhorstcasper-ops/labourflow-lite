@@ -26,8 +26,12 @@ async function md5Hex(s: string): Promise<string> {
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
 }
-function pfEncode(v: string): string {
-  return encodeURIComponent(v).replace(/%20/g, "+");
+function pfEncode(value: string): string {
+  // Must match PHP's urlencode() used by PayFast.
+  return encodeURIComponent(value.trim())
+    .replace(/[!'()*~]/g, (c) => "%" + c.charCodeAt(0).toString(16).toUpperCase())
+    .replace(/%[0-9a-f]{2}/g, (match) => match.toUpperCase())
+    .replace(/%20/g, "+");
 }
 
 async function callPayfastCancel(token: string): Promise<{ ok: boolean; detail: string }> {
