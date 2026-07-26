@@ -7,6 +7,8 @@ import { Loader2, Home } from "lucide-react";
 import BackHomeBar from "@/components/BackHomeBar";
 import { useLiveData } from "@/hooks/useLiveData";
 import LiveStatus from "@/components/LiveStatus";
+import LiveHealthBanner from "@/components/LiveHealthBanner";
+
 
 type ErrorRow = {
   id: string;
