@@ -14,7 +14,21 @@ type Mode = "signup" | "login";
 const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [mode, setMode] = useState<Mode>("signup");
+  // Show "Sign in" by default. Only open on the sign-up form when the person
+  // is arriving from a plan/trial link (or explicitly asks for it), so existing
+  // customers aren't confronted with "Create your account".
+  const [mode, setMode] = useState<Mode>(() => {
+    const params = new URLSearchParams(window.location.search);
+    const wanted = (params.get("mode") || "").toLowerCase();
+    if (wanted === "signup" || wanted === "login") return wanted as Mode;
+    let pendingPlan: string | null = null;
+    try {
+      pendingPlan = localStorage.getItem("inreco.pendingPlan");
+    } catch (_) {
+      pendingPlan = null;
+    }
+    return params.get("plan") || pendingPlan ? "signup" : "login";
+  });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
