@@ -2287,7 +2287,13 @@ if ('serviceWorker' in navigator && !isPreviewHost && !isInIframe) {
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredInstallPrompt = e;
+  window.deferredInstallPrompt = e;
+  if (window.__inrecoInstall) {
+    window.__inrecoInstall.event = e;
+    window.__inrecoInstall.listeners.forEach((fn) => { try { fn(); } catch (_) {} });
+  }
 });
+
 window.addEventListener('appinstalled', () => {
   deferredInstallPrompt = null;
   try { localStorage.setItem('inreco.pwaInstalled', '1'); } catch (_) {}
