@@ -264,7 +264,7 @@ export default function CompanyProfilePage() {
                 )}
                 <Input
                   type="file"
-                  accept="image/png,image/jpeg"
+                  accept="image/png,image/jpeg,image/webp"
                   className="max-w-xs"
                   onChange={(e) => e.target.files?.[0] && uploadLogo(e.target.files[0])}
                 />
