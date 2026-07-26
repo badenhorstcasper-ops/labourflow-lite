@@ -20,8 +20,17 @@ type Props = {
  */
 export default function BackHomeBar({ homeTo = "/", className = "" }: Props) {
   const navigate = useNavigate();
+  const clearPendingCheckout = () => {
+    try {
+      localStorage.removeItem("inreco.pendingPlan");
+      localStorage.removeItem("inreco.pendingPayment");
+    } catch (_) {}
+  };
   const goHome = () => {
-    if (homeTo === "/") window.location.assign("/");
+    if (homeTo === "/") {
+      clearPendingCheckout();
+      window.location.assign("/");
+    }
     else navigate(homeTo);
   };
   const goBack = () => {

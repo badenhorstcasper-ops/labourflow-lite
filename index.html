@@ -2518,14 +2518,6 @@ window.removeDevice = removeDevice;
         if (cta) cta.style.display = '';
       } catch (_) {}
     }
-    // If a paid plan was selected before sign-in, resume the PayFast checkout.
-    try {
-      const pending = localStorage.getItem('inreco.pendingPlan');
-      if (pending) {
-        localStorage.removeItem('inreco.pendingPlan');
-        setTimeout(() => window.payWithPayfast && window.payWithPayfast(pending), 400);
-      }
-    } catch (_) {}
   } else {
     // When launched from the installed PWA / home-screen shortcut, skip the
     // marketing landing and go straight into the app's login screen.
