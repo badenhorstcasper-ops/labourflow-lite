@@ -35,8 +35,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <header className="border-b bg-background/95">
         <div className="container mx-auto max-w-7xl px-4 py-3">
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-          <div className="flex min-w-0 shrink-0 items-center gap-2">
+          <div className="flex w-full min-w-0 flex-col gap-3">
+          <div className="flex min-w-0 items-center justify-center gap-2 md:justify-start">
             <Button variant="ghost" size="sm" onClick={goBack} aria-label="Go back">
               <ArrowLeft className="h-4 w-4" />
               <span className="hidden sm:inline">Back</span>
@@ -55,7 +55,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               </Link>
             )}
           </div>
-          <nav className="flex max-w-full flex-wrap items-center gap-1 xl:justify-end">
+          <nav className="-mx-4 flex max-w-none items-center gap-1 overflow-x-auto px-4 pb-1 md:mx-0 md:max-w-full md:flex-wrap md:justify-center md:overflow-visible md:px-0 md:pb-0">
             <Link className={linkCls("/app")} to="/app">CARA</Link>
             <Link className={linkCls("/dashboard")} to="/dashboard">Dashboard</Link>
             <Link className={linkCls("/account-app/generate")} to="/account-app/generate">Generate Docs</Link>
