@@ -88,6 +88,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <Link to="/privacy" className="hover:underline">Privacy</Link>
           <span aria-hidden>·</span>
           <Link to="/disclaimer" className="hover:underline">Disclaimer</Link>
+          <span aria-hidden>·</span>
+          <Link to="/get" className="hover:underline">Share / install the app</Link>
+
         </div>
       </footer>
     </div>
