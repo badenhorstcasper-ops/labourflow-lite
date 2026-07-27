@@ -312,7 +312,7 @@ function TopicChips({ busy, onPick }: { busy: boolean; onPick: (prompt: string) 
 
 
   const chipCls = "px-3 py-1.5 rounded-full border bg-card hover:bg-muted text-sm transition disabled:opacity-50";
-  const groupCls = "px-3 py-1.5 rounded-full border border-primary/40 bg-primary/10 hover:bg-primary/20 text-sm font-medium transition disabled:opacity-50";
+  const groupCls = "px-3 py-1.5 rounded-full border border-primary/40 bg-card hover:bg-muted text-sm font-medium transition disabled:opacity-50";
   const subCls = "px-3 py-1.5 rounded-full border bg-background hover:bg-muted text-xs transition disabled:opacity-50";
 
   const q = query.trim().toLowerCase();
