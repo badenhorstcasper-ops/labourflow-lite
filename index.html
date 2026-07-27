@@ -467,11 +467,15 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
 
       <div class="hero-badge">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        Powered by iNRECO
+        <span id="heroBadgeText">Powered by iNRECO</span>
       </div>
-      <h1 style="color:#fff;font-weight:800">Your <span class="blue-text">Pocket Labour</span>&nbsp;<br>Consultant.</h1>
-      <p class="hero-sub" style="color:#fff;font-weight:700">Instant AI-driven Pocket Labour compliance guidance from CARA. Warnings, hearings, CCMA, retrenchments — answered in seconds.</p>
-      <p class="hero-sub2">Built for South African employers. Always on. Always compliant.</p>
+      <h1 id="heroTitle" style="color:#fff;font-weight:800">Your <span class="blue-text">Pocket Labour</span>&nbsp;<br>Consultant.</h1>
+      <p class="hero-sub" id="heroSub" style="color:#fff;font-weight:700">Instant AI-driven Pocket Labour compliance guidance from CARA. Warnings, hearings, CCMA, retrenchments — answered in seconds.</p>
+      <p class="hero-sub2" id="heroSub2">Built for South African employers. Always on. Always compliant.</p>
+      <div id="industryPicker" style="display:flex;flex-wrap:wrap;gap:10px;margin:0 0 22px">
+        <a href="/restaurants" class="contact-chip" style="padding:7px 14px;font-size:.8rem;border:1px solid var(--border);border-radius:999px;text-decoration:none;color:var(--text)">🍽️ I run a restaurant</a>
+        <a href="/supermarkets" class="contact-chip" style="padding:7px 14px;font-size:.8rem;border:1px solid var(--border);border-radius:999px;text-decoration:none;color:var(--text)">🛒 I run a supermarket / retail store</a>
+      </div>
       <div class="btn-row">
         <button type="button" class="btn-primary" onclick="window.location.href='/pricing'">Get Started <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
         <button type="button" id="heroOpenApp" class="btn-primary" style="display:none" onclick="window.location.href='/app'">Open the app</button>
@@ -498,10 +502,114 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
     </div>
     <div class="hero-img-wrap">
       <div class="hero-img-glow"></div>
-      <img src="/__l5e/assets-v1/5cd70fc9-0d15-451f-b7b0-d5f130ae5cf1/inreco-hero.jpg" alt="iNRECO Pocket Consultant shown on a phone and laptop" width="1200" height="912" loading="lazy" style="width:100%;height:auto;border-radius:16px;box-shadow:0 24px 60px rgba(0,0,0,.55)" />
+      <img id="heroShot" src="/__l5e/assets-v1/5cd70fc9-0d15-451f-b7b0-d5f130ae5cf1/inreco-hero.jpg" alt="iNRECO Pocket Consultant shown on a phone and laptop" width="1200" height="912" loading="lazy" style="width:100%;height:auto;border-radius:16px;box-shadow:0 24px 60px rgba(0,0,0,.55)" />
     </div>
   </div>
 </section>
+
+<script>
+/* Industry landing pages: the SAME marketing page, with industry wording,
+   picture and questions swapped in based on the web address. */
+(function () {
+  var INDUSTRIES = {
+    '/restaurants': {
+      key: 'restaurants',
+      badge: 'For restaurants, cafés & takeaways',
+      title: 'Labour help for <span class="blue-text">restaurants</span>&nbsp;<br>and cafés.',
+      sub: 'Late arrivals, no-shows on a Saturday night, till and stock shortages, tips disputes — CARA gives you the correct, legal next step in seconds.',
+      sub2: 'Built for South African restaurant, café and takeaway owners. Always on. Always compliant.',
+      img: '/hero-restaurant.jpg',
+      imgAlt: 'A restaurant manager using iNRECO on his phone',
+      shareText: 'iNRECO Pocket Consultant — instant SA labour help for restaurants and cafés',
+      qaTitle: 'Restaurant questions we get <span class="blue-text">every week</span>.',
+      qaDesc: 'Real situations from South African kitchens and front-of-house teams.',
+      qa: [
+        ['A waiter did not pitch for his Saturday night shift. Can I fire him?', 'Not for one no-show. Treat it as absence without leave: ask for an explanation in writing, and if there is no valid reason issue a written warning. Dismissal only becomes fair after repeated offences with valid warnings on file, or after a proper hearing for prolonged desertion. CARA drafts the AWOL letter and the warning for you.'],
+        ['Money is short in the till after a shift. What may I do?', 'You may investigate and hold a disciplinary hearing, but you may not simply deduct the shortfall from wages. A deduction needs written consent for that specific loss, after a fair procedure, and it may not exceed a quarter of the pay. CARA sets out the steps and drafts the charge sheet.'],
+        ['Do I have to pay a waiter if the restaurant is dead quiet and I send them home?', 'If an employee reports for work as arranged, they must be paid for at least four hours, even if you send them home early. CARA explains how this works with your shift roster.'],
+        ['Can I make staff share tips or take a cut for breakages?', 'A tips pool is allowed if the arrangement is agreed and applied consistently. Docking tips or pay for breakages without written consent and a fair process is unlawful. CARA gives you a compliant tips and breakage policy.'],
+        ['A chef was caught eating stock without paying. Is that theft?', 'It can be, but you must run a fair disciplinary hearing first, with written charges and a chance for the person to state their side. CARA drafts the charges, the notice of hearing and the outcome letter, and can even arrange an independent chairperson.'],
+        ['How do I handle staff who work public holidays and long shifts?', 'Public holiday work is paid at double, or normal pay plus a day off if agreed. Overtime is at one and a half times, capped by the BCEA. CARA calculates it and shows you the rules in plain language.']
+      ]
+    },
+    '/supermarkets': {
+      key: 'supermarkets',
+      badge: 'For supermarkets & retail stores',
+      title: 'Labour help for <span class="blue-text">supermarkets</span>&nbsp;<br>and retail stores.',
+      sub: 'Stock loss, till shortages, cashier misconduct, shift disputes and union matters — CARA gives you the correct, legal next step in seconds.',
+      sub2: 'Built for South African supermarket, spaza and retail store owners. Always on. Always compliant.',
+      img: '/hero-retail.jpg',
+      imgAlt: 'A supermarket manager using iNRECO on the shop floor',
+      shareText: 'iNRECO Pocket Consultant — instant SA labour help for supermarkets and retail stores',
+      qaTitle: 'Retail questions we get <span class="blue-text">every week</span>.',
+      qaDesc: 'Real situations from South African supermarket and retail floors.',
+      qa: [
+        ['Stock keeps going missing. Can I dismiss the whole department?', 'Team or derivative misconduct dismissals are possible but very risky and easily overturned. Start with an investigation, then charge the individuals the evidence points to. CARA shows you the safe route and drafts the paperwork.'],
+        ['A cashier is short on her till. Can I take it off her wages?', 'Not automatically. You need a fair process and written consent for that specific loss, and a deduction may not exceed a quarter of her pay. CARA drafts the investigation and hearing documents.'],
+        ['Can I search staff bags when they leave the store?', 'Yes, if searches are part of an agreed, written policy, applied to everyone consistently and done respectfully by a same-gender searcher. CARA supplies a compliant search policy.'],
+        ['An employee brought a sick note that looks fake. What now?', 'Use the Sick Note Verification tool in the app: it checks whether the practitioner is genuinely registered and builds a locked record you can rely on. If it is false, CARA generates the disciplinary charges.'],
+        ['Union members want a meeting during trading hours. Must I allow it?', 'Recognised unions have organisational rights, but meetings are normally outside working time or by arrangement. CARA explains what you must allow and what you may refuse.'],
+        ['Sunday and public holiday shifts — what must I pay?', 'Sunday work is one and a half times for ordinary Sunday workers and double for others; public holidays are double. CARA calculates it and puts it in writing for your roster.']
+      ]
+    }
+  };
+
+  var path = window.location.pathname.replace(/\/+$/, '') || '/';
+  var ind = INDUSTRIES[path];
+  window.INRECO_INDUSTRY = ind ? ind.key : '';
+  window.INRECO_SHARE_PATH = ind ? path : '/get';
+  if (!ind) return;
+
+  function set(id, html) { var el = document.getElementById(id); if (el) el.innerHTML = html; }
+  set('heroBadgeText', ind.badge);
+  set('heroTitle', ind.title);
+  set('heroSub', ind.sub);
+  set('heroSub2', ind.sub2);
+  var picker = document.getElementById('industryPicker');
+  if (picker) picker.style.display = 'none';
+
+  document.title = 'iNRECO Pocket Consultant — ' + ind.badge;
+  var og = document.querySelector('meta[property="og:title"]');
+  if (og) og.setAttribute('content', 'iNRECO Pocket Consultant — ' + ind.badge);
+  var ogd = document.querySelector('meta[property="og:description"]');
+  if (ogd) ogd.setAttribute('content', ind.sub);
+  var ogu = document.querySelector('meta[property="og:url"]');
+  if (ogu) ogu.setAttribute('content', 'https://app.inreco.co.za' + path);
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var shot = document.getElementById('heroShot');
+    if (shot) { shot.src = ind.img; shot.alt = ind.imgAlt; }
+
+    var sec = document.getElementById('industry-qa');
+    var list = document.getElementById('industryQaList');
+    if (sec && list) {
+      sec.style.display = '';
+      set('industryQaTitle', ind.qaTitle);
+      set('industryQaDesc', ind.qaDesc);
+      list.innerHTML = ind.qa.map(function (row) {
+        return '<details style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px">' +
+          '<summary style="cursor:pointer;font-weight:700;color:var(--text)">' + row[0] + '</summary>' +
+          '<p style="margin:10px 0 0;color:var(--muted);line-height:1.75">' + row[1] + '</p></details>';
+      }).join('');
+    }
+
+    /* Share links keep people on the industry page */
+    var url = 'https://app.inreco.co.za' + path;
+    var msg = ind.shareText + ': ' + url;
+    document.querySelectorAll('a[href*="wa.me"]').forEach(function (a) {
+      a.href = 'https://wa.me/?text=' + encodeURIComponent(msg);
+    });
+    document.querySelectorAll('a[href^="mailto:?subject=iNRECO"]').forEach(function (a) {
+      a.href = 'mailto:?subject=' + encodeURIComponent('iNRECO — ' + ind.badge) + '&body=' + encodeURIComponent(msg);
+    });
+    document.querySelectorAll('button[onclick*="clipboard.writeText"]').forEach(function (b) {
+      b.setAttribute('onclick', "navigator.clipboard.writeText('" + url + "');this.textContent='\u2713 Copied'");
+    });
+  });
+})();
+</script>
+
+
 
 <section id="features" class="features-bg">
   <div class="section-inner">
@@ -678,7 +786,19 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
     </div>
 </section>
 
+<section id="industry-qa" class="features-bg" style="display:none;border-top:1px solid rgba(148,163,184,.15)">
+  <div class="section-inner">
+    <div class="features-header">
+      <p class="section-label" id="industryQaLabel">Common questions</p>
+      <h2 id="industryQaTitle">Questions we get <span class="blue-text">every week</span>.</h2>
+      <p class="section-desc" id="industryQaDesc"></p>
+    </div>
+    <div id="industryQaList" style="max-width:820px;margin:0 auto;display:flex;flex-direction:column;gap:12px"></div>
+  </div>
+</section>
+
 <section class="cta-section" id="contact">
+
   <div class="cta-glow"></div>
   <div style="position:relative;max-width:680px;margin:0 auto">
     <img src="/__l5e/assets-v1/4aba35d0-6c17-4d33-904c-ff51123648e9/inreco-logo-cut.png" alt="iNRECO logo" width="795" height="943" style="width:170px;height:auto;display:block;margin:0 auto 24px" loading="lazy" />
@@ -895,7 +1015,7 @@ window.__IS_REACT_ROUTE__ = (() => {
   // The legacy marketing page owns ONLY the home address. Everything else is
   // handled by the React app (including unknown addresses, so the built-in
   // "page not found" screen can show instead of the marketing page).
-  return !(p === '/' || p === '' || p === '/index.html');
+  return !(p === '/' || p === '' || p === '/index.html' || p === '/restaurants' || p === '/supermarkets');
 })();
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -2203,7 +2323,7 @@ window.openUpgrade = openUpgrade; window.closeUpgrade = closeUpgrade;
 window.selectPlan = selectPlan; window.payWithPayfast = payWithPayfast;
 
 // --- Sharing ---
-const APP_URL = 'https://inrecoapp.inreco.co.za';
+const APP_URL = 'https://app.inreco.co.za' + (window.INRECO_SHARE_PATH && window.INRECO_SHARE_PATH !== '/get' ? window.INRECO_SHARE_PATH : '');
 const APP_SHARE_MSG = 'I use iNRECO for instant IR guidance — try it free:';
 const APP_SHARE_TAGLINE = 'Get instant IR guidance in your pocket — powered by iNRECO';
 
@@ -2374,7 +2494,7 @@ window.installAppNow = async function () {
   showInstallModal();
 };
 window.shareApp = async function () {
-  var url = 'https://app.inreco.co.za/get';
+  var url = 'https://app.inreco.co.za' + (window.INRECO_SHARE_PATH || '/get');
   try { var r = localStorage.getItem('inreco.ref'); if (r) url += '?ref=' + encodeURIComponent(r); } catch (_) {}
   var text = 'iNRECO Pocket Consultant \u2014 instant South African labour advice and ready-made HR documents on your phone.';
   if (navigator.share) {

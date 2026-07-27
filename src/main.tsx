@@ -25,7 +25,7 @@ initPwaInstall();
 // The legacy marketing page owns ONLY the home address ("/"). React handles
 // every other address, including unknown ones so the "page not found" screen
 // can appear instead of the marketing page.
-const LEGACY_ROUTES = ["/", "", "/index.html"];
+const LEGACY_ROUTES = ["/", "", "/index.html", "/restaurants", "/supermarkets"];
 
 // A password-reset (or other recovery) link from an email arrives at the home
 // address with the one-time code attached. The marketing page must NOT swallow
