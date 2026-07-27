@@ -38,6 +38,8 @@ import AdminOverview from "@/pages/AdminOverview";
 import AdminPartnerDecision from "@/pages/AdminPartnerDecision";
 import AdminMarketing from "@/pages/AdminMarketing";
 import AdminHealth from "@/pages/AdminHealth";
+import GetApp from "@/pages/GetApp";
+
 
 
 const queryClient = new QueryClient();
@@ -67,6 +69,8 @@ function AppRoutes() {
       {/* Open routes */}
       <Route path="/" element={<Index />} />
       <Route path="/pricing" element={<Pricing />} />
+      <Route path="/get" element={<GetApp />} />
+
       <Route path="/auth" element={<Auth />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/payment-success" element={<PaymentSuccess />} />

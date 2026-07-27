@@ -194,22 +194,28 @@ const Pricing = () => {
   const canSubmit = Boolean(checkoutEmail);
   const billingDate = trialBillingDate();
 
-  async function startTrial(plan: Plan) {
+  async function startCheckout(plan: Plan, mode: "trial" | "now" = "trial") {
     if (!checkoutEmail) {
-      setCheckoutError("Please enter your email address before starting the trial.");
+      setCheckoutError("Please enter your email address before continuing.");
       return;
     }
 
-    setBusyPlan(plan.name);
+    setBusyPlan(`${plan.name}:${mode}`);
     setCheckoutError(null);
     try {
       const { data, error } = await supabase.functions.invoke<CheckoutResponse>("payfast-checkout", {
-        body: { planName: plan.name, email: checkoutEmail, referralCode: referralCode || undefined },
+        body: {
+          planName: plan.name,
+          email: checkoutEmail,
+          mode,
+          referralCode: referralCode || undefined,
+        },
       });
       if (error) throw new Error(await functionErrorMessage(error));
       if (!data?.actionUrl || !data.fields) {
         throw new Error("Checkout could not start. Please try again.");
       }
+
 
       try {
         localStorage.setItem("inreco.pendingInstallPrompt", "1");
@@ -342,22 +348,39 @@ const Pricing = () => {
                   )}
 
                   {plan.kind === "paid" && (
-                    <div>
+                    <div className="space-y-2">
                       <Button
                         type="button"
                         className="w-full"
                         variant={plan.highlight ? "default" : "outline"}
                         disabled={!canSubmit || busyPlan !== null}
-                        onClick={() => startTrial(plan)}
+                        onClick={() => startCheckout(plan, "trial")}
                       >
-                        {busyPlan === plan.name ? "Opening PayFast…" : canSubmit ? plan.cta : "Enter your email above"}
+                        {busyPlan === `${plan.name}:trial`
+                          ? "Opening PayFast…"
+                          : canSubmit
+                            ? "Start 7-day free trial"
+                            : "Enter your email above"}
                       </Button>
-                      <p className="mt-2 text-center text-[11px] text-muted-foreground">
-                        No charge today. First debit of {plan.priceLabel} on{" "}
-                        {new Date(billingDate).toLocaleDateString("en-ZA")}.
+                      <Button
+                        type="button"
+                        className="w-full"
+                        variant="secondary"
+                        disabled={!canSubmit || busyPlan !== null}
+                        onClick={() => startCheckout(plan, "now")}
+                      >
+                        {busyPlan === `${plan.name}:now`
+                          ? "Opening PayFast…"
+                          : `Join now & pay ${plan.priceLabel}`}
+                      </Button>
+                      <p className="text-center text-[11px] text-muted-foreground">
+                        Free trial: no charge today, first debit of {plan.priceLabel} on{" "}
+                        {new Date(billingDate).toLocaleDateString("en-ZA")}. Join now: billed
+                        today, then monthly.
                       </p>
                     </div>
                   )}
+
                 </CardContent>
               </Card>
             );

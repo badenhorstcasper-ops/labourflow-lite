@@ -1,59 +1,41 @@
-I’m sorry. You are right to be angry. The app must be tested on the same kind of live path your users touch, not only inside the preview.
+## What I'll fix
 
-## What I found so far
+### 1. Top bar not lining up (live site)
+On the app pages the menu row sits in its own scrolling strip, so on wide screens it slides to the right and the iNRECO logo/Back/Home get pushed out of view (that's what your screenshot shows). I'll make the menu wrap onto a second line instead of sliding, and keep the left side (Back, Home, iNRECO) locked in place and aligned with the page content below it.
 
-1. **The top app bar is not built for the current number of links.**
-   - The header uses a narrow content width while the links need more room.
-   - On wide screens it wraps/overflows awkwardly instead of lining up cleanly with the main app area.
+### 2. The official app icon
+Use the artwork you attached as the one true app icon everywhere: the installed shortcut (all sizes, including the rounded "maskable" version phones use), the browser tab icon, the iPhone home-screen icon, and the picture that shows up when a link is shared.
 
-2. **The “Home” loop is very likely caused by saved checkout state after PayFast is cancelled.**
-   - The landing page still checks for a saved “pending plan”.
-   - If someone started checkout, cancelled PayFast, then clicks Home, the landing page can briefly show and then restart the old checkout path again.
-   - That matches your “home page for maybe 3 seconds and then it changes again” description.
+### 3. "Install the app" on the landing page
+Add the one-tap install button in three sensible spots on the home page: in the top hero area, next to the pricing block, and in the footer. On iPhone it shows the two short steps instead (Apple gives no install button). If the app is already installed, the buttons quietly disappear.
 
-3. **The cancellation page does not clear the unfinished checkout state.**
-   - It lets the user go back to plans, but it does not fully reset the “I was in the middle of paying” memory in the browser.
+### 4. Share the app with friends
+Add a "Share iNRECO" button next to each install button and inside the app (so subscribers can pass it on). Tapping it opens the phone's normal share sheet (WhatsApp, SMS, email) with a short message and a special link, e.g. `app.inreco.co.za/get`. On a computer it copies the link and confirms.
 
-## Fix plan
+New public page at `/get`:
+- Shows the icon, one-line description, and a big Install button.
+- Anyone opening it who is not a paying subscriber is sent straight to the plan choices (pay now or start the free trial) — exactly as you asked.
+- If the person who shared has a partner/referral code, it rides along on the link so they get credit.
 
-### 1. Stop the Home button from restarting old payment attempts
-- When a user lands on **Payment cancelled**, clear the saved pending payment details from the browser.
-- Stop the landing page from auto-resuming PayFast checkout just because an old plan is still saved.
-- Keep the useful saved email only where it helps the user, but do not let it force navigation or payment.
+Also: when the installed app is opened by someone with no plan, it goes straight to the plan chooser instead of bouncing around.
 
-### 2. Make Home always stay on the landing page
-- Keep the landing page as the true front door.
-- Make the pricing Home button do a clean full-page load to `/`.
-- Make sure a signed-in user with no subscription is not silently pushed back into `/pricing?reason=no_subscription` unless they actively click **Open the app** or visit an app-only page.
+### 5. WhatsApp / link previews
+Add the missing social preview details to the home page and `/get`: title, one-line description and the icon image, so any link shared on WhatsApp shows the logo and a proper card. (Right now there are none, so shares look blank.)
 
-### 3. Fix the top navigation layout
-- Rework the app header so the brand/back/home area and the links align with the same page width.
-- Allow the links to scroll neatly on smaller screens instead of wrapping badly.
-- Keep the owner/admin links visible for admin users, but make them fit professionally.
+### 6. Two buttons on every plan: "Start 7-day free trial" and "Join now"
+On both the landing page plan cards and the `/pricing` page each paid plan gets two clear buttons:
+- **Start 7-day free trial** — nothing charged today, first charge in 7 days (what happens now).
+- **Join now & pay** — charged today and the monthly billing starts immediately.
 
-### 4. Test the exact unhappy path you described
-I will test and record the result for each step:
+The checkout service is updated to accept which of the two the person picked and to set the amount and first billing date accordingly, with the plan name and price recorded the same way as today so the partner commission tracking still works.
 
-```text
-Incognito-style fresh browser
-→ open app.inreco-style landing page
-→ pricing
-→ start checkout
-→ simulate/cancel return to payment-cancelled page
-→ click Home
-→ confirm it stays on landing page and does not jump back
-```
+### 7. Whole-app layout and ease-of-use pass
+I'll walk the real live pages (home, plans, sign-in, CARA, dashboard, documents, generate, verify sick note, profile, billing, partner and admin pages) on both phone and desktop sizes, and report back a short list of anything cluttered, confusing, cut off or dead-ending — with the small, safe fixes applied (consistent page widths, working Back/Home everywhere, clear next-step buttons). Anything bigger I'll list as a suggestion for you to approve rather than change on my own.
 
-### 5. Test the logged-in app header
-I will also test:
-
-```text
-Open CARA/app page
-→ check top links line up
-→ check desktop width
-→ check smaller/mobile width
-→ confirm no link text is black-on-blue or misaligned
-```
-
-### 6. What I will not claim without proof
-I will not say “fixed end-to-end” unless I have checked the page path, browser state, and visible result after the fix.
+## Technical notes
+- `src/components/AppShell.tsx`: replace the horizontally scrolling `nav` with a wrapping flex row; align header container to the same `max-w-7xl` as `main`.
+- Add attached artwork via `lovable-assets` and regenerate `public/icon-192.png`, `icon-512.png`, `icon-maskable-{192,512}.png`, `favicon.png`; keep `public/manifest.json` pointing at them.
+- New `src/components/ShareAppButton.tsx` using `navigator.share` with clipboard fallback; new public route `/get` (`src/pages/GetApp.tsx`) added to `src/App.tsx`/`src/main.tsx` route allowlist, redirecting non-entitled visitors to `/pricing`.
+- Add `og:title/description/image/url`, `twitter:card=summary_large_image` to `index.html` head (absolute `https://app.inreco.co.za/icon-512.png`).
+- `supabase/functions/payfast-checkout/index.ts`: accept `mode: "trial" | "now"`; for `now` set `amount` to the plan price and `billing_date` to today; keep signature logic unchanged. Redeploy to live.
+- Verify with Playwright against the live domain plus a Lighthouse-style installability check.

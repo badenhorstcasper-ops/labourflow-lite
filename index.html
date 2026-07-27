@@ -435,6 +435,18 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
 <meta name="apple-mobile-web-app-title" content="iNRECO">
 <link rel="icon" type="image/png" href="/favicon.png">
 <link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png">
+<meta property="og:site_name" content="iNRECO">
+<meta property="og:title" content="iNRECO Pocket Consultant — SA labour advice in your pocket">
+<meta property="og:description" content="Instant South African labour compliance guidance from CARA, plus ready-made warnings, hearings and HR documents.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://app.inreco.co.za/">
+<meta property="og:image" content="https://app.inreco.co.za/icon-512.png">
+<meta property="og:image:width" content="512">
+<meta property="og:image:height" content="512">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="iNRECO Pocket Consultant">
+<meta name="twitter:description" content="Instant South African labour compliance guidance from CARA.">
+<meta name="twitter:image" content="https://app.inreco.co.za/icon-512.png">
 </head>
 <body>
 
@@ -460,13 +472,17 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
         <button type="button" id="heroOpenApp" class="btn-primary" style="display:none" onclick="window.location.href='/app'">Open the app</button>
         <a href="#features" class="btn-ghost">See Features</a>
       </div>
+    <div class="inreco-getrow" style="margin-top:26px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:center">
+      <button type="button" class="btn-primary" onclick="installAppNow()"><img src="/icon-192.png" alt="" width="20" height="20" style="border-radius:5px"> Install iNRECO on your device</button>
+      <button type="button" class="btn-ghost" onclick="shareApp()">Share iNRECO with a friend</button>
+    </div>
     <div style="margin-top:24px;display:flex;flex-wrap:wrap;gap:10px;align-items:center">
       <span style="font-size:.8rem;color:var(--muted)">Share iNRECO:</span>
-      <a href="https://wa.me/?text=Get%20instant%20Pocket%20Labour%20guidance%20from%20CARA%20%E2%80%94%20your%20personal%20Pocket%20Labour%20consultant%3A%20https%3A%2F%2Finrecoapp.inreco.co.za" target="_blank" class="contact-chip" style="padding:7px 14px;font-size:.8rem;background:#16a34a;border-color:#16a34a;color:#fff">
+      <a href="https://wa.me/?text=Get%20instant%20Pocket%20Labour%20guidance%20from%20CARA%20%E2%80%94%20your%20personal%20Pocket%20Labour%20consultant%3A%20https%3A%2F%2Fapp.inreco.co.za%2Fget" target="_blank" class="contact-chip" style="padding:7px 14px;font-size:.8rem;background:#16a34a;border-color:#16a34a;color:#fff">
         <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
         WhatsApp
       </a>
-      <a href="mailto:?subject=iNRECO%20%E2%80%94%20Your%20Pocket%20Labour%20Consultant&body=Get%20instant%20Pocket%20Labour%20guidance%20from%20CARA%3A%20https%3A%2F%2Finrecoapp.inreco.co.za" class="contact-chip" style="padding:7px 14px;font-size:.8rem">
+      <a href="mailto:?subject=iNRECO%20%E2%80%94%20Your%20Pocket%20Labour%20Consultant&body=Get%20instant%20Pocket%20Labour%20guidance%20from%20CARA%3A%20https%3A%2F%2Fapp.inreco.co.za%2Fget" class="contact-chip" style="padding:7px 14px;font-size:.8rem">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
         Email
       </a>
@@ -576,6 +592,10 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
     <h2 style="text-align:center">Start Free</h2>
     <p class="section-desc" style="text-align:center;margin:0 auto 8px">Every paid plan starts with a 7-day free trial — no charge during the trial, cancel anytime.</p>
     <p style="text-align:center;font-size:.8rem;color:rgba(148,163,184,.5)">Enterprise: pay 10 months, get 12 — save 17% annually.</p>
+    <div class="inreco-getrow" style="margin-top:26px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:center">
+      <button type="button" class="btn-primary" onclick="installAppNow()"><img src="/icon-192.png" alt="" width="20" height="20" style="border-radius:5px"> Install iNRECO on your device</button>
+      <button type="button" class="btn-ghost" onclick="shareApp()">Share iNRECO with a friend</button>
+    </div>
     <div class="pricing-grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-top:48px">
 
       <div class="price-card">
@@ -589,6 +609,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
           <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>CARA AI adviser</li>
         </ul>
         <button type="button" class="btn-price" onclick="window.location.href='/pricing'">Start 7-day free trial</button>
+        <button type="button" class="btn-price" style="margin-top:8px;background:transparent;border:1px solid rgba(255,255,255,.25);color:#fff" onclick="window.location.href='/pricing'">Join now &amp; pay</button>
       </div>
 
       <!-- (old "Solo (duplicate)" card removed; Solo is now the first card above) -->
@@ -606,6 +627,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
           <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>CCMA tracker</li>
         </ul>
         <button type="button" class="btn-price" onclick="window.location.href='/pricing'">Start 7-day free trial</button>
+        <button type="button" class="btn-price" style="margin-top:8px;background:transparent;border:1px solid rgba(255,255,255,.25);color:#fff" onclick="window.location.href='/pricing'">Join now &amp; pay</button>
       </div>
 
       <div class="price-card">
@@ -618,6 +640,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
           <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>WhatsApp support</li>
         </ul>
         <button type="button" class="btn-price" onclick="window.location.href='/pricing'">Start 7-day free trial</button>
+        <button type="button" class="btn-price" style="margin-top:8px;background:transparent;border:1px solid rgba(255,255,255,.25);color:#fff" onclick="window.location.href='/pricing'">Join now &amp; pay</button>
       </div>
 
       <div class="price-card">
@@ -631,6 +654,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
           <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>WhatsApp support</li>
         </ul>
         <button type="button" class="btn-price" onclick="window.location.href='/pricing'">Start 7-day free trial</button>
+        <button type="button" class="btn-price" style="margin-top:8px;background:transparent;border:1px solid rgba(255,255,255,.25);color:#fff" onclick="window.location.href='/pricing'">Join now &amp; pay</button>
       </div>
 
     </div>
@@ -639,7 +663,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
     <div style="margin-top:40px;text-align:center">
       <p style="font-size:.85rem;color:var(--muted);margin-bottom:16px">Know an employer who needs this? Share iNRECO.</p>
       <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:10px">
-        <a href="https://wa.me/?text=Get%20instant%20Pocket%20Labour%20guidance%20from%20CARA%20%E2%80%94%20your%20personal%20Pocket%20Labour%20consultant%3A%20https%3A%2F%2Finrecoapp.inreco.co.za" target="_blank" class="contact-chip" style="background:#16a34a;border-color:#16a34a;color:#fff">
+        <a href="https://wa.me/?text=Get%20instant%20Pocket%20Labour%20guidance%20from%20CARA%20%E2%80%94%20your%20personal%20Pocket%20Labour%20consultant%3A%20https%3A%2F%2Fapp.inreco.co.za%2Fget" target="_blank" class="contact-chip" style="background:#16a34a;border-color:#16a34a;color:#fff">
           <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
           Share on WhatsApp
         </a>
@@ -846,6 +870,11 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
   </div>
 </div>
 
+<div style="padding:8px 20px 24px">
+    <div class="inreco-getrow" style="margin-top:26px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:center">
+      <button type="button" class="btn-primary" onclick="installAppNow()"><img src="/icon-192.png" alt="" width="20" height="20" style="border-radius:5px"> Install iNRECO on your device</button>
+      <button type="button" class="btn-ghost" onclick="shareApp()">Share iNRECO with a friend</button>
+    </div></div>
 <footer class="app-footer"><a href="/terms" style="color:inherit;text-decoration:underline">Terms</a> · <a href="/privacy" style="color:inherit;text-decoration:underline">Privacy</a> · <a href="/disclaimer" style="color:inherit;text-decoration:underline">Disclaimer</a> · <a href="/partner/apply" style="color:inherit;text-decoration:underline">Become a partner</a></footer>
 
 <script type="module">
@@ -2330,6 +2359,24 @@ function hideInstallModal() {
 }
 window.hideInstallModal = hideInstallModal;
 
+
+window.installAppNow = async function () {
+  if (window.deferredInstallPrompt || (window.__inrecoInstall && window.__inrecoInstall.event)) {
+    try { await window.promptInstall(); return; } catch (_) {}
+  }
+  showInstallModal();
+};
+window.shareApp = async function () {
+  var url = 'https://app.inreco.co.za/get';
+  try { var r = localStorage.getItem('inreco.ref'); if (r) url += '?ref=' + encodeURIComponent(r); } catch (_) {}
+  var text = 'iNRECO Pocket Consultant \u2014 instant South African labour advice and ready-made HR documents on your phone.';
+  if (navigator.share) {
+    try { await navigator.share({ title: 'iNRECO Pocket Consultant', text: text, url: url }); return; } catch (_) {}
+  }
+  try { await navigator.clipboard.writeText(text + ' ' + url); alert('Link copied \u2014 paste it into WhatsApp or a message.'); }
+  catch (_) { window.prompt('Copy this link and send it to a friend:', url); }
+};
+
 window.promptInstall = async function () {
   if (deferredInstallPrompt) {
     try {
@@ -2526,7 +2573,12 @@ window.removeDevice = removeDevice;
     }
   } else {
     // When launched from the installed PWA / home-screen shortcut, skip the
-    // marketing landing and go straight into the app's login screen.
+    // marketing landing. Someone who has never signed in here (for example a
+    // friend who installed a shared shortcut) goes straight to the plan
+    // choices; everyone else sees the login screen.
+    let hasAccount = false;
+    try { hasAccount = localStorage.getItem('inreco.hasAccount') === '1'; } catch (_) {}
+    if (launchedAsApp && !hasAccount) { window.location.href = '/pricing'; return; }
     showScreen(launchedAsApp ? 'login' : 'welcome');
   }
   // Seed history so first back press triggers popstate instead of leaving
@@ -2536,6 +2588,7 @@ window.removeDevice = removeDevice;
 
 supabase.auth.onAuthStateChange((_event, session) => {
   if (!session) { currentUser=null; currentProfile=null; }
+  else { try { localStorage.setItem('inreco.hasAccount', '1'); } catch (_) {} }
 });
 </script>
 

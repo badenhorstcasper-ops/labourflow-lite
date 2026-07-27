@@ -55,7 +55,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               </Link>
             )}
           </div>
-          <nav className="-mx-1 flex max-w-full items-center gap-1 overflow-x-auto whitespace-nowrap px-1 pb-1 xl:mx-0 xl:justify-end xl:pb-0">
+          <nav className="flex max-w-full flex-wrap items-center gap-1 xl:justify-end">
             <Link className={linkCls("/app")} to="/app">CARA</Link>
             <Link className={linkCls("/dashboard")} to="/dashboard">Dashboard</Link>
             <Link className={linkCls("/account-app/generate")} to="/account-app/generate">Generate Docs</Link>
@@ -88,6 +88,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <Link to="/privacy" className="hover:underline">Privacy</Link>
           <span aria-hidden>·</span>
           <Link to="/disclaimer" className="hover:underline">Disclaimer</Link>
+          <span aria-hidden>·</span>
+          <Link to="/get" className="hover:underline">Share / install the app</Link>
+
         </div>
       </footer>
     </div>
