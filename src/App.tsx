@@ -69,6 +69,8 @@ function AppRoutes() {
       {/* Open routes */}
       <Route path="/" element={<Index />} />
       <Route path="/pricing" element={<Pricing />} />
+      <Route path="/get" element={<GetApp />} />
+
       <Route path="/auth" element={<Auth />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/payment-success" element={<PaymentSuccess />} />
