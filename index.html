@@ -2323,7 +2323,7 @@ window.openUpgrade = openUpgrade; window.closeUpgrade = closeUpgrade;
 window.selectPlan = selectPlan; window.payWithPayfast = payWithPayfast;
 
 // --- Sharing ---
-const APP_URL = 'https://inrecoapp.inreco.co.za';
+const APP_URL = 'https://app.inreco.co.za' + (window.INRECO_SHARE_PATH && window.INRECO_SHARE_PATH !== '/get' ? window.INRECO_SHARE_PATH : '');
 const APP_SHARE_MSG = 'I use iNRECO for instant IR guidance — try it free:';
 const APP_SHARE_TAGLINE = 'Get instant IR guidance in your pocket — powered by iNRECO';
 
@@ -2494,7 +2494,7 @@ window.installAppNow = async function () {
   showInstallModal();
 };
 window.shareApp = async function () {
-  var url = 'https://app.inreco.co.za/get';
+  var url = 'https://app.inreco.co.za' + (window.INRECO_SHARE_PATH || '/get');
   try { var r = localStorage.getItem('inreco.ref'); if (r) url += '?ref=' + encodeURIComponent(r); } catch (_) {}
   var text = 'iNRECO Pocket Consultant \u2014 instant South African labour advice and ready-made HR documents on your phone.';
   if (navigator.share) {
