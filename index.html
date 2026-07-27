@@ -507,6 +507,110 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
   </div>
 </section>
 
+<script>
+/* Industry landing pages: the SAME marketing page, with industry wording,
+   picture and questions swapped in based on the web address. */
+(function () {
+  var INDUSTRIES = {
+    '/restaurants': {
+      key: 'restaurants',
+      badge: 'For restaurants, cafés & takeaways',
+      title: 'Labour help for <span class="blue-text">restaurants</span>&nbsp;<br>and cafés.',
+      sub: 'Late arrivals, no-shows on a Saturday night, till and stock shortages, tips disputes — CARA gives you the correct, legal next step in seconds.',
+      sub2: 'Built for South African restaurant, café and takeaway owners. Always on. Always compliant.',
+      img: '/hero-restaurant.jpg',
+      imgAlt: 'A restaurant manager using iNRECO on his phone',
+      shareText: 'iNRECO Pocket Consultant — instant SA labour help for restaurants and cafés',
+      qaTitle: 'Restaurant questions we get <span class="blue-text">every week</span>.',
+      qaDesc: 'Real situations from South African kitchens and front-of-house teams.',
+      qa: [
+        ['A waiter did not pitch for his Saturday night shift. Can I fire him?', 'Not for one no-show. Treat it as absence without leave: ask for an explanation in writing, and if there is no valid reason issue a written warning. Dismissal only becomes fair after repeated offences with valid warnings on file, or after a proper hearing for prolonged desertion. CARA drafts the AWOL letter and the warning for you.'],
+        ['Money is short in the till after a shift. What may I do?', 'You may investigate and hold a disciplinary hearing, but you may not simply deduct the shortfall from wages. A deduction needs written consent for that specific loss, after a fair procedure, and it may not exceed a quarter of the pay. CARA sets out the steps and drafts the charge sheet.'],
+        ['Do I have to pay a waiter if the restaurant is dead quiet and I send them home?', 'If an employee reports for work as arranged, they must be paid for at least four hours, even if you send them home early. CARA explains how this works with your shift roster.'],
+        ['Can I make staff share tips or take a cut for breakages?', 'A tips pool is allowed if the arrangement is agreed and applied consistently. Docking tips or pay for breakages without written consent and a fair process is unlawful. CARA gives you a compliant tips and breakage policy.'],
+        ['A chef was caught eating stock without paying. Is that theft?', 'It can be, but you must run a fair disciplinary hearing first, with written charges and a chance for the person to state their side. CARA drafts the charges, the notice of hearing and the outcome letter, and can even arrange an independent chairperson.'],
+        ['How do I handle staff who work public holidays and long shifts?', 'Public holiday work is paid at double, or normal pay plus a day off if agreed. Overtime is at one and a half times, capped by the BCEA. CARA calculates it and shows you the rules in plain language.']
+      ]
+    },
+    '/supermarkets': {
+      key: 'supermarkets',
+      badge: 'For supermarkets & retail stores',
+      title: 'Labour help for <span class="blue-text">supermarkets</span>&nbsp;<br>and retail stores.',
+      sub: 'Stock loss, till shortages, cashier misconduct, shift disputes and union matters — CARA gives you the correct, legal next step in seconds.',
+      sub2: 'Built for South African supermarket, spaza and retail store owners. Always on. Always compliant.',
+      img: '/hero-retail.jpg',
+      imgAlt: 'A supermarket manager using iNRECO on the shop floor',
+      shareText: 'iNRECO Pocket Consultant — instant SA labour help for supermarkets and retail stores',
+      qaTitle: 'Retail questions we get <span class="blue-text">every week</span>.',
+      qaDesc: 'Real situations from South African supermarket and retail floors.',
+      qa: [
+        ['Stock keeps going missing. Can I dismiss the whole department?', 'Team or derivative misconduct dismissals are possible but very risky and easily overturned. Start with an investigation, then charge the individuals the evidence points to. CARA shows you the safe route and drafts the paperwork.'],
+        ['A cashier is short on her till. Can I take it off her wages?', 'Not automatically. You need a fair process and written consent for that specific loss, and a deduction may not exceed a quarter of her pay. CARA drafts the investigation and hearing documents.'],
+        ['Can I search staff bags when they leave the store?', 'Yes, if searches are part of an agreed, written policy, applied to everyone consistently and done respectfully by a same-gender searcher. CARA supplies a compliant search policy.'],
+        ['An employee brought a sick note that looks fake. What now?', 'Use the Sick Note Verification tool in the app: it checks whether the practitioner is genuinely registered and builds a locked record you can rely on. If it is false, CARA generates the disciplinary charges.'],
+        ['Union members want a meeting during trading hours. Must I allow it?', 'Recognised unions have organisational rights, but meetings are normally outside working time or by arrangement. CARA explains what you must allow and what you may refuse.'],
+        ['Sunday and public holiday shifts — what must I pay?', 'Sunday work is one and a half times for ordinary Sunday workers and double for others; public holidays are double. CARA calculates it and puts it in writing for your roster.']
+      ]
+    }
+  };
+
+  var path = window.location.pathname.replace(/\/+$/, '') || '/';
+  var ind = INDUSTRIES[path];
+  window.INRECO_INDUSTRY = ind ? ind.key : '';
+  window.INRECO_SHARE_PATH = ind ? path : '/get';
+  if (!ind) return;
+
+  function set(id, html) { var el = document.getElementById(id); if (el) el.innerHTML = html; }
+  set('heroBadgeText', ind.badge);
+  set('heroTitle', ind.title);
+  set('heroSub', ind.sub);
+  set('heroSub2', ind.sub2);
+  var picker = document.getElementById('industryPicker');
+  if (picker) picker.style.display = 'none';
+
+  document.title = 'iNRECO Pocket Consultant — ' + ind.badge;
+  var og = document.querySelector('meta[property="og:title"]');
+  if (og) og.setAttribute('content', 'iNRECO Pocket Consultant — ' + ind.badge);
+  var ogd = document.querySelector('meta[property="og:description"]');
+  if (ogd) ogd.setAttribute('content', ind.sub);
+  var ogu = document.querySelector('meta[property="og:url"]');
+  if (ogu) ogu.setAttribute('content', 'https://app.inreco.co.za' + path);
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var shot = document.getElementById('heroShot');
+    if (shot) { shot.src = ind.img; shot.alt = ind.imgAlt; }
+
+    var sec = document.getElementById('industry-qa');
+    var list = document.getElementById('industryQaList');
+    if (sec && list) {
+      sec.style.display = '';
+      set('industryQaTitle', ind.qaTitle);
+      set('industryQaDesc', ind.qaDesc);
+      list.innerHTML = ind.qa.map(function (row) {
+        return '<details style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px">' +
+          '<summary style="cursor:pointer;font-weight:700;color:var(--text)">' + row[0] + '</summary>' +
+          '<p style="margin:10px 0 0;color:var(--muted);line-height:1.75">' + row[1] + '</p></details>';
+      }).join('');
+    }
+
+    /* Share links keep people on the industry page */
+    var url = 'https://app.inreco.co.za' + path;
+    var msg = ind.shareText + ': ' + url;
+    document.querySelectorAll('a[href*="wa.me"]').forEach(function (a) {
+      a.href = 'https://wa.me/?text=' + encodeURIComponent(msg);
+    });
+    document.querySelectorAll('a[href^="mailto:?subject=iNRECO"]').forEach(function (a) {
+      a.href = 'mailto:?subject=' + encodeURIComponent('iNRECO — ' + ind.badge) + '&body=' + encodeURIComponent(msg);
+    });
+    document.querySelectorAll('button[onclick*="clipboard.writeText"]').forEach(function (b) {
+      b.setAttribute('onclick', "navigator.clipboard.writeText('" + url + "');this.textContent='\u2713 Copied'");
+    });
+  });
+})();
+</script>
+
+
+
 <section id="features" class="features-bg">
   <div class="section-inner">
     <div class="features-header">
