@@ -1,52 +1,36 @@
-## What's wrong today
+## What you'll get
 
-The old page in your GitHub project `inreco-app-landing` is a separate, frozen copy. Right now it still shows the Business plan at **R499** instead of **R599**, it has no "Join now & pay" buttons, no "Install the app" or "Share with a friend" buttons, no sick-note verification section, and its buttons point at older addresses. Every time we improve the real page, that copy falls behind again.
+New, on-brand pictures on the landing page that actually look like the iNRECO app in use, plus your logo shown big and often so people remember it.
 
-## The fix
+## The logo
 
-Turn that old page into a signpost: anyone who opens it is sent straight to the real page at `app.inreco.co.za`. Then the two can never differ again, because there is only one real page.
+- Your uploaded logo file becomes the official landing-page logo, stored on Lovable's fast file service (so the page stays quick).
+- It keeps its **exact black background** from the picture you sent — no recolouring, no crop, no transparency trick.
+- Where it appears:
+  1. Top-left of the landing page header, next to the "iNRECO" name.
+  2. Large and centred in the hero area, in a black tile so the logo's own black edge blends in perfectly.
+  3. In the bottom "call to action" band (replacing the small generic picture there now).
+  4. In the footer.
 
-## What you do (about 3 minutes, all in your web browser)
+## The new pictures
 
-1. Go to your project page on GitHub: `github.com/badenhorstcasper-ops/inreco-app-landing`
-2. Click the file named **index.html** (that file is the old landing page).
-3. Click the **pencil icon** at the top right of the file (the "edit" button).
-4. Press **Ctrl+A** (or **Cmd+A** on a Mac) to select everything, then **Delete**. The box should now be empty.
-5. Paste in the text block below exactly as it is.
-6. Scroll down, click the green **Commit changes** button, leave the message as it is, and confirm.
-7. Wait about 2 minutes, then open `inrecoapp.inreco.co.za` in a private/incognito window. It should flick over to the real page by itself.
+Four fresh images generated to match the app, replacing the stock-looking photos currently baked into the page:
 
-## The text to paste
+1. **Hero image** — a phone and laptop side by side showing the CARA chat screen (a real-looking labour question and answer) in the app's blue brand colours.
+2. **"Why iNRECO" image A** — the document generator screen: a warning letter being produced, with the template list beside it.
+3. **"Why iNRECO" image B** — a South African workplace/office scene with a manager using the app on a phone.
+4. **Sick-note section image** — the Verify Sick Note screen: a medical certificate next to the app's practitioner-check result.
 
-```text
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>iNRECO Pocket Consultant — SA labour help in your pocket</title>
-    <meta name="description" content="Instant South African labour guidance from CARA, plus ready-made warnings, hearings and HR documents." />
-    <link rel="canonical" href="https://app.inreco.co.za/" />
-    <meta http-equiv="refresh" content="0; url=https://app.inreco.co.za/" />
-    <script>window.location.replace("https://app.inreco.co.za/" + window.location.search);</script>
-  </head>
-  <body style="font-family:system-ui;text-align:center;padding:60px">
-    <p>Taking you to iNRECO…</p>
-    <p><a href="https://app.inreco.co.za/">Tap here if nothing happens</a></p>
-  </body>
-</html>
-```
+All four are made in the app's existing dark-blue/green brand palette so they sit together as one set.
 
-## Why this is safe
+## What does not change
 
-- Anyone who saved the old address as a bookmark still lands in the right place.
-- Partner links with a referral code (the `?ref=` part of a link) are carried across, so salespeople still get credit.
-- Nothing on the live app changes, so there is no risk of breaking what already works.
+- No wording, prices, buttons or links change.
+- No behaviour, sign-up or payment changes.
+- Only the landing page's pictures and logo placement.
 
-## Optional, even cleaner (only if you want to)
+## Technical notes
 
-Instead of the above, at your domain provider (Domains.co.za) you can point `inrecoapp` to the same place as `app`. That removes the old page completely. The paste-in step above works on its own, so do that first and treat the domain change as a later tidy-up.
-
-## After you've done it
-
-Tell me and I'll open the address myself and confirm it lands on the correct live page with the right prices and buttons.
+- Images generated with the image tool, saved as project assets and referenced from `index.html`, replacing the current inline base64 photos (this also makes the page file much smaller and faster).
+- The uploaded logo is registered via `lovable-assets` and reused for header/hero/CTA/footer; the existing app icons and social-share image are left as they are.
+- After the change I'll open the page at desktop and phone widths, screenshot it, and check nothing overlaps or overflows before reporting back.
