@@ -467,11 +467,15 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
 
       <div class="hero-badge">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        Powered by iNRECO
+        <span id="heroBadgeText">Powered by iNRECO</span>
       </div>
-      <h1 style="color:#fff;font-weight:800">Your <span class="blue-text">Pocket Labour</span>&nbsp;<br>Consultant.</h1>
-      <p class="hero-sub" style="color:#fff;font-weight:700">Instant AI-driven Pocket Labour compliance guidance from CARA. Warnings, hearings, CCMA, retrenchments — answered in seconds.</p>
-      <p class="hero-sub2">Built for South African employers. Always on. Always compliant.</p>
+      <h1 id="heroTitle" style="color:#fff;font-weight:800">Your <span class="blue-text">Pocket Labour</span>&nbsp;<br>Consultant.</h1>
+      <p class="hero-sub" id="heroSub" style="color:#fff;font-weight:700">Instant AI-driven Pocket Labour compliance guidance from CARA. Warnings, hearings, CCMA, retrenchments — answered in seconds.</p>
+      <p class="hero-sub2" id="heroSub2">Built for South African employers. Always on. Always compliant.</p>
+      <div id="industryPicker" style="display:flex;flex-wrap:wrap;gap:10px;margin:0 0 22px">
+        <a href="/restaurants" class="contact-chip" style="padding:7px 14px;font-size:.8rem;border:1px solid var(--border);border-radius:999px;text-decoration:none;color:var(--text)">🍽️ I run a restaurant</a>
+        <a href="/supermarkets" class="contact-chip" style="padding:7px 14px;font-size:.8rem;border:1px solid var(--border);border-radius:999px;text-decoration:none;color:var(--text)">🛒 I run a supermarket / retail store</a>
+      </div>
       <div class="btn-row">
         <button type="button" class="btn-primary" onclick="window.location.href='/pricing'">Get Started <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
         <button type="button" id="heroOpenApp" class="btn-primary" style="display:none" onclick="window.location.href='/app'">Open the app</button>
