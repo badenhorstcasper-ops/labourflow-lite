@@ -180,7 +180,9 @@ Deno.serve(async (req) => {
 
   const origin = safeOrigin(req);
   const amount = PLAN_PRICES[planName as PlanName];
-  const billingDate = trialBillingDate();
+  // "now" = pay today and start billing immediately. "trial" = 7 free days.
+  const payNow = typeof body.mode === "string" && body.mode.toLowerCase() === "now";
+  const billingDate = payNow ? new Date().toISOString().slice(0, 10) : trialBillingDate();
   const mPaymentId = globalThis.crypto.randomUUID();
   const notifyUrl = `${supabaseUrl}/functions/v1/payfast-webhook`;
   const admin = createClient(supabaseUrl, serviceKey);
@@ -208,8 +210,10 @@ Deno.serve(async (req) => {
     notify_url: notifyUrl,
     email_address: email,
     m_payment_id: mPaymentId,
-    amount: "0.00",
-    item_name: `iNRECO Pocket Consultant - ${planName} (7-day free trial)`,
+    amount: payNow ? amount.toFixed(2) : "0.00",
+    item_name: payNow
+      ? `iNRECO Pocket Consultant - ${planName}`
+      : `iNRECO Pocket Consultant - ${planName} (7-day free trial)`,
     item_description: "iNRECO Pocket Consultant subscription access",
 
     subscription_type: "1",
@@ -219,6 +223,7 @@ Deno.serve(async (req) => {
     cycles: "0",
   };
   if (referralCode) baseFields.custom_str1 = referralCode;
+
 
   const fields = await signFields(baseFields, passphrase);
 
