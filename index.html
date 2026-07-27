@@ -2573,7 +2573,12 @@ window.removeDevice = removeDevice;
     }
   } else {
     // When launched from the installed PWA / home-screen shortcut, skip the
-    // marketing landing and go straight into the app's login screen.
+    // marketing landing. Someone who has never signed in here (for example a
+    // friend who installed a shared shortcut) goes straight to the plan
+    // choices; everyone else sees the login screen.
+    let hasAccount = false;
+    try { hasAccount = localStorage.getItem('inreco.hasAccount') === '1'; } catch (_) {}
+    if (launchedAsApp && !hasAccount) { window.location.href = '/pricing'; return; }
     showScreen(launchedAsApp ? 'login' : 'welcome');
   }
   // Seed history so first back press triggers popstate instead of leaving
@@ -2583,6 +2588,7 @@ window.removeDevice = removeDevice;
 
 supabase.auth.onAuthStateChange((_event, session) => {
   if (!session) { currentUser=null; currentProfile=null; }
+  else { try { localStorage.setItem('inreco.hasAccount', '1'); } catch (_) {} }
 });
 </script>
 
