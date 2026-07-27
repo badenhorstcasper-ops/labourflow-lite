@@ -38,6 +38,8 @@ import AdminOverview from "@/pages/AdminOverview";
 import AdminPartnerDecision from "@/pages/AdminPartnerDecision";
 import AdminMarketing from "@/pages/AdminMarketing";
 import AdminHealth from "@/pages/AdminHealth";
+import GetApp from "@/pages/GetApp";
+
 
 
 const queryClient = new QueryClient();
