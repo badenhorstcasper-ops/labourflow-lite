@@ -502,7 +502,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
     </div>
     <div class="hero-img-wrap">
       <div class="hero-img-glow"></div>
-      <img src="/__l5e/assets-v1/5cd70fc9-0d15-451f-b7b0-d5f130ae5cf1/inreco-hero.jpg" alt="iNRECO Pocket Consultant shown on a phone and laptop" width="1200" height="912" loading="lazy" style="width:100%;height:auto;border-radius:16px;box-shadow:0 24px 60px rgba(0,0,0,.55)" />
+      <img id="heroShot" src="/__l5e/assets-v1/5cd70fc9-0d15-451f-b7b0-d5f130ae5cf1/inreco-hero.jpg" alt="iNRECO Pocket Consultant shown on a phone and laptop" width="1200" height="912" loading="lazy" style="width:100%;height:auto;border-radius:16px;box-shadow:0 24px 60px rgba(0,0,0,.55)" />
     </div>
   </div>
 </section>
@@ -899,7 +899,7 @@ window.__IS_REACT_ROUTE__ = (() => {
   // The legacy marketing page owns ONLY the home address. Everything else is
   // handled by the React app (including unknown addresses, so the built-in
   // "page not found" screen can show instead of the marketing page).
-  return !(p === '/' || p === '' || p === '/index.html');
+  return !(p === '/' || p === '' || p === '/index.html' || p === '/restaurants' || p === '/supermarkets');
 })();
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
