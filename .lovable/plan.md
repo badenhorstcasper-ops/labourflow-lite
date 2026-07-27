@@ -1,36 +1,12 @@
-## What you'll get
+## What's wrong
 
-New, on-brand pictures on the landing page that actually look like the iNRECO app in use, plus your logo shown big and often so people remember it.
+I placed the logo picture with its black square background in three places on the landing page (top badge, closing call-to-action, bottom of page). You asked for the logo to sit on the same colour as the page — no black blocks on the blue page. That was my mistake.
 
-## The logo
+## The fix
 
-- Your uploaded logo file becomes the official landing-page logo, stored on Lovable's fast file service (so the page stays quick).
-- It keeps its **exact black background** from the picture you sent — no recolouring, no crop, no transparency trick.
-- Where it appears:
-  1. Top-left of the landing page header, next to the "iNRECO" name.
-  2. Large and centred in the hero area, in a black tile so the logo's own black edge blends in perfectly.
-  3. In the bottom "call to action" band (replacing the small generic picture there now).
-  4. In the footer.
+1. Make a cut-out version of your logo — the tick and the "iNRECO" wording only, with no square behind it, so whatever colour is behind it shows through.
+2. Use that cut-out in all three spots on the landing page, and delete every `background:#000` / black-panel styling I added around it, so the logo simply sits on the page's dark blue.
+3. Do the same anywhere else the black-backed logo picture was used on the page (the closing call-to-action block currently has a black rounded panel behind it — that goes too).
+4. Check the page again on a laptop-size and phone-size screen to confirm there is no black square anywhere and the logo still reads clearly against the blue.
 
-## The new pictures
-
-Four fresh images generated to match the app, replacing the stock-looking photos currently baked into the page:
-
-1. **Hero image** — a phone and laptop side by side showing the CARA chat screen (a real-looking labour question and answer) in the app's blue brand colours.
-2. **"Why iNRECO" image A** — the document generator screen: a warning letter being produced, with the template list beside it.
-3. **"Why iNRECO" image B** — a South African workplace/office scene with a manager using the app on a phone.
-4. **Sick-note section image** — the Verify Sick Note screen: a medical certificate next to the app's practitioner-check result.
-
-All four are made in the app's existing dark-blue/green brand palette so they sit together as one set.
-
-## What does not change
-
-- No wording, prices, buttons or links change.
-- No behaviour, sign-up or payment changes.
-- Only the landing page's pictures and logo placement.
-
-## Technical notes
-
-- Images generated with the image tool, saved as project assets and referenced from `index.html`, replacing the current inline base64 photos (this also makes the page file much smaller and faster).
-- The uploaded logo is registered via `lovable-assets` and reused for header/hero/CTA/footer; the existing app icons and social-share image are left as they are.
-- After the change I'll open the page at desktop and phone widths, screenshot it, and check nothing overlaps or overflows before reporting back.
+Note: the app icon on your phone home screen and the WhatsApp share preview keep the black square version — those need a solid background by design. Only the on-page pictures change.
