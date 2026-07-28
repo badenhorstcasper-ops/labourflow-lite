@@ -41,31 +41,29 @@ export default function GeneratePage() {
   }, [templateKey]);
 
   // "Blank template" shortcut from the picker: generate immediately, once.
+  const blankRan = useRef<string | null>(null);
   useEffect(() => {
     if (!authed || params.get("blank") !== "1") return;
     const def = getTemplate(templateKey);
     if (!def) return;
-    let cancelled = false;
+    if (blankRan.current === templateKey) return;
+    blankRan.current = templateKey;
     (async () => {
       setBusy(true);
       try {
         const r = await generateDocument(def.build(blankValuesFor(def)));
-        if (!cancelled) {
-          setResult(r);
-          toast.success("Blank template generated");
-        }
+        setResult(r);
+        toast.success("Blank template generated");
       } catch (e: unknown) {
         toast.error("Generation failed: " + (e instanceof Error ? e.message : String(e)));
       } finally {
-        if (!cancelled) setBusy(false);
+        setBusy(false);
       }
     })();
     setParams({ template: templateKey }, { replace: true });
-    return () => {
-      cancelled = true;
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authed, templateKey, params.get("blank")]);
+  }, [authed, templateKey, params]);
+
 
 
   if (authed === false) {
