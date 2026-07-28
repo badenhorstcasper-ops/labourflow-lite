@@ -99,10 +99,20 @@ export default function GeneratePage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground">{t.description}</p>
-                  <Button variant="link" className="px-0 mt-2" onClick={(e) => { e.stopPropagation(); setParams({ template: t.key }); }}>
-                    Use this template →
-                  </Button>
+                  <div className="flex flex-wrap items-center gap-3 mt-2">
+                    <Button variant="link" className="px-0" onClick={(e) => { e.stopPropagation(); setParams({ template: t.key }); }}>
+                      Use this template →
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => { e.stopPropagation(); setParams({ template: t.key, blank: "1" }); }}
+                    >
+                      Blank template
+                    </Button>
+                  </div>
                 </CardContent>
+
               </Card>
             ))}
           </div>
