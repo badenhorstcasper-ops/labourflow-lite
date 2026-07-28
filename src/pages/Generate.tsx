@@ -147,6 +147,21 @@ export default function GeneratePage() {
     }
   }
 
+  async function onGenerateBlank() {
+    if (!tpl) return;
+    setBusy(true);
+    try {
+      const r = await generateDocument(tpl.build(blankValuesFor(tpl, values)));
+      setResult(r);
+      toast.success("Blank template generated");
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error("Generation failed: " + msg);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function download(url: string | null | undefined) {
     if (!url) return;
     window.open(url, "_blank");
