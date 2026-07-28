@@ -16,7 +16,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { generateDocument, type GenerateResult } from "@/lib/documents";
-import { TEMPLATE_REGISTRY, getTemplate } from "@/lib/documents/templates";
+import { TEMPLATE_REGISTRY, getTemplate, blankValuesFor } from "@/lib/documents/templates";
 import ChairpersonOffer from "@/components/ChairpersonOffer";
 
 export default function GeneratePage() {
