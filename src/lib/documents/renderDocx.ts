@@ -267,18 +267,31 @@ export async function renderDocx(ctx: RenderContext): Promise<Uint8Array> {
   // Signatures
   const sigs = template.signatures || defaultSignatures(company);
   body.push(new Paragraph({ spacing: { before: 600 }, children: [new TextRun("")] }));
-  const sigCellWidth = Math.floor(9360 / sigs.length);
-  body.push(
-    new Table({
+  if (template.signingPlaceLine) {
+    body.push(
+      new Paragraph({
+        spacing: { after: 240 },
+        children: [
+          new TextRun({
+            text: "Signed at _______________________ on this _______ day of _________________ 20_____.",
+            size: 20,
+          }),
+        ],
+      })
+    );
+  }
+  const signatureTable = (blocks: { label: string; name?: string }[]) => {
+    const w = Math.floor(9360 / blocks.length);
+    return new Table({
       width: { size: 9360, type: WidthType.DXA },
-      columnWidths: sigs.map(() => sigCellWidth),
+      columnWidths: blocks.map(() => w),
       rows: [
         new TableRow({
-          height: { value: 600, rule: HeightRule.ATLEAST },
-          children: sigs.map(
+          height: { value: 700, rule: HeightRule.ATLEAST },
+          children: blocks.map(
             (s) =>
               new TableCell({
-                width: { size: sigCellWidth, type: WidthType.DXA },
+                width: { size: w, type: WidthType.DXA },
                 borders: {
                   ...cellNoBorder,
                   top: { style: BorderStyle.SINGLE, size: 6, color: "111827" },
@@ -286,22 +299,36 @@ export async function renderDocx(ctx: RenderContext): Promise<Uint8Array> {
                 margins: { top: 80, bottom: 80, left: 120, right: 120 },
                 children: [
                   new Paragraph({
-                    children: [new TextRun({ text: s.label, size: 18, color: "6B7280" })],
+                    children: [new TextRun({ text: s.label, size: 18, bold: true })],
                   }),
                   ...(s.name
-                    ? [
-                        new Paragraph({
-                          children: [new TextRun({ text: s.name, size: 20 })],
-                        }),
-                      ]
+                    ? [new Paragraph({ children: [new TextRun({ text: s.name, size: 20 })] })]
                     : []),
+                  new Paragraph({
+                    children: [
+                      new TextRun({ text: "Date: ___________________", size: 18, color: "6B7280" }),
+                    ],
+                  }),
                 ],
               })
           ),
         }),
       ],
-    })
-  );
+    });
+  };
+  body.push(signatureTable(sigs));
+  if (template.witnesses) {
+    body.push(
+      new Paragraph({
+        spacing: { before: 400, after: 120 },
+        children: [
+          new TextRun({ text: "Witnesses (optional but recommended)", size: 19, italics: true, color: "6B7280" }),
+        ],
+      })
+    );
+    body.push(signatureTable([{ label: "WITNESS 1" }, { label: "WITNESS 2" }]));
+  }
+
 
   // Footer
   const footerLine = companyFooterLine(company) || company.company_name;
