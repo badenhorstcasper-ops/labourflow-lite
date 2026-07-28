@@ -353,7 +353,19 @@ export async function renderDocx(ctx: RenderContext): Promise<Uint8Array> {
     ],
   });
 
-  const header = new Header({ children: [headerTable, accentRule] });
+  const runningTitle = (template.runningTitle || template.title || "").toUpperCase();
+  const runningStrip = new Paragraph({
+    spacing: { before: 60 },
+    children: [
+      new TextRun({ text: runningTitle, bold: true, size: 17, color: accent }),
+      ...(template.confidential !== false
+        ? [new TextRun({ text: "   |   Confidential", size: 17, color: "6B7280" })]
+        : []),
+    ],
+  });
+
+  const header = new Header({ children: [headerTable, runningStrip, accentRule] });
+
 
   const doc = new Document({
     styles: {
