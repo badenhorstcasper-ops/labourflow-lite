@@ -144,9 +144,17 @@ export async function renderDocx(ctx: RenderContext): Promise<Uint8Array> {
   const body: (Paragraph | Table)[] = [
     new Paragraph({
       spacing: { before: 240, after: 60 },
-      children: [new TextRun({ text: template.title, bold: true, size: 36 })],
+      children: [new TextRun({ text: template.title, bold: true, size: 36, color: accent })],
     }),
   ];
+  if (template.legalBasis) {
+    body.push(
+      new Paragraph({
+        spacing: { after: 100 },
+        children: [new TextRun({ text: template.legalBasis, size: 20, italics: true, color: "6B7280" })],
+      })
+    );
+  }
   if (template.subtitle) {
     body.push(
       new Paragraph({
@@ -172,6 +180,38 @@ export async function renderDocx(ctx: RenderContext): Promise<Uint8Array> {
     );
   };
 
+  const fieldsTable = (rows: { label: string; value?: string }[]) => {
+    const labelW = 3560;
+    const valueW = 9360 - labelW;
+    return new Table({
+      width: { size: 9360, type: WidthType.DXA },
+      columnWidths: [labelW, valueW],
+      rows: rows.map(
+        (r) =>
+          new TableRow({
+            height: { value: 400, rule: HeightRule.ATLEAST },
+            children: [
+              new TableCell({
+                width: { size: labelW, type: WidthType.DXA },
+                shading: { fill: "EDF5F7", type: ShadingType.CLEAR },
+                margins: { top: 80, bottom: 80, left: 120, right: 120 },
+                children: [
+                  new Paragraph({ children: [new TextRun({ text: r.label, bold: true, size: 20 })] }),
+                ],
+              }),
+              new TableCell({
+                width: { size: valueW, type: WidthType.DXA },
+                margins: { top: 80, bottom: 80, left: 120, right: 120 },
+                children: [
+                  new Paragraph({ children: [new TextRun({ text: r.value || "", size: 20 })] }),
+                ],
+              }),
+            ],
+          })
+      ),
+    });
+  };
+
   for (const block of template.body) {
     if (block.kind === "p") {
       body.push(
@@ -181,11 +221,31 @@ export async function renderDocx(ctx: RenderContext): Promise<Uint8Array> {
           children: runsToTextRuns(block.runs, block.text, { size: 22 }),
         })
       );
+    } else if (block.kind === "section") {
+      body.push(
+        new Paragraph({
+          spacing: { before: 280, after: 120 },
+          border: { bottom: { style: BorderStyle.SINGLE, size: 8, color: accent, space: 2 } },
+          children: [
+            new TextRun({ text: block.text.toUpperCase(), bold: true, size: 26, color: accent }),
+          ],
+        })
+      );
     } else if (block.kind === "h") {
       body.push(
         new Paragraph({
           spacing: { before: 200, after: 80 },
-          children: [new TextRun({ text: block.text, bold: true, size: 26 })],
+          children: [new TextRun({ text: block.text, bold: true, size: 24 })],
+        })
+      );
+    } else if (block.kind === "fields") {
+      body.push(fieldsTable(block.rows));
+      body.push(new Paragraph({ spacing: { after: 160 }, children: [new TextRun("")] }));
+    } else if (block.kind === "note") {
+      body.push(
+        new Paragraph({
+          spacing: { after: 120 },
+          children: [new TextRun({ text: block.text, size: 19, italics: true, color: "6B7280" })],
         })
       );
     } else if (block.kind === "list") {
@@ -201,6 +261,7 @@ export async function renderDocx(ctx: RenderContext): Promise<Uint8Array> {
       body.push(new Paragraph({ children: [new TextRun("")] }));
     }
   }
+
 
 
   // Signatures
