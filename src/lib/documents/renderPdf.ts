@@ -124,6 +124,9 @@ export async function renderPdf(ctx: RenderContext): Promise<Uint8Array> {
   let page: PDFPage = pdf.addPage([pageW, pageH]);
   let cursorY = pageH - MARGIN;
 
+  const runningTitle = (template.runningTitle || template.title || "").toUpperCase();
+  const showConfidential = template.confidential !== false;
+
   const drawHeader = (p: PDFPage) => {
     let y = pageH - MARGIN;
     // logo
@@ -152,8 +155,31 @@ export async function renderPdf(ctx: RenderContext): Promise<Uint8Array> {
     drawRight(`Doc #: ${docNumber}`, font, 9, muted);
     drawRight(`Date: ${generatedAt.toISOString().slice(0, 10)}`, font, 9, muted);
 
+    // running document strip
+    let stripY = Math.min(y - 56, ry - 6);
+    if (runningTitle) {
+      p.drawText(sanitizeWinAnsi(runningTitle), {
+        x: MARGIN,
+        y: stripY,
+        font: bold,
+        size: 8.5,
+        color: accent,
+      });
+      if (showConfidential) {
+        const tw = bold.widthOfTextAtSize(sanitizeWinAnsi(runningTitle), 8.5);
+        p.drawText("|  Confidential", {
+          x: MARGIN + tw + 8,
+          y: stripY,
+          font,
+          size: 8.5,
+          color: muted,
+        });
+      }
+      stripY -= 6;
+    }
+
     // accent rule
-    const ruleY = Math.min(y - 56, ry - 6);
+    const ruleY = stripY;
     p.drawRectangle({
       x: MARGIN,
       y: ruleY,
@@ -163,6 +189,7 @@ export async function renderPdf(ctx: RenderContext): Promise<Uint8Array> {
     });
     return ruleY - 24;
   };
+
 
   const drawFooter = (p: PDFPage, pageNum: number, pageCount: number) => {
     const footerY = MARGIN - 18;
