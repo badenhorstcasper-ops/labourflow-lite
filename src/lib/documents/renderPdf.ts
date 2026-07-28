@@ -350,8 +350,72 @@ export async function renderPdf(ctx: RenderContext): Promise<Uint8Array> {
     });
   };
 
+  // ---- house-style helpers ----
+  const drawSectionBar = (text: string) => {
+    ensure(34);
+    cursorY -= 10;
+    const label = sanitizeWinAnsi(text).toUpperCase();
+    const lines = wrap(label, bold, 12, contentW);
+    for (const ln of lines) {
+      ensure(20);
+      page.drawText(ln, { x: MARGIN, y: cursorY - 12, font: bold, size: 12, color: accent });
+      cursorY -= 16;
+    }
+    page.drawRectangle({ x: MARGIN, y: cursorY - 1, width: contentW, height: 0.8, color: accent });
+    cursorY -= 12;
+  };
+
+  const shade = rgb(0.93, 0.96, 0.97);
+  const lineCol = rgb(0.82, 0.85, 0.88);
+
+  const drawFieldsTable = (rows: { label: string; value?: string }[]) => {
+    const labelW = Math.round(contentW * 0.38);
+    const valueW = contentW - labelW;
+    const size = 10;
+    const padX = 8;
+    const padY = 6;
+    for (const row of rows) {
+      const labelLines = wrap(row.label, bold, size, labelW - padX * 2);
+      const valueLines = wrap(row.value || "", font, size, valueW - padX * 2);
+      const lineCount = Math.max(labelLines.length, valueLines.length, 1);
+      const rowH = lineCount * (size + 3) + padY * 2;
+      ensure(rowH + 2);
+      const top = cursorY;
+      const bottom = top - rowH;
+      // label cell shading
+      page.drawRectangle({ x: MARGIN, y: bottom, width: labelW, height: rowH, color: shade });
+      // borders
+      page.drawRectangle({ x: MARGIN, y: bottom, width: contentW, height: 0.6, color: lineCol });
+      page.drawRectangle({ x: MARGIN, y: top, width: contentW, height: 0.6, color: lineCol });
+      page.drawRectangle({ x: MARGIN, y: bottom, width: 0.6, height: rowH, color: lineCol });
+      page.drawRectangle({ x: MARGIN + labelW, y: bottom, width: 0.6, height: rowH, color: lineCol });
+      page.drawRectangle({ x: MARGIN + contentW, y: bottom, width: 0.6, height: rowH, color: lineCol });
+      labelLines.forEach((ln, i) => {
+        page.drawText(ln, {
+          x: MARGIN + padX,
+          y: top - padY - size - i * (size + 3),
+          font: bold,
+          size,
+          color: ink,
+        });
+      });
+      valueLines.forEach((ln, i) => {
+        page.drawText(ln, {
+          x: MARGIN + labelW + padX,
+          y: top - padY - size - i * (size + 3),
+          font,
+          size,
+          color: ink,
+        });
+      });
+      cursorY = bottom;
+    }
+    cursorY -= 12;
+  };
+
   // Title
   drawText(template.title, bold, 18, ink, 6);
+  if (template.legalBasis) drawText(template.legalBasis, font, 10, muted, 6);
   if (template.subtitle) drawText(template.subtitle, font, 11, muted, 8);
   cursorY -= 8;
 
@@ -361,9 +425,16 @@ export async function renderPdf(ctx: RenderContext): Promise<Uint8Array> {
       const runs = block.runs && block.runs.length ? block.runs : [{ text: block.text }];
       drawRunsJustified(runs, 11, ink, 4);
       cursorY -= 6;
+    } else if (block.kind === "section") {
+      drawSectionBar(block.text);
     } else if (block.kind === "h") {
       cursorY -= 4;
-      drawText(block.text, bold, 13, ink, 5);
+      drawText(block.text, bold, 12, ink, 5);
+    } else if (block.kind === "fields") {
+      drawFieldsTable(block.rows);
+    } else if (block.kind === "note") {
+      drawText(block.text, font, 9.5, muted, 4);
+      cursorY -= 4;
     } else if (block.kind === "list") {
       block.items.forEach((item, i) => {
         const runs = block.itemRuns?.[i] && block.itemRuns[i].length
@@ -380,15 +451,37 @@ export async function renderPdf(ctx: RenderContext): Promise<Uint8Array> {
 
   // Signatures
   const sigs = template.signatures || defaultSignatures(company);
-  ensure(80);
-  cursorY -= 30;
-  const sigW = (contentW - 30) / Math.max(sigs.length, 1);
-  sigs.forEach((s, i) => {
-    const x = MARGIN + i * (sigW + 30);
-    page.drawRectangle({ x, y: cursorY, width: sigW, height: 0.7, color: ink });
-    page.drawText(sanitizeWinAnsi(s.label), { x, y: cursorY - 12, font, size: 9, color: muted });
-    if (s.name) page.drawText(sanitizeWinAnsi(s.name), { x, y: cursorY + 6, font, size: 10, color: ink });
-  });
+  ensure(110);
+  cursorY -= 24;
+  if (template.signingPlaceLine) {
+    drawText(
+      "Signed at _______________________ on this _______ day of _________________ 20_____.",
+      font,
+      10,
+      ink,
+      6
+    );
+    cursorY -= 14;
+  }
+  const drawSigRow = (blocks: { label: string; name?: string }[]) => {
+    ensure(60);
+    cursorY -= 24;
+    const w = (contentW - 30) / Math.max(blocks.length, 1);
+    blocks.forEach((s, i) => {
+      const x = MARGIN + i * (w + 30);
+      page.drawRectangle({ x, y: cursorY, width: w, height: 0.7, color: ink });
+      page.drawText(sanitizeWinAnsi(s.label), { x, y: cursorY - 12, font: bold, size: 9, color: ink });
+      if (s.name) page.drawText(sanitizeWinAnsi(s.name), { x, y: cursorY + 6, font, size: 10, color: ink });
+      page.drawText("Date: ___________________", { x, y: cursorY - 26, font, size: 9, color: muted });
+    });
+    cursorY -= 34;
+  };
+  drawSigRow(sigs);
+  if (template.witnesses) {
+    drawText("Witnesses (optional but recommended)", font, 9.5, muted, 4);
+    drawSigRow([{ label: "WITNESS 1" }, { label: "WITNESS 2" }]);
+  }
+
 
   // Footers w/ page counts
   const pages = pdf.getPages();
