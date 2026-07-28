@@ -243,12 +243,22 @@ export default function GeneratePage() {
                 ))}
               </CardContent>
             </Card>
-            <div className="flex gap-3">
-              <Button onClick={onGenerate} disabled={busy}>
-                {busy ? "Generating…" : "Generate document"}
-              </Button>
-              <Button variant="outline" onClick={() => setParams({})}>Back to templates</Button>
+            <div className="space-y-2">
+              <div className="flex flex-wrap gap-3">
+                <Button onClick={onGenerate} disabled={busy}>
+                  {busy ? "Generating…" : "Generate document"}
+                </Button>
+                <Button variant="secondary" onClick={onGenerateBlank} disabled={busy}>
+                  Generate blank template
+                </Button>
+                <Button variant="outline" onClick={() => setParams({})}>Back to templates</Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Tip: you don't have to fill anything in. "Generate blank template" gives you the
+                document with empty lines to complete by hand or on your computer later.
+              </p>
             </div>
+
           </>
         )}
       </div>
