@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import AppShell from "@/components/AppShell";
@@ -16,7 +16,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { generateDocument, type GenerateResult } from "@/lib/documents";
-import { TEMPLATE_REGISTRY, getTemplate } from "@/lib/documents/templates";
+import { TEMPLATE_REGISTRY, getTemplate, blankValuesFor } from "@/lib/documents/templates";
 import ChairpersonOffer from "@/components/ChairpersonOffer";
 
 export default function GeneratePage() {
@@ -39,6 +39,32 @@ export default function GeneratePage() {
     setValues({});
     setResult(null);
   }, [templateKey]);
+
+  // "Blank template" shortcut from the picker: generate immediately, once.
+  const blankRan = useRef<string | null>(null);
+  useEffect(() => {
+    if (!authed || params.get("blank") !== "1") return;
+    const def = getTemplate(templateKey);
+    if (!def) return;
+    if (blankRan.current === templateKey) return;
+    blankRan.current = templateKey;
+    (async () => {
+      setBusy(true);
+      try {
+        const r = await generateDocument(def.build(blankValuesFor(def)));
+        setResult(r);
+        toast.success("Blank template generated");
+      } catch (e: unknown) {
+        toast.error("Generation failed: " + (e instanceof Error ? e.message : String(e)));
+      } finally {
+        setBusy(false);
+      }
+    })();
+    setParams({ template: templateKey }, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authed, templateKey, params]);
+
+
 
   if (authed === false) {
     return (
@@ -73,10 +99,20 @@ export default function GeneratePage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground">{t.description}</p>
-                  <Button variant="link" className="px-0 mt-2" onClick={(e) => { e.stopPropagation(); setParams({ template: t.key }); }}>
-                    Use this template →
-                  </Button>
+                  <div className="flex flex-wrap items-center gap-3 mt-2">
+                    <Button variant="link" className="px-0" onClick={(e) => { e.stopPropagation(); setParams({ template: t.key }); }}>
+                      Use this template →
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => { e.stopPropagation(); setParams({ template: t.key, blank: "1" }); }}
+                    >
+                      Blank template
+                    </Button>
+                  </div>
                 </CardContent>
+
               </Card>
             ))}
           </div>
@@ -103,6 +139,21 @@ export default function GeneratePage() {
       const r = await generateDocument(built);
       setResult(r);
       toast.success("Document generated");
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error("Generation failed: " + msg);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onGenerateBlank() {
+    if (!tpl) return;
+    setBusy(true);
+    try {
+      const r = await generateDocument(tpl.build(blankValuesFor(tpl, values)));
+      setResult(r);
+      toast.success("Blank template generated");
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       toast.error("Generation failed: " + msg);
@@ -192,12 +243,22 @@ export default function GeneratePage() {
                 ))}
               </CardContent>
             </Card>
-            <div className="flex gap-3">
-              <Button onClick={onGenerate} disabled={busy}>
-                {busy ? "Generating…" : "Generate document"}
-              </Button>
-              <Button variant="outline" onClick={() => setParams({})}>Back to templates</Button>
+            <div className="space-y-2">
+              <div className="flex flex-wrap gap-3">
+                <Button onClick={onGenerate} disabled={busy}>
+                  {busy ? "Generating…" : "Generate document"}
+                </Button>
+                <Button variant="secondary" onClick={onGenerateBlank} disabled={busy}>
+                  Generate blank template
+                </Button>
+                <Button variant="outline" onClick={() => setParams({})}>Back to templates</Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Tip: you don't have to fill anything in. "Generate blank template" gives you the
+                document with empty lines to complete by hand or on your computer later.
+              </p>
             </div>
+
           </>
         )}
       </div>
