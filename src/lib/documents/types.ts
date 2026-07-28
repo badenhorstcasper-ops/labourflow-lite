@@ -26,10 +26,20 @@ export type SignatureBlock = { label: string; name?: string };
 
 export type InlineRun = { text: string; bold?: boolean };
 
+/** A label/value row in a detail table (shaded label column, blank value = fill-in). */
+export type FieldRow = { label: string; value?: string };
+
 export type DocBlock =
   | { kind: "p"; text: string; runs?: InlineRun[] }
+  /** Major section bar: accent colour, uppercase, ruled underline. */
+  | { kind: "section"; text: string }
+  /** Sub-heading inside a section, e.g. "1.1 The Employer". */
   | { kind: "h"; text: string }
+  /** Two-column detail table — the house look for structured particulars. */
+  | { kind: "fields"; rows: FieldRow[] }
   | { kind: "list"; items: string[]; itemRuns?: InlineRun[][] }
+  /** Small muted guidance line, e.g. "Complete this section only if…". */
+  | { kind: "note"; text: string }
   | { kind: "spacer" };
 
 export type DocumentTemplate = {
@@ -39,13 +49,24 @@ export type DocumentTemplate = {
   title: string;
   /** Optional subtitle / recipient line, e.g. "Issued to: John Doe" */
   subtitle?: string;
+  /** Optional legal basis line under the title, italic and muted. */
+  legalBasis?: string;
+  /** Short label used in the running header strip. Defaults to the title. */
+  runningTitle?: string;
+  /** Show the "| Confidential" marker in the running header. Default true. */
+  confidential?: boolean;
   /** Body content as portable blocks (renderer-agnostic) */
   body: DocBlock[];
   /** Signature blocks rendered at the end. Default: signatory + employee. */
   signatures?: SignatureBlock[];
+  /** Add "Signed at ___ on this ___ day of ___" above the signature blocks. */
+  signingPlaceLine?: boolean;
+  /** Add an optional witness signature row under the signatures. */
+  witnesses?: boolean;
   /** Whether DOCX should be produced too. Default true. */
   produceDocx?: boolean;
 };
+
 
 export type RenderContext = {
   template: DocumentTemplate;
