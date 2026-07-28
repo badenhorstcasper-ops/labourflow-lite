@@ -144,9 +144,17 @@ export async function renderDocx(ctx: RenderContext): Promise<Uint8Array> {
   const body: (Paragraph | Table)[] = [
     new Paragraph({
       spacing: { before: 240, after: 60 },
-      children: [new TextRun({ text: template.title, bold: true, size: 36 })],
+      children: [new TextRun({ text: template.title, bold: true, size: 36, color: accent })],
     }),
   ];
+  if (template.legalBasis) {
+    body.push(
+      new Paragraph({
+        spacing: { after: 100 },
+        children: [new TextRun({ text: template.legalBasis, size: 20, italics: true, color: "6B7280" })],
+      })
+    );
+  }
   if (template.subtitle) {
     body.push(
       new Paragraph({
@@ -172,6 +180,38 @@ export async function renderDocx(ctx: RenderContext): Promise<Uint8Array> {
     );
   };
 
+  const fieldsTable = (rows: { label: string; value?: string }[]) => {
+    const labelW = 3560;
+    const valueW = 9360 - labelW;
+    return new Table({
+      width: { size: 9360, type: WidthType.DXA },
+      columnWidths: [labelW, valueW],
+      rows: rows.map(
+        (r) =>
+          new TableRow({
+            height: { value: 400, rule: HeightRule.ATLEAST },
+            children: [
+              new TableCell({
+                width: { size: labelW, type: WidthType.DXA },
+                shading: { fill: "EDF5F7", type: ShadingType.CLEAR },
+                margins: { top: 80, bottom: 80, left: 120, right: 120 },
+                children: [
+                  new Paragraph({ children: [new TextRun({ text: r.label, bold: true, size: 20 })] }),
+                ],
+              }),
+              new TableCell({
+                width: { size: valueW, type: WidthType.DXA },
+                margins: { top: 80, bottom: 80, left: 120, right: 120 },
+                children: [
+                  new Paragraph({ children: [new TextRun({ text: r.value || "", size: 20 })] }),
+                ],
+              }),
+            ],
+          })
+      ),
+    });
+  };
+
   for (const block of template.body) {
     if (block.kind === "p") {
       body.push(
@@ -181,11 +221,31 @@ export async function renderDocx(ctx: RenderContext): Promise<Uint8Array> {
           children: runsToTextRuns(block.runs, block.text, { size: 22 }),
         })
       );
+    } else if (block.kind === "section") {
+      body.push(
+        new Paragraph({
+          spacing: { before: 280, after: 120 },
+          border: { bottom: { style: BorderStyle.SINGLE, size: 8, color: accent, space: 2 } },
+          children: [
+            new TextRun({ text: block.text.toUpperCase(), bold: true, size: 26, color: accent }),
+          ],
+        })
+      );
     } else if (block.kind === "h") {
       body.push(
         new Paragraph({
           spacing: { before: 200, after: 80 },
-          children: [new TextRun({ text: block.text, bold: true, size: 26 })],
+          children: [new TextRun({ text: block.text, bold: true, size: 24 })],
+        })
+      );
+    } else if (block.kind === "fields") {
+      body.push(fieldsTable(block.rows));
+      body.push(new Paragraph({ spacing: { after: 160 }, children: [new TextRun("")] }));
+    } else if (block.kind === "note") {
+      body.push(
+        new Paragraph({
+          spacing: { after: 120 },
+          children: [new TextRun({ text: block.text, size: 19, italics: true, color: "6B7280" })],
         })
       );
     } else if (block.kind === "list") {
@@ -203,21 +263,35 @@ export async function renderDocx(ctx: RenderContext): Promise<Uint8Array> {
   }
 
 
+
   // Signatures
   const sigs = template.signatures || defaultSignatures(company);
   body.push(new Paragraph({ spacing: { before: 600 }, children: [new TextRun("")] }));
-  const sigCellWidth = Math.floor(9360 / sigs.length);
-  body.push(
-    new Table({
+  if (template.signingPlaceLine) {
+    body.push(
+      new Paragraph({
+        spacing: { after: 240 },
+        children: [
+          new TextRun({
+            text: "Signed at _______________________ on this _______ day of _________________ 20_____.",
+            size: 20,
+          }),
+        ],
+      })
+    );
+  }
+  const signatureTable = (blocks: { label: string; name?: string }[]) => {
+    const w = Math.floor(9360 / blocks.length);
+    return new Table({
       width: { size: 9360, type: WidthType.DXA },
-      columnWidths: sigs.map(() => sigCellWidth),
+      columnWidths: blocks.map(() => w),
       rows: [
         new TableRow({
-          height: { value: 600, rule: HeightRule.ATLEAST },
-          children: sigs.map(
+          height: { value: 700, rule: HeightRule.ATLEAST },
+          children: blocks.map(
             (s) =>
               new TableCell({
-                width: { size: sigCellWidth, type: WidthType.DXA },
+                width: { size: w, type: WidthType.DXA },
                 borders: {
                   ...cellNoBorder,
                   top: { style: BorderStyle.SINGLE, size: 6, color: "111827" },
@@ -225,22 +299,36 @@ export async function renderDocx(ctx: RenderContext): Promise<Uint8Array> {
                 margins: { top: 80, bottom: 80, left: 120, right: 120 },
                 children: [
                   new Paragraph({
-                    children: [new TextRun({ text: s.label, size: 18, color: "6B7280" })],
+                    children: [new TextRun({ text: s.label, size: 18, bold: true })],
                   }),
                   ...(s.name
-                    ? [
-                        new Paragraph({
-                          children: [new TextRun({ text: s.name, size: 20 })],
-                        }),
-                      ]
+                    ? [new Paragraph({ children: [new TextRun({ text: s.name, size: 20 })] })]
                     : []),
+                  new Paragraph({
+                    children: [
+                      new TextRun({ text: "Date: ___________________", size: 18, color: "6B7280" }),
+                    ],
+                  }),
                 ],
               })
           ),
         }),
       ],
-    })
-  );
+    });
+  };
+  body.push(signatureTable(sigs));
+  if (template.witnesses) {
+    body.push(
+      new Paragraph({
+        spacing: { before: 400, after: 120 },
+        children: [
+          new TextRun({ text: "Witnesses (optional but recommended)", size: 19, italics: true, color: "6B7280" }),
+        ],
+      })
+    );
+    body.push(signatureTable([{ label: "WITNESS 1" }, { label: "WITNESS 2" }]));
+  }
+
 
   // Footer
   const footerLine = companyFooterLine(company) || company.company_name;
@@ -265,7 +353,19 @@ export async function renderDocx(ctx: RenderContext): Promise<Uint8Array> {
     ],
   });
 
-  const header = new Header({ children: [headerTable, accentRule] });
+  const runningTitle = (template.runningTitle || template.title || "").toUpperCase();
+  const runningStrip = new Paragraph({
+    spacing: { before: 60 },
+    children: [
+      new TextRun({ text: runningTitle, bold: true, size: 17, color: accent }),
+      ...(template.confidential !== false
+        ? [new TextRun({ text: "   |   Confidential", size: 17, color: "6B7280" })]
+        : []),
+    ],
+  });
+
+  const header = new Header({ children: [headerTable, runningStrip, accentRule] });
+
 
   const doc = new Document({
     styles: {
