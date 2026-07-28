@@ -1107,3 +1107,21 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
 export function getTemplate(key: string): TemplateDefinition | undefined {
   return TEMPLATE_REGISTRY.find((t) => t.key === key);
 }
+
+/**
+ * Fill every empty field of a template with a blank fill-in line so the user
+ * can generate a printable, hand-completed template without capturing details.
+ * Select fields are left empty on purpose — each builder already has a sensible
+ * default wording for them.
+ */
+export function blankValuesFor(
+  def: TemplateDefinition,
+  current: Record<string, string> = {},
+): Record<string, string> {
+  const out: Record<string, string> = { ...current };
+  for (const f of def.fields) {
+    if (out[f.key]?.trim()) continue;
+    out[f.key] = f.type === "select" ? "" : "____________";
+  }
+  return out;
+}
