@@ -3,6 +3,16 @@ import { supabase } from "@/integrations/supabase/client";
 import AppShell from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 
 type Row = {
@@ -19,10 +29,14 @@ type Row = {
   created_at: string;
 };
 
+type Pending = { kind: "delete" | "revoke"; row: Row } | null;
+
 export default function DocumentsPage() {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [authed, setAuthed] = useState(false);
+  const [pending, setPending] = useState<Pending>(null);
+  const [busy, setBusy] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -53,24 +67,65 @@ export default function DocumentsPage() {
     toast.success("Share link copied");
   }
 
-  async function revoke(id: string) {
-    if (!confirm("Revoke this share link? Anyone with the link will lose access.")) return;
-    const { error } = await supabase
+  async function revoke(row: Row) {
+    const revokedAt = new Date().toISOString();
+    const { data, error } = await supabase
       .from("generated_documents")
-      .update({ revoked_at: new Date().toISOString() })
-      .eq("id", id);
-    if (error) toast.error(error.message);
-    else { toast.success("Revoked"); load(); }
+      .update({ revoked_at: revokedAt })
+      .eq("id", row.id)
+      .select("id");
+    if (error) return toast.error(error.message);
+    if (!data || data.length === 0) {
+      return toast.error(
+        "You don't have permission to revoke this document — ask the account owner."
+      );
+    }
+    setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, revoked_at: revokedAt } : r)));
+    toast.success("Share link revoked");
   }
 
-  async function remove(id: string, row: Row) {
-    if (!confirm("Delete this document permanently?")) return;
+  async function remove(row: Row) {
+    const snapshot = rows;
+    // Remove from the list right away, restore if the delete does not stick.
+    setRows((prev) => prev.filter((r) => r.id !== row.id));
+
+    const { data, error } = await supabase
+      .from("generated_documents")
+      .delete()
+      .eq("id", row.id)
+      .select("id");
+
+    if (error || !data || data.length === 0) {
+      setRows(snapshot);
+      return toast.error(
+        error?.message ||
+          "You don't have permission to delete this document — ask the account owner."
+      );
+    }
+
     const paths = [row.pdf_path, row.docx_path].filter(Boolean) as string[];
-    if (paths.length) await supabase.storage.from("documents").remove(paths);
-    const { error } = await supabase.from("generated_documents").delete().eq("id", id);
-    if (error) toast.error(error.message);
-    else { toast.success("Deleted"); load(); }
+    if (paths.length) {
+      const { error: rmErr } = await supabase.storage.from("documents").remove(paths);
+      if (rmErr) {
+        toast.warning("Document removed, but the stored files could not be deleted.");
+        return;
+      }
+    }
+    toast.success("Document deleted");
   }
+
+  async function confirmPending() {
+    if (!pending) return;
+    setBusy(true);
+    try {
+      if (pending.kind === "delete") await remove(pending.row);
+      else await revoke(pending.row);
+    } finally {
+      setBusy(false);
+      setPending(null);
+    }
+  }
+
 
   if (loading) return <AppShell><p className="text-muted-foreground">Loading…</p></AppShell>;
   if (!authed) {
