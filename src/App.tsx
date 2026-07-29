@@ -39,6 +39,7 @@ import AdminPartnerDecision from "@/pages/AdminPartnerDecision";
 import AdminMarketing from "@/pages/AdminMarketing";
 import AdminHealth from "@/pages/AdminHealth";
 import GetApp from "@/pages/GetApp";
+import UifGuide from "@/pages/UifGuide";
 
 
 
@@ -70,6 +71,7 @@ function AppRoutes() {
       <Route path="/" element={<Index />} />
       <Route path="/pricing" element={<Pricing />} />
       <Route path="/get" element={<GetApp />} />
+      <Route path="/guides/uif-ufiling" element={<UifGuide />} />
 
       <Route path="/auth" element={<Auth />} />
       <Route path="/reset-password" element={<ResetPassword />} />
