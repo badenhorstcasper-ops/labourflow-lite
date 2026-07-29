@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import InstallAppButton from "@/components/InstallAppButton";
 import BackHomeBar from "@/components/BackHomeBar";
 
-type PaymentStatus = "idle" | "checking" | "pending" | "complete" | "delayed";
+type PaymentStatus = "idle" | "checking" | "pending" | "complete" | "provisional" | "delayed";
 
 const PaymentSuccess = () => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
@@ -25,6 +25,14 @@ const PaymentSuccess = () => {
     let cancelled = false;
     let attempts = 0;
 
+    function clearPendingKeys() {
+      try {
+        localStorage.removeItem("inreco.pendingEmail");
+        localStorage.removeItem("inreco.pendingPlan");
+        localStorage.removeItem("inreco.pendingPayment");
+      } catch (_) {}
+    }
+
     async function checkPayment() {
       if (cancelled) return;
       attempts += 1;
@@ -40,16 +48,24 @@ const PaymentSuccess = () => {
 
       if (data?.status === "complete") {
         await supabase.functions.invoke("link-subscription", { body: {} });
-        try {
-          localStorage.removeItem("inreco.pendingEmail");
-          localStorage.removeItem("inreco.pendingPlan");
-          localStorage.removeItem("inreco.pendingPayment");
-        } catch (_) {}
+        clearPendingKeys();
         setPaymentStatus("complete");
         return;
       }
 
-      if (attempts >= 12) {
+      // PayFast only sends people back here after a successful transaction, but
+      // its confirmation message can lag. Rather than lock the customer out,
+      // open the app straight away and let the confirmation catch up.
+      if (attempts >= 4) {
+        const { data: grant } = await supabase.functions.invoke("payfast-provisional-access", {
+          body: { mPaymentId: paymentId },
+        });
+        if (cancelled) return;
+        if (grant?.granted) {
+          clearPendingKeys();
+          setPaymentStatus(grant.confirmed ? "complete" : "provisional");
+          return;
+        }
         setPaymentStatus("delayed");
         return;
       }
@@ -63,6 +79,7 @@ const PaymentSuccess = () => {
       cancelled = true;
     };
   }, [isLoggedIn, paymentId]);
+
 
   const pendingEmail =
     typeof window !== "undefined" ? localStorage.getItem("inreco.pendingEmail") : null;
