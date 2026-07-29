@@ -1,30 +1,34 @@
-## What's actually wrong
+## What's wrong
 
-I checked the live database, and this is confirmed, not a guess.
+The Delete button removes the row on screen, then the list refreshes and the document comes back — because the delete never actually happened in the database.
 
-The Company Profile page saves everything (details **and** logo) under the **account owner's** ID. But the permission rules on the database and on the logo storage area only allow you to save under **your own** ID. For anyone who is a team member on someone else's account, those two IDs are different — so the upload is rejected and the details save fails too.
+Confirmed cause: the access rules on the documents table (and on the file storage area) allow **only the account owner** to delete or revoke. Team members — including your second (Outlook) login, which is a team member of the owner account — are silently blocked: the database accepts the request but changes zero rows and reports no error. The page then reloads and the document reappears.
 
-This hits you directly: your `casperbadenhorst77@outlook.com` account is recorded as an active team member of your `badenhorst.casper@gmail.com` account. So when you're signed in with the outlook address, the app tries to save the logo into the gmail account's folder, and the rules block it. Same for saving company details.
+The same silent failure applies to **Revoke** (also owner-only) and to deleting the actual PDF/Word files in storage.
 
 ## The fix
 
-1. **Logo storage rules** — allow uploading, replacing, reading and deleting a logo when you are either the account owner *or* an active team member of that account (this is exactly the pattern already used successfully for the sick-note files, so it's proven in this app).
-2. **Company details rules** — allow an active team member to save/update the account's company details, not just the owner.
-3. **Page-side safety net** — if the logo upload is refused, show a plain-language message ("You don't have permission to change this account's logo") instead of a raw technical error, and never let a failed logo block the rest of the details from saving.
-4. **Small correctness fix** — when the logo file type changes (e.g. from PNG to JPG), remove the old file so two logos don't linger in storage.
+1. **Access rules (database + file storage)**
+   - Allow active team members of the account, and admins, to delete and revoke documents belonging to their account — not just the owner.
+   - Match the file-storage rules so the PDF/Word files are actually removed too, not left behind.
 
-## End-to-end check afterwards
+2. **Documents page behaviour** (`src/pages/Documents.tsx`)
+   - Ask the database to confirm what it actually changed on delete and revoke. If nothing changed, show a plain-language message ("You don't have permission to delete this document — ask the account owner") instead of pretending it worked.
+   - Remove the row from the list immediately on a confirmed delete, and put it back only if the request failed. No more flicker-and-return.
+   - Report storage-cleanup problems instead of ignoring them.
+   - Replace the browser `confirm()` pop-ups with the app's own confirmation dialog so it looks and behaves like the rest of the app.
 
-I'll run through the whole client-details flow in the running app and confirm each step really works:
-- Sign in, open Company profile, load existing details
-- Upload a logo (PNG/JPG/WEBP), see the preview appear
-- Save the profile, reload the page, confirm details and logo persist
-- Remove the logo, save, confirm it's gone
-- Generate a sample document and confirm the logo and company details appear in the PDF and Word versions
-- Repeat the key steps as a team member account, which is the case that's currently broken
+3. **End-to-end check of the whole documents flow**
+   - Generate a document (filled and blank template), confirm it appears with a number.
+   - Download PDF and Word from the list.
+   - Copy the share link and open it signed-out — confirm it loads with the logo.
+   - Revoke, then re-open the share link — confirm it says the link was revoked.
+   - Delete, refresh the page — confirm it stays gone and the files are removed.
+   - Repeat the key steps signed in as a team member.
 
 ## Technical notes
 
-- Root cause: `CompanyProfile.tsx` writes with `owner_user_id = current_account_owner()`, while `storage.objects` policies for `company-logos` (INSERT/UPDATE/DELETE) and `public.company_profiles` (INSERT/UPDATE) all gate on `auth.uid() = owner_user_id`. Only SELECT has a team-member branch.
-- Migration will rewrite those policies to use the existing `public.is_account_member(_owner, _user)` security-definer helper, matching the `medical-certificates` bucket policies.
-- No schema/table changes; policy changes only, plus small UI error-handling edits in `src/pages/CompanyProfile.tsx`.
+- New policies on `public.generated_documents` for DELETE/UPDATE using the existing `is_account_member(owner_user_id, auth.uid())` helper plus `has_role(auth.uid(),'admin')`; keep the owner policies.
+- Matching `storage.objects` DELETE policy for bucket `documents` scoped by first path segment = account owner id, allowing active team members.
+- Client: `.delete().eq('id', id).select('id')` / `.update({revoked_at}).eq('id',id).select('id')` and branch on empty result; optimistic list update with rollback.
+- Verification runs against the live preview with a real signed-in session (owner and team member).
