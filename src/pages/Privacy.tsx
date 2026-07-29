@@ -1,8 +1,10 @@
 import { LegalLayout, COMPANY, REGULATOR } from "./Legal";
+import Seo from "@/components/Seo";
 
 export default function Privacy() {
   return (
-    <LegalLayout title="Privacy Policy">
+
+    <Seo title="Privacy Policy — iNRECO" description="How iNRECO collects, uses and protects your personal information under South Africa's POPIA, and the choices you have over your data." path="/privacy" />    <LegalLayout title="Privacy Policy">
       <p>
         This Privacy Policy explains how <strong>{COMPANY.legalName}</strong>{" "}
         (trading as <strong>{COMPANY.brand}</strong>) collects, uses, shares and

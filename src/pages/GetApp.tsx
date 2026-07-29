@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import InstallAppButton from "@/components/InstallAppButton";
 import ShareAppButton from "@/components/ShareAppButton";
 import { Button } from "@/components/ui/button";
+import Seo from "@/components/Seo";
 import { useSubscription } from "@/hooks/useSubscription";
 
 /**
@@ -27,7 +28,8 @@ const GetApp = () => {
   const plansHref = `/pricing${ref ? `?ref=${encodeURIComponent(ref)}` : ""}`;
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+
+    <Seo title="Install the iNRECO app on your phone" description="Add the iNRECO Pocket Consultant to your phone home screen for instant South African labour compliance answers, warnings and HR documents." path="/get" />    <div className="min-h-screen bg-background text-foreground">
       <div className="mx-auto flex max-w-xl flex-col items-center gap-6 px-4 py-14 text-center">
         <img
           src="/icon-512.png"

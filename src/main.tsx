@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
+import { HelmetProvider } from "react-helmet-async";
 // Side-effect import: exposes window.iNRECO.{generatePdf,generateDocx} so the
 // legacy vanilla app in index.html can produce branded PDF / Word downloads.
 import "./lib/documents/clientEntry";
@@ -64,7 +65,9 @@ if (shouldMountReact(window.location.pathname)) {
     const rootEl = document.getElementById("root")!;
     createRoot(rootEl).render(
       <StrictMode>
-        <App />
+        <HelmetProvider>
+          <App />
+        </HelmetProvider>
       </StrictMode>,
     );
   })();

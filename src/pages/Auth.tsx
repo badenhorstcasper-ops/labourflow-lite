@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { Button } from "@/components/ui/button";
+import Seo from "@/components/Seo";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -171,11 +172,14 @@ const Auth = () => {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
+
+    <Seo title="Sign in or sign up — iNRECO" description="Sign in to iNRECO or create an account to use CARA, generate HR documents and manage your labour compliance subscription." path="/auth" />    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
       <div className="w-full max-w-md"><BackHomeBar homeTo="/" /></div>
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>{mode === "signup" ? "Create your account" : "Welcome back"}</CardTitle>
+          <CardTitle asChild>
+            <h1 className="text-2xl font-semibold">{mode === "signup" ? "Create your iNRECO account" : "Sign in to iNRECO"}</h1>
+          </CardTitle>
           <CardDescription>
             {mode === "signup"
               ? "Sign up to access CARA and your subscription."

@@ -1,8 +1,10 @@
 import { LegalLayout, COMPANY } from "./Legal";
+import Seo from "@/components/Seo";
 
 export default function Terms() {
   return (
-    <LegalLayout title="Terms of Use">
+
+    <Seo title="Terms of Use — iNRECO" description="The terms that govern your use of the iNRECO Pocket Consultant app, including subscriptions, acceptable use and limits of our guidance." path="/terms" />    <LegalLayout title="Terms of Use">
       <p>
         These Terms of Use ("Terms") govern your access to and use of the{" "}
         {COMPANY.brand} web application available at{" "}

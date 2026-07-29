@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import BackHomeBar from "@/components/BackHomeBar";
+import Seo from "@/components/Seo";
 
 const FN_URL =
   (import.meta.env.VITE_SUPABASE_URL || "") + "/functions/v1/submit-contact";
@@ -66,7 +67,8 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+
+    <Seo title="Contact iNRECO — labour compliance support" description="Send the iNRECO team a message about the Pocket Consultant app, subscriptions, chairperson bookings or South African labour compliance support." path="/contact" />    <div className="min-h-screen bg-background">
       <div className="container mx-auto max-w-2xl px-4 py-12">
         <BackHomeBar homeTo="/" />
         <header className="mb-8 text-center">

@@ -4,6 +4,7 @@ import { Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
+import Seo from "@/components/Seo";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -235,7 +236,8 @@ const Pricing = () => {
 
 
   return (
-    <div className="min-h-screen bg-background">
+
+    <Seo title="Pricing — iNRECO Solo & Business plans" description="Simple monthly pricing for iNRECO: the Solo plan for one manager and the Business plan for teams, both with a 7-day free trial." path="/pricing" />    <div className="min-h-screen bg-background">
 
       <div className="container mx-auto max-w-7xl px-4 py-12">
         <BackHomeBar homeTo="/" />
@@ -317,7 +319,9 @@ const Pricing = () => {
                   </div>
                 )}
                 <CardHeader>
-                  <CardTitle>{plan.name}</CardTitle>
+                  <CardTitle asChild>
+                    <h2 className="text-xl font-semibold">{plan.name}</h2>
+                  </CardTitle>
                   <CardDescription>{plan.description}</CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-1 flex-col justify-between gap-6">

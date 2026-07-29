@@ -1,8 +1,10 @@
 import { LegalLayout, COMPANY } from "./Legal";
+import Seo from "@/components/Seo";
 
 export default function Disclaimer() {
   return (
-    <LegalLayout title="Disclaimer">
+
+    <Seo title="Disclaimer — iNRECO" description="iNRECO provides practical labour compliance guidance and templates; this page explains what that guidance is and is not, and when to get legal advice." path="/disclaimer" />    <LegalLayout title="Disclaimer">
       <h2>1. Not legal advice</h2>
       <p>
         <strong>{COMPANY.brand}</strong> provides industrial-relations guidance,
