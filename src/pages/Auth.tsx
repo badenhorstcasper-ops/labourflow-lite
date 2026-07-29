@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { Button } from "@/components/ui/button";
+import Seo from "@/components/Seo";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -171,115 +172,120 @@ const Auth = () => {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md"><BackHomeBar homeTo="/" /></div>
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>{mode === "signup" ? "Create your account" : "Welcome back"}</CardTitle>
-          <CardDescription>
-            {mode === "signup"
-              ? "Sign up to access CARA and your subscription."
-              : "Sign in to continue."}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <form onSubmit={handleSubmit} className="space-y-3">
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-              />
-            </div>
-            <div>
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                required
-                minLength={6}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete={mode === "signup" ? "new-password" : "current-password"}
-              />
-            </div>
-            {mode === "signup" && (
-              <label className="flex items-start gap-2 text-xs text-muted-foreground">
-                <input
-                  type="checkbox"
-                  className="mt-0.5"
-                  checked={acceptedTerms}
-                  onChange={(e) => setAcceptedTerms(e.target.checked)}
+    <>
+      <Seo title="Sign in or sign up — iNRECO" description="Sign in to iNRECO or create an account to use CARA, generate HR documents and manage your labour compliance subscription." path="/auth" />
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
+        <div className="w-full max-w-md"><BackHomeBar homeTo="/" /></div>
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <h1 className="text-2xl font-semibold leading-none tracking-tight">
+              {mode === "signup" ? "Create your iNRECO account" : "Sign in to iNRECO"}
+            </h1>
+            <CardDescription>
+              {mode === "signup"
+                ? "Sign up to access CARA and your subscription."
+                : "Sign in to continue."}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-3">
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
                   required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
                 />
-                <span>
-                  I agree to the{" "}
-                  <Link to="/terms" target="_blank" className="underline">Terms of Use</Link>,{" "}
-                  <Link to="/privacy" target="_blank" className="underline">Privacy Policy</Link>{" "}
-                  and{" "}
-                  <Link to="/disclaimer" target="_blank" className="underline">Disclaimer</Link>.
-                  I understand that iNRECO provides IR guidance, not legal advice.
-                </span>
-              </label>
-            )}
-            <Button type="submit" className="w-full" disabled={busy}>
-              {busy ? "Please wait…" : mode === "signup" ? "Create account" : "Sign in"}
+              </div>
+              <div>
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  required
+                  minLength={6}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                />
+              </div>
+              {mode === "signup" && (
+                <label className="flex items-start gap-2 text-xs text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5"
+                    checked={acceptedTerms}
+                    onChange={(e) => setAcceptedTerms(e.target.checked)}
+                    required
+                  />
+                  <span>
+                    I agree to the{" "}
+                    <Link to="/terms" target="_blank" className="underline">Terms of Use</Link>,{" "}
+                    <Link to="/privacy" target="_blank" className="underline">Privacy Policy</Link>{" "}
+                    and{" "}
+                    <Link to="/disclaimer" target="_blank" className="underline">Disclaimer</Link>.
+                    I understand that iNRECO provides IR guidance, not legal advice.
+                  </span>
+                </label>
+              )}
+              <Button type="submit" className="w-full" disabled={busy}>
+                {busy ? "Please wait…" : mode === "signup" ? "Create account" : "Sign in"}
+              </Button>
+              {mode === "login" && (
+                <button
+                  type="button"
+                  className="w-full text-center text-xs text-muted-foreground underline"
+                  onClick={handleForgotPassword}
+                  disabled={busy}
+                >
+                  Forgot your password?
+                </button>
+              )}
+            </form>
+  
+  
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">or</span>
+              </div>
+            </div>
+  
+            <Button variant="outline" className="w-full" onClick={handleGoogle} disabled={busy}>
+              Continue with Google
             </Button>
-            {mode === "login" && (
-              <button
-                type="button"
-                className="w-full text-center text-xs text-muted-foreground underline"
-                onClick={handleForgotPassword}
-                disabled={busy}
-              >
-                Forgot your password?
-              </button>
-            )}
-          </form>
-
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">or</span>
-            </div>
-          </div>
-
-          <Button variant="outline" className="w-full" onClick={handleGoogle} disabled={busy}>
-            Continue with Google
-          </Button>
-
-          <p className="text-center text-sm text-muted-foreground">
-            {mode === "signup" ? (
-              <>
-                Already have an account?{" "}
-                <button className="underline" onClick={() => setMode("login")} type="button">
-                  Sign in
-                </button>
-              </>
-            ) : (
-              <>
-                New here?{" "}
-                <button className="underline" onClick={() => setMode("signup")} type="button">
-                  Create an account
-                </button>
-              </>
-            )}
-          </p>
-          <p className="text-center text-xs text-muted-foreground">
-            <Link to="/pricing" className="underline">
-              See plans
-            </Link>
-          </p>
-        </CardContent>
-      </Card>
-    </div>
+  
+            <p className="text-center text-sm text-muted-foreground">
+              {mode === "signup" ? (
+                <>
+                  Already have an account?{" "}
+                  <button className="underline" onClick={() => setMode("login")} type="button">
+                    Sign in
+                  </button>
+                </>
+              ) : (
+                <>
+                  New here?{" "}
+                  <button className="underline" onClick={() => setMode("signup")} type="button">
+                    Create an account
+                  </button>
+                </>
+              )}
+            </p>
+            <p className="text-center text-xs text-muted-foreground">
+              <Link to="/pricing" className="underline">
+                See plans
+              </Link>
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    </>
   );
 };
 
