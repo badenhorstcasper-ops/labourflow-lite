@@ -94,12 +94,14 @@ const PaymentSuccess = () => {
         <>
           <p className="max-w-md text-muted-foreground">
             {paymentStatus === "complete"
-              ? "Your trial is active and ready to use."
-              : paymentStatus === "delayed"
-                ? "PayFast is taking a little longer to confirm your trial. You can try opening the app now, or refresh this page in a minute."
-                : paymentId
-                  ? "PayFast is confirming your trial. This usually takes a few seconds."
-                  : "Your trial is being linked to your account."}
+              ? "Your plan is active and ready to use."
+              : paymentStatus === "provisional"
+                ? "You're in. Your access is open now while PayFast finishes confirming — nothing more for you to do."
+                : paymentStatus === "delayed"
+                  ? "PayFast is taking a little longer to confirm. Open the app and try again — if anything is still locked, email info@inreco.co.za and we'll sort it out right away."
+                  : paymentId
+                    ? "PayFast is confirming your payment. This usually takes a few seconds."
+                    : "Your plan is being linked to your account."}
           </p>
           <Button asChild>
             <Link to="/app">Open CARA</Link>
