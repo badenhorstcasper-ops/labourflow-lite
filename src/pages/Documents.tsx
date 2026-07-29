@@ -171,8 +171,8 @@ export default function DocumentsPage() {
                       {r.pdf_path && <Button size="sm" variant="outline" onClick={() => download(r.pdf_path)}>PDF</Button>}
                       {r.docx_path && <Button size="sm" variant="outline" onClick={() => download(r.docx_path)}>DOCX</Button>}
                       <Button size="sm" variant="outline" onClick={() => copyLink(r.share_token)} disabled={!!r.revoked_at}>Copy link</Button>
-                      {!r.revoked_at && <Button size="sm" variant="outline" onClick={() => revoke(r.id)}>Revoke</Button>}
-                      <Button size="sm" variant="destructive" onClick={() => remove(r.id, r)}>Delete</Button>
+                      {!r.revoked_at && <Button size="sm" variant="outline" onClick={() => setPending({ kind: "revoke", row: r })}>Revoke</Button>}
+                      <Button size="sm" variant="destructive" onClick={() => setPending({ kind: "delete", row: r })}>Delete</Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -181,6 +181,28 @@ export default function DocumentsPage() {
           </div>
         )}
       </div>
+
+      <AlertDialog open={!!pending} onOpenChange={(o) => { if (!o) setPending(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {pending?.kind === "delete" ? "Delete this document?" : "Revoke this share link?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {pending?.kind === "delete"
+                ? "This permanently removes the document and its PDF and Word files. This cannot be undone."
+                : "Anyone who already has this link will lose access. The document itself stays in your list."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={busy}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={(e) => { e.preventDefault(); confirmPending(); }} disabled={busy}>
+              {busy ? "Working…" : pending?.kind === "delete" ? "Delete" : "Revoke"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppShell>
   );
 }
+
