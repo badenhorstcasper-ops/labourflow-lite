@@ -74,7 +74,8 @@ export default function Seo({ title, description, path, jsonLd }: SeoProps) {
     return () => {
       script?.remove();
     };
-  }, [title, description, path, jsonLd]);
+  // Stringified so a freshly-built object each render does not redo the work.
+  }, [title, description, path, jsonLd ? JSON.stringify(jsonLd) : null]);
 
   return null;
 }
