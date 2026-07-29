@@ -178,9 +178,9 @@ const Auth = () => {
         <div className="w-full max-w-md"><BackHomeBar homeTo="/" /></div>
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle asChild>
-              <h1 className="text-2xl font-semibold">{mode === "signup" ? "Create your iNRECO account" : "Sign in to iNRECO"}</h1>
-            </CardTitle>
+            <h1 className="text-2xl font-semibold leading-none tracking-tight">
+              {mode === "signup" ? "Create your iNRECO account" : "Sign in to iNRECO"}
+            </h1>
             <CardDescription>
               {mode === "signup"
                 ? "Sign up to access CARA and your subscription."

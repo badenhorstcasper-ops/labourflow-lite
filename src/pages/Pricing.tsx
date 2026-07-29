@@ -320,9 +320,7 @@ const Pricing = () => {
                     </div>
                   )}
                   <CardHeader>
-                    <CardTitle asChild>
-                      <h2 className="text-xl font-semibold">{plan.name}</h2>
-                    </CardTitle>
+                    <h2 className="text-2xl font-semibold leading-none tracking-tight">{plan.name}</h2>
                     <CardDescription>{plan.description}</CardDescription>
                   </CardHeader>
                   <CardContent className="flex flex-1 flex-col justify-between gap-6">
