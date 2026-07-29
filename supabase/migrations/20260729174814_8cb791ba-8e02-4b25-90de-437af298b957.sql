@@ -1,0 +1,2 @@
+CREATE POLICY "Admins can view all devices" ON public.user_devices FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'admin'));
+CREATE POLICY "Admins can delete any device" ON public.user_devices FOR DELETE TO authenticated USING (public.has_role(auth.uid(), 'admin'));
