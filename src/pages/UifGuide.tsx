@@ -60,19 +60,16 @@ export default function UifGuide() {
         title="UIF registration and uFiling: employer guide (South Africa)"
         description="A plain-language guide for South African employers: how to register for UIF, set up uFiling, declare workers and pay the monthly 2% contribution on time."
         path="/guides/uif-ufiling"
-      >
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "FAQPage",
-            mainEntity: faqs.map((f) => ({
-              "@type": "Question",
-              name: f.q,
-              acceptedAnswer: { "@type": "Answer", text: f.a },
-            })),
-          })}
-        </script>
-      </Seo>
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: faqs.map((f) => ({
+            "@type": "Question",
+            name: f.q,
+            acceptedAnswer: { "@type": "Answer", text: f.a },
+          })),
+        }}
+      />
 
       <div className="min-h-screen bg-background">
         <div className="container mx-auto max-w-3xl px-4 py-10">
