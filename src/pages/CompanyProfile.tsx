@@ -323,10 +323,11 @@ export default function CompanyProfilePage() {
 }
 
 function Field({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  const id = `field-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
   return (
     <div>
-      <Label>{label}</Label>
-      <Input className="mt-1" value={value} onChange={(e) => onChange(e.target.value)} />
+      <Label htmlFor={id}>{label}</Label>
+      <Input id={id} className="mt-1" value={value} onChange={(e) => onChange(e.target.value)} />
     </div>
   );
 }

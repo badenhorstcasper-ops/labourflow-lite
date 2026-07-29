@@ -311,6 +311,8 @@ Deno.serve(async (req) => {
       trial_ends_at: paidToday ? trialEndsAt : null,
       payfast_token: payfastToken,
       pf_payment_id: pfPaymentId,
+      // The real confirmation has landed — this is no longer provisional access.
+      provisional_until: null,
       updated_at: now,
     };
 

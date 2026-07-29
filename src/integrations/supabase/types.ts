@@ -1272,6 +1272,7 @@ export type Database = {
           payfast_token: string | null
           pf_payment_id: string | null
           plan_name: string
+          provisional_until: string | null
           status: string
           trial_ends_at: string | null
           updated_at: string
@@ -1286,6 +1287,7 @@ export type Database = {
           payfast_token?: string | null
           pf_payment_id?: string | null
           plan_name: string
+          provisional_until?: string | null
           status?: string
           trial_ends_at?: string | null
           updated_at?: string
@@ -1300,6 +1302,7 @@ export type Database = {
           payfast_token?: string | null
           pf_payment_id?: string | null
           plan_name?: string
+          provisional_until?: string | null
           status?: string
           trial_ends_at?: string | null
           updated_at?: string

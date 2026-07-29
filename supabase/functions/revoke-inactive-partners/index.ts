@@ -63,5 +63,26 @@ Deno.serve(async (req) => {
     revoked.push({ id: p.id, email: p.email as string, full_name: p.full_name as string });
   }
 
-  return json({ ok: true, revoked_count: revoked.length, revoked });
+  // Clean up provisional access that PayFast never confirmed. `provisional_until`
+  // is cleared the moment a real payment notification arrives, so anything still
+  // set and in the past means no confirmation ever came.
+  const { data: stale } = await admin
+    .from("subscriptions")
+    .select("id, email")
+    .not("provisional_until", "is", null)
+    .lt("provisional_until", now.toISOString());
+
+  for (const s of stale ?? []) {
+    await admin
+      .from("subscriptions")
+      .update({ status: "pending", provisional_until: null, updated_at: now.toISOString() })
+      .eq("id", s.id);
+  }
+
+  return json({
+    ok: true,
+    revoked_count: revoked.length,
+    revoked,
+    provisional_expired: (stale ?? []).length,
+  });
 });

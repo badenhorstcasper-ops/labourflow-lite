@@ -1,0 +1,2 @@
+ALTER TABLE public.subscriptions ADD COLUMN IF NOT EXISTS provisional_until timestamptz;
+COMMENT ON COLUMN public.subscriptions.provisional_until IS 'Set when access was granted on the buyer''s return from PayFast before the ITN arrived. Cleared once the payment notification confirms the payment.';
