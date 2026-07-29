@@ -117,14 +117,25 @@ export default function CompanyProfilePage() {
       .upload(path, file, { upsert: true, contentType: file.type });
     toast.dismiss(uploading);
     if (error) {
-      toast.error("Couldn't upload that logo. The rest of your profile will still save. (" + error.message + ")");
+      const msg = (error.message || "").toLowerCase();
+      if (msg.includes("row-level security") || msg.includes("unauthorized") || msg.includes("policy")) {
+        toast.error("You don't have permission to change this account's logo. Ask the account owner to do it.");
+      } else {
+        toast.error("Couldn't upload that logo. The rest of your profile will still save. (" + error.message + ")");
+      }
       return;
+    }
+    // Clean up an older logo saved with a different file type, so only one remains.
+    const stale = ["png", "jpg", "webp"].filter((e) => e !== ext).map((e) => `${ownerId}/logo.${e}`);
+    if (stale.length) {
+      await supabase.storage.from("company-logos").remove(stale);
     }
     // Store the storage path; we'll sign it for display each time.
     set("logo_url", path);
     setLogoPreview(await resolveLogoUrl(path));
     toast.success("Logo uploaded");
   }
+
 
 
   function removeLogo() {
