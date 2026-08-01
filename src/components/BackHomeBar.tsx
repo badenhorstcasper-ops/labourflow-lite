@@ -67,6 +67,3 @@ export default function BackHomeBar({ homeTo = "/", className = "" }: Props) {
     </div>
   );
 }
-    </div>
-  );
-}
