@@ -1,9 +1,11 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
 type Props = {
-  /** Where the Home button goes. Defaults to "/" (public landing). */
+  /** Where the Home button goes for signed-out visitors. Defaults to "/". */
   homeTo?: string;
   /** Optional wrapper class (e.g. to control container/padding). */
   className?: string;
