@@ -64,7 +64,7 @@ export default function AdminPage() {
     if (error) throw new Error(error.message);
     if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
     return data as Stats;
-  }, 30_000);
+  }, 30_000, authorized);
 
   async function resolveError(id: string) {
     const { error } = await supabase.functions.invoke("resolve-error", { body: { id } });
