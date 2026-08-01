@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import InstallAppButton from "@/components/InstallAppButton";
 import ShareAppButton from "@/components/ShareAppButton";
 import { Button } from "@/components/ui/button";
+import BackHomeBar from "@/components/BackHomeBar";
 import Seo from "@/components/Seo";
 import { useSubscription } from "@/hooks/useSubscription";
 
