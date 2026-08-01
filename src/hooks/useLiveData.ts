@@ -35,6 +35,7 @@ export function useLiveData<T>(
   }, []);
 
   useEffect(() => {
+    if (!enabled) return;
     run();
     const iv = setInterval(run, intervalMs);
     const onVis = () => { if (document.visibilityState === "visible") run(); };
@@ -46,7 +47,7 @@ export function useLiveData<T>(
       document.removeEventListener("visibilitychange", onVis);
       window.removeEventListener("online", onOnline);
     };
-  }, [run, intervalMs]);
+  }, [run, intervalMs, enabled]);
 
   return { data, error, refreshing, updatedAt, refresh: run };
 }
