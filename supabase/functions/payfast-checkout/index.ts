@@ -12,6 +12,10 @@ const PLAN_PRICES: Record<PlanName, number> = {
 
 const PLAN_NAMES = new Set<PlanName>(["Solo", "Business", "Professional"]);
 const TRIAL_DAYS = 7;
+/** Someone who arrives through a friend's invite link gets double the trial. */
+const REFERRED_TRIAL_DAYS = 14;
+/** PayFast will not process a card payment below this amount. */
+const MIN_CHARGE_ZAR = 5;
 const LIVE_MERCHANT_ID = "12090292";
 const LIVE_MERCHANT_KEY = "3xbkln8wrhwqj";
 const SANDBOX_MERCHANT_ID = "10000100";
@@ -91,9 +95,9 @@ function safeOrigin(req: Request) {
   return "https://app.inreco.co.za";
 }
 
-function trialBillingDate() {
+function trialBillingDate(days: number = TRIAL_DAYS) {
   const date = new Date();
-  date.setDate(date.getDate() + TRIAL_DAYS);
+  date.setDate(date.getDate() + days);
   return date.toISOString().slice(0, 10);
 }
 
@@ -179,13 +183,47 @@ Deno.serve(async (req) => {
   }
 
   const origin = safeOrigin(req);
-  const amount = PLAN_PRICES[planName as PlanName];
-  // "now" = pay today and start billing immediately. "trial" = 7 free days.
+  const fullAmount = PLAN_PRICES[planName as PlanName];
+  // "now" = pay today and start billing immediately. "trial" = free days first.
   const payNow = typeof body.mode === "string" && body.mode.toLowerCase() === "now";
-  const billingDate = payNow ? new Date().toISOString().slice(0, 10) : trialBillingDate();
+  const admin = createClient(supabaseUrl, serviceKey);
+
+  // Someone who joined through a friend's invite link gets 14 free days.
+  let trialDays = TRIAL_DAYS;
+  if (authedUser.id) {
+    const { data: invited } = await admin
+      .from("referral_signups")
+      .select("id")
+      .eq("referred_user_id", authedUser.id)
+      .neq("status", "blocked")
+      .maybeSingle();
+    if (invited?.id) trialDays = REFERRED_TRIAL_DAYS;
+  }
+
+  // Referral credit the buyer has earned comes off this payment automatically.
+  let creditApplied = 0;
+  let creditIds: string[] = [];
+  if (authedUser.id && payNow) {
+    const { data: credits } = await admin
+      .from("referral_credits")
+      .select("id, amount_zar")
+      .eq("user_id", authedUser.id)
+      .eq("status", "granted")
+      .order("created_at", { ascending: true });
+    const maxUsable = Math.max(0, fullAmount - MIN_CHARGE_ZAR);
+    for (const c of credits ?? []) {
+      if (creditApplied >= maxUsable) break;
+      const value = Number(c.amount_zar) || 0;
+      if (creditApplied + value > maxUsable) continue;
+      creditApplied += value;
+      creditIds.push(c.id as string);
+    }
+  }
+
+  const amount = Math.max(0, fullAmount - creditApplied);
+  const billingDate = payNow ? new Date().toISOString().slice(0, 10) : trialBillingDate(trialDays);
   const mPaymentId = globalThis.crypto.randomUUID();
   const notifyUrl = `${supabaseUrl}/functions/v1/payfast-webhook`;
-  const admin = createClient(supabaseUrl, serviceKey);
   const { error: txError } = await admin.from("payfast_transactions").insert({
     user_id: authedUser.id,
     email,
@@ -195,11 +233,20 @@ Deno.serve(async (req) => {
     status: "pending",
     billing_date: billingDate,
     referral_code: referralCode,
+    referral_credit_zar: creditApplied,
   });
 
   if (txError) {
     console.error("Could not create PayFast tracking record", txError);
     return json({ error: "Checkout could not start. Please try again." }, 500);
+  }
+
+  // Hold the credit against this checkout so it cannot be spent twice.
+  if (creditIds.length) {
+    await admin
+      .from("referral_credits")
+      .update({ status: "reserved", note: `Reserved for checkout ${mPaymentId}` })
+      .in("id", creditIds);
   }
 
   const baseFields: Record<string, string> = {
@@ -213,16 +260,17 @@ Deno.serve(async (req) => {
     amount: payNow ? amount.toFixed(2) : "0.00",
     item_name: payNow
       ? `iNRECO Pocket Consultant - ${planName}`
-      : `iNRECO Pocket Consultant - ${planName} (7-day free trial)`,
+      : `iNRECO Pocket Consultant - ${planName} (${trialDays}-day free trial)`,
     item_description: "iNRECO Pocket Consultant subscription access",
 
     subscription_type: "1",
     billing_date: billingDate,
-    recurring_amount: amount.toFixed(2),
+    recurring_amount: fullAmount.toFixed(2),
     frequency: "3",
     cycles: "0",
   };
   if (referralCode) baseFields.custom_str1 = referralCode;
+
 
 
   const fields = await signFields(baseFields, passphrase);

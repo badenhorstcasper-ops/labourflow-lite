@@ -54,7 +54,15 @@ export default function Terms() {
           <li>All payments are processed by PayFast (Pty) Ltd, an authorised South African payment service provider. We do not store your full card details.</li>
           <li>Prices are shown in South African Rand (ZAR) and include VAT where applicable.</li>
           <li>You may cancel your subscription at any time from your account. Cancellation takes effect at the end of the current billing cycle; we do not pro-rate refunds for partial months.</li>
+          <li>If you join through a valid invite link from an existing customer, your free trial is <strong>14 days</strong> instead of 7. Referral credit earned by the referring account is applied automatically to reduce that account's next payment.</li>
         </ul>
+
+        <h2>4A. Referral program</h2>
+        <p>
+          Our referral program rewards genuine new customers only. We may withhold or reverse rewards where we
+          reasonably believe a referral is fraudulent, self-referred, or otherwise abusive, and we may change referral
+          rewards or caps at any time.
+        </p>
   
         <h2>5. Cooling-off / right to cancel (ECTA s 44)</h2>
         <p>

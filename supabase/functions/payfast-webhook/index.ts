@@ -24,7 +24,88 @@ type PayfastTransaction = {
   amount: number | string;
   billing_date: string | null;
   referral_code: string | null;
+  referral_credit_zar: number | string | null;
 };
+
+/** Credit a referrer earns once their friend actually starts paying. */
+const REFERRAL_REWARDS: Record<string, number> = {
+  Solo: 50,
+  Business: 100,
+  Professional: 150,
+  Enterprise: 250,
+};
+
+/** Put credit that was held for an abandoned or failed checkout back in the pot. */
+async function releaseReservedCredit(
+  supabase: ReturnType<typeof createClient>,
+  mPaymentId: string,
+) {
+  await supabase
+    .from("referral_credits")
+    .update({ status: "granted", note: null })
+    .eq("status", "reserved")
+    .eq("note", `Reserved for checkout ${mPaymentId}`);
+}
+
+/** Reward the person whose invite link brought this paying customer in. */
+async function awardReferralCredit(
+  supabase: ReturnType<typeof createClient>,
+  tx: PayfastTransaction,
+) {
+  const query = supabase
+    .from("referral_signups")
+    .select("id, referrer_user_id, status")
+    .eq("status", "pending")
+    .limit(1);
+  const { data: signup } = tx.user_id
+    ? await query.eq("referred_user_id", tx.user_id).maybeSingle()
+    : await query.eq("referred_email", tx.email.toLowerCase()).maybeSingle();
+  if (!signup?.id) return;
+
+  const reward = REFERRAL_REWARDS[tx.plan_name] ?? 0;
+  const referrerId = signup.referrer_user_id as string;
+
+  await supabase
+    .from("referral_signups")
+    .update({ status: "converted", converted_plan: tx.plan_name, converted_at: new Date().toISOString() })
+    .eq("id", signup.id);
+
+  if (reward <= 0) return;
+
+  // Monthly cap per account, set by the owner in the admin area.
+  const { data: settings } = await supabase
+    .from("referral_settings")
+    .select("monthly_cap_zar")
+    .eq("id", 1)
+    .maybeSingle();
+  const cap = Number(settings?.monthly_cap_zar ?? 500);
+
+  const monthStart = new Date();
+  monthStart.setUTCDate(1);
+  monthStart.setUTCHours(0, 0, 0, 0);
+  const { data: thisMonth } = await supabase
+    .from("referral_credits")
+    .select("amount_zar")
+    .eq("user_id", referrerId)
+    .neq("status", "reversed")
+    .gte("created_at", monthStart.toISOString());
+  const earned = (thisMonth ?? []).reduce((total, row) => total + Number(row.amount_zar || 0), 0);
+  const allowed = Math.max(0, Math.min(reward, cap - earned));
+  if (allowed <= 0) {
+    console.log("referral credit skipped: monthly cap reached", referrerId);
+    return;
+  }
+
+  await supabase.from("referral_credits").insert({
+    user_id: referrerId,
+    signup_id: signup.id,
+    amount_zar: allowed,
+    plan_name: tx.plan_name,
+    status: "granted",
+    note: allowed < reward ? "Reduced by the monthly referral cap" : null,
+  });
+}
+
 
 
 let ipCache: { ips: Set<string>; at: number } = { ips: new Set(), at: 0 };
@@ -221,7 +302,7 @@ Deno.serve(async (req) => {
 
     const { data: txData } = await supabase
       .from("payfast_transactions")
-      .select("id, user_id, email, plan_name, amount, billing_date, referral_code")
+      .select("id, user_id, email, plan_name, amount, billing_date, referral_code, referral_credit_zar")
       .eq("m_payment_id", mPaymentId)
       .maybeSingle();
 
@@ -248,6 +329,7 @@ Deno.serve(async (req) => {
           .eq("id", subscriptionId);
       }
 
+      await releaseReservedCredit(supabase, mPaymentId);
       await logAttempt(supabase, { ...txLog, outcome: "accepted", reason: "cancelled" });
       return ok();
     }
@@ -266,6 +348,7 @@ Deno.serve(async (req) => {
           .eq("id", subscriptionId);
       }
 
+      await releaseReservedCredit(supabase, mPaymentId);
       await logAttempt(supabase, { ...txLog, outcome: "accepted", reason: "failed_debit" });
       return ok();
     }
@@ -344,6 +427,21 @@ Deno.serve(async (req) => {
       } catch (e) {
         console.error("referral attribution failed", e);
       }
+    }
+
+    // Referral program: spend any credit that was held for this checkout, and
+    // reward the friend who invited this customer once real money moves.
+    try {
+      if (Number(tx.referral_credit_zar || 0) > 0) {
+        await supabase
+          .from("referral_credits")
+          .update({ status: "applied", applied_at: now, note: `Applied to payment ${mPaymentId}` })
+          .eq("status", "reserved")
+          .eq("note", `Reserved for checkout ${mPaymentId}`);
+      }
+      if (!paidToday) await awardReferralCredit(supabase, tx);
+    } catch (e) {
+      console.error("referral credit handling failed", e);
     }
 
     await logAttempt(supabase, { ...txLog, outcome: "accepted" });

@@ -40,6 +40,10 @@ import AdminMarketing from "@/pages/AdminMarketing";
 import AdminHealth from "@/pages/AdminHealth";
 import GetApp from "@/pages/GetApp";
 import UifGuide from "@/pages/UifGuide";
+import ReferEarn from "@/pages/ReferEarn";
+import AdminReferrals from "@/pages/AdminReferrals";
+import { captureInviteFromUrl, attachInviteIfAny } from "@/lib/referral";
+import { supabase } from "@/integrations/supabase/client";
 
 
 
@@ -57,13 +61,27 @@ function useCaptureRef() {
         localStorage.setItem("inreco.ref", ref.toUpperCase());
       }
     } catch (_) {}
+    captureInviteFromUrl(search);
   }, [search]);
 }
+
+/** Links a signed-in account to the invite link it arrived from (once). */
+function useAttachInvite() {
+  React.useEffect(() => {
+    attachInviteIfAny();
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") attachInviteIfAny();
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
+}
+
 
 
 function AppRoutes() {
   usePageView();
   useCaptureRef();
+  useAttachInvite();
 
   return (
     <Routes>
@@ -97,6 +115,8 @@ function AppRoutes() {
       <Route path="/admin/partner-decision" element={<AdminPartnerDecision />} />
       <Route path="/admin/marketing" element={<AdminMarketing />} />
       <Route path="/admin/health" element={<AdminHealth />} />
+      <Route path="/admin/referrals" element={<AdminReferrals />} />
+      <Route path="/account-app/refer" element={gated(<ReferEarn />)} />
 
 
 
