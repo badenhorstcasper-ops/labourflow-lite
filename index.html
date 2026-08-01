@@ -530,6 +530,12 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
       shareText: 'iNRECO Pocket Consultant — instant SA labour help for restaurants and cafés',
       qaTitle: 'Restaurant questions we get <span class="blue-text">every week</span>.',
       qaDesc: 'Real situations from South African kitchens and front-of-house teams.',
+      howItWorksImg: '/__l5e/assets-v1/c259ed1a-5d2a-4bf8-8fdc-1f9b19f5d256/inreco-how-it-works-restaurant.jpg',
+      howItWorksAlt: 'Restaurant owner getting a labour-law answer from iNRECO during service',
+      whyImgA: '/__l5e/assets-v1/0b5d5945-1cc1-43f9-a0a3-7285d0dddbe1/inreco-why-restaurant-a.jpg',
+      whyImgAAlt: 'Busy South African restaurant floor — the kind of workplace iNRECO is built for',
+      whyImgB: '/__l5e/assets-v1/05a2dbf2-5abf-4ea7-aa0e-f4fe7518930f/inreco-why-restaurant-b.jpg',
+      whyImgBAlt: 'Restaurant manager checking iNRECO on his phone between shifts',
       qa: [
         ['A waiter did not pitch for his Saturday night shift. Can I fire him?', 'Not for one no-show. Treat it as absence without leave: ask for an explanation in writing, and if there is no valid reason issue a written warning. Dismissal only becomes fair after repeated offences with valid warnings on file, or after a proper hearing for prolonged desertion. CARA drafts the AWOL letter and the warning for you.'],
         ['Money is short in the till after a shift. What may I do?', 'You may investigate and hold a disciplinary hearing, but you may not simply deduct the shortfall from wages. A deduction needs written consent for that specific loss, after a fair procedure, and it may not exceed a quarter of the pay. CARA sets out the steps and drafts the charge sheet.'],
@@ -587,6 +593,13 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
     var shot = document.getElementById('heroShot');
     if (shot) { shot.src = ind.img; shot.alt = ind.imgAlt; }
 
+    var hiw = document.getElementById('howItWorksImg');
+    if (hiw && ind.howItWorksImg) { hiw.src = ind.howItWorksImg; hiw.alt = ind.howItWorksAlt; }
+    var whyA = document.getElementById('whyImgA');
+    if (whyA && ind.whyImgA) { whyA.src = ind.whyImgA; whyA.alt = ind.whyImgAAlt; }
+    var whyB = document.getElementById('whyImgB');
+    if (whyB && ind.whyImgB) { whyB.src = ind.whyImgB; whyB.alt = ind.whyImgBAlt; }
+
     var sec = document.getElementById('industry-qa');
     var list = document.getElementById('industryQaList');
     if (sec && list) {
@@ -640,7 +653,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
   <div class="section-inner">
     <div class="split-grid">
       <div style="position:relative">
-        <img src="/__l5e/assets-v1/cdb47a15-50cd-4928-81b3-48437ba1ad01/inreco-how-it-works.jpg" alt="Professional using iNRECO" class="split-img" loading="lazy" width="1200" height="900">
+        <img id="howItWorksImg" src="/__l5e/assets-v1/cdb47a15-50cd-4928-81b3-48437ba1ad01/inreco-how-it-works.jpg" alt="Professional using iNRECO" class="split-img" loading="lazy" width="1200" height="900">
         <div class="split-badge">
           <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
           <div><div class="split-badge-label">SA Labour Law</div><div class="split-badge-val">Always current</div></div>
@@ -675,8 +688,8 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
         </div>
       </div>
       <div class="why-imgs">
-        <img src="/__l5e/assets-v1/e75264d5-54b4-42ea-8708-be69ee416049/inreco-why-a.jpg" alt="Generating a formal written warning inside iNRECO" width="768" height="1024" loading="lazy" />
-        <img src="/__l5e/assets-v1/de5333d6-925f-43e1-bd64-d115e849300f/inreco-why-b.jpg" alt="A South African manager using iNRECO on his phone" width="768" height="1024" loading="lazy" />
+        <img id="whyImgA" src="/__l5e/assets-v1/e75264d5-54b4-42ea-8708-be69ee416049/inreco-why-a.jpg" alt="Generating a formal written warning inside iNRECO" width="768" height="1024" loading="lazy" />
+        <img id="whyImgB" src="/__l5e/assets-v1/de5333d6-925f-43e1-bd64-d115e849300f/inreco-why-b.jpg" alt="A South African manager using iNRECO on his phone" width="768" height="1024" loading="lazy" />
       </div>
     </div>
   </div>
