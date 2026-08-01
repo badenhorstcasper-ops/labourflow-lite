@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import BackHomeBar from "@/components/BackHomeBar";
 import TeamManagement from "@/components/TeamManagement";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -83,6 +84,7 @@ const Settings = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto max-w-4xl px-4 py-10">
+        <BackHomeBar homeTo="/app" />
         <header className="mb-8">
           <h1 className="text-3xl font-bold tracking-tight">Account Settings</h1>
           <p className="mt-1 text-sm text-muted-foreground">
