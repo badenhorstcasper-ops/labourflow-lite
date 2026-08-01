@@ -77,7 +77,7 @@ export default function AdminOverview() {
     if ((ov as { error?: string })?.error) throw new Error((ov as { error: string }).error);
     setPending((pend as { id: string; full_name: string; email: string; created_at: string }[]) || []);
     return ov as Data;
-  }, 30_000);
+  }, 30_000, authorized);
 
   if (checking || !authorized) {
     return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>;
