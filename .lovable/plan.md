@@ -1,41 +1,49 @@
-## What's happening
+## Goal
+On the `/restaurants` industry landing page, swap the generic/corporate images in the **"How It Works"** and **"Why iNRECO"** sections for visuals that clearly read as South African restaurant, café, or takeaway operations.
 
-**1. The jumbled "Start Free" page (second screenshot)**
+## Current state
+- The landing page is a single `index.html` file. Industry pages (`/restaurants`, `/supermarkets`) reuse the same HTML and swap only the hero image, title, badge, subtitle, and FAQ list via a small inline JS config object (`INDUSTRIES`).
+- The images to replace are:
+  1. **How It Works** — `inreco-how-it-works.jpg` (currently a corporate/logistics-style shot).
+  2. **Why iNRECO** — two stacked images: `inreco-why-a.jpg` and `inreco-why-b.jpg`.
+- These image references are hardcoded in `index.html` and are not yet part of the industry swap logic.
 
-The old-style page code (the file `index.html`, which is the public landing page) contains styling rules written for plain `header` and `h1` tags. Those rules apply to *every* page of the app, not just the landing page. Confirmed in that file:
+## Plan
 
-- a rule that forces any `header` block into a side-by-side sticky bar
-- a rule that blows any `h1` up to a huge size
+### 1. Generate new restaurant-specific images
+Generate three new images using the image generation tool:
+- **How It Works** (`inreco-how-it-works-restaurant.jpg`): A South African restaurant manager or owner using a phone/tablet on the restaurant floor or near the pass, with the warm bustle of a kitchen or service area in the background. Should feel practical and operational, not posed/corporate.
+- **Why iNRECO — top** (`inreco-why-restaurant-a.jpg`): A busy South African restaurant/café interior or front-of-house scene — staff serving, tables, coffee machine, POS/till. Should convey "this is built for my business."
+- **Why iNRECO — bottom** (`inreco-why-restaurant-b.jpg`): A close-up of a restaurant owner/manager reviewing something on a phone at a table or counter, with a relaxed but professional vibe.
 
-The pricing page and 12 other app pages use plain `header` and `h1` tags, so the intro text gets squeezed into three side-by-side columns with a giant "Start Free" sitting on top of it. On a phone this looks broken; on desktop it mostly hides.
+All three should match the existing dark blue brand palette and realistic photographic style, and should not contain text.
 
-**2. "Unsafe app blocked" from Google Play Protect (first screenshot)**
+### 2. Upload images as Lovable assets
+Use the `lovable-assets` CLI to upload the generated files and create `.asset.json` pointer files under `src/assets/`. Then remove the original generated files from the repo (only the pointer files remain).
 
-This is not a bug in the app and nothing is unsafe. When someone adds the app to their home screen, some Android browsers (and older Android versions) build a small wrapper app on the phone, and Google warns about the wrapper because it was built for an older Android version. Chrome builds a current wrapper and does not show this warning. I cannot remove the warning from our side — but I can stop people hitting it and reassure them when they do.
+### 3. Wire the images into the industry swap script
+Update the inline `INDUSTRIES` JavaScript in `index.html` for `/restaurants`:
+- Add new keys: `howItWorksImg`, `whyImgA`, `whyImgB` (or similar).
+- In the `DOMContentLoaded` handler, look up the relevant `<img>` elements by ID or class and replace their `src` and `alt` attributes when the current path is `/restaurants`.
+- Add `id` attributes to the three target `<img>` tags if they do not already have them, so the JS can target them reliably.
+- Keep the existing default images for `/supermarkets` and the base `/` landing page unchanged.
 
-## The fix
+### 4. Update alt text
+Make alt text specific to restaurants, e.g.:
+- How It Works: "Restaurant owner getting a labour-law answer from iNRECO during service."
+- Why A: "Busy South African restaurant floor — the kind of workplace iNRECO is built for."
+- Why B: "Restaurant manager checking iNRECO on his phone between shifts."
 
-**Stop the old styling leaking into app pages**
+### 5. Verify
+- Preview the `/restaurants` page at mobile and desktop widths to confirm the new images load and the layout still stacks correctly.
+- Confirm `/supermarkets` and `/` still show the original images.
 
-Restrict the two offending rules in the landing page file so they only apply to the landing/old page itself (by scoping them to the old page's own container) instead of every `header` and `h1` on the site. Then check the pricing page and the other affected pages (Settings, Contact, Refer & Earn, Health, Partner pages, Legal pages, Share) on a phone-sized screen to confirm each one reads correctly.
+## Files to change
+- `index.html` — add restaurant image assets to the industry swap script and add targetable IDs to the three image tags.
+- `src/assets/inreco-how-it-works-restaurant.jpg.asset.json` — new asset pointer.
+- `src/assets/inreco-why-restaurant-a.jpg.asset.json` — new asset pointer.
+- `src/assets/inreco-why-restaurant-b.jpg.asset.json` — new asset pointer.
 
-**Make the "Start Free" page read well on a phone regardless**
-
-Give the pricing intro a sensible width, spacing and heading size of its own, so it can never be pushed around by outside styling again.
-
-**Improve the install experience on Android**
-
-- On the install page and the install button: detect when someone is using a browser other than Chrome on Android and show a short line saying "For the smoothest install, open this page in Chrome" with a tap-to-copy of the address.
-- Add one plain-language line under the install button explaining that if Android shows a Play Protect warning, they can tap "Install anyway" — or simply skip installing and use the app in the browser, which works exactly the same.
-- Keep the existing behaviour where the app can just be used in the browser with no install at all.
-
-## Verification before I hand back
-
-I'll load the pricing page and the other affected pages at phone width, take screenshots, and confirm nothing overlaps and everything is readable, then re-check the install page wording.
-
-## Technical detail
-
-- `index.html`: scope the global `header { ... }` and `h1 { ... }` declarations (and the `@media (max-width:600px) header` rule) to the legacy shell container so they stop cascading into the React tree.
-- `src/pages/Pricing.tsx`: add explicit `max-w`/`mx-auto`/text-size classes on the header block so it is self-contained.
-- `src/pages/GetApp.tsx` and `src/components/InstallAppButton.tsx`: add non-Chrome-Android detection and the Play Protect explainer copy.
-- Verify with Playwright at 390x844 across the affected routes.
+## Out of scope
+- No changes to pricing, hero image, FAQ copy, or navigation.
+- No changes to `/supermarkets` or the base `/` page images.
