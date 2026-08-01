@@ -43,6 +43,11 @@ const InstallAppButton = () => {
   const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
   const isIOS = /iPad|iPhone|iPod/.test(ua);
   const isAndroid = /Android/.test(ua);
+  // Chrome on Android builds an up-to-date home-screen app. Other Android
+  // browsers build an older-style one, which makes Google show a scary
+  // "unsafe app blocked" warning — so we nudge people to Chrome instead.
+  const isChromeAndroid =
+    isAndroid && /Chrome\//.test(ua) && !/(EdgA|OPR|SamsungBrowser|Brave|YaBrowser|UCBrowser|MiuiBrowser|Firefox)/.test(ua);
   const fallbackMsg = isIOS
     ? "On iPhone/iPad: tap the Share icon, then Add to Home Screen."
     : isAndroid
@@ -67,6 +72,18 @@ const InstallAppButton = () => {
         <img src="/icon-192.png" alt="" width={20} height={20} className="rounded" />
         Install iNRECO on your device
       </button>
+      {isAndroid && !isChromeAndroid && (
+        <p className="max-w-sm text-center text-xs text-muted-foreground">
+          For the smoothest install, open <strong>app.inreco.co.za</strong> in Chrome first.
+        </p>
+      )}
+      {isAndroid && (
+        <p className="max-w-sm text-center text-xs text-muted-foreground">
+          If your phone shows a Google Play Protect warning, it's safe to tap{" "}
+          <strong>Install anyway</strong> — or skip installing and just use iNRECO in your
+          browser, which works exactly the same.
+        </p>
+      )}
       {!canInstall && showFallback && (
         <p className="max-w-sm text-xs text-muted-foreground">{fallbackMsg}</p>
       )}
