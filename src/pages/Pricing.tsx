@@ -249,8 +249,8 @@ const Pricing = () => {
               {reasonMessage}
             </div>
           )}
-          <header className="mb-10 text-center">
-            <h1 className="text-3xl font-bold tracking-tight">Start Free</h1>
+          <header className="mx-auto mb-10 block w-full max-w-2xl text-center">
+            <h1 className="text-3xl font-bold leading-tight tracking-tight">Start Free</h1>
             <p className="mt-2 text-sm text-muted-foreground">
               Every paid plan starts with a <strong>7-day free trial</strong>. Your
               card is secured today via PayFast (no money taken). The first debit
