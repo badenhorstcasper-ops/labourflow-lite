@@ -593,6 +593,13 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
     var shot = document.getElementById('heroShot');
     if (shot) { shot.src = ind.img; shot.alt = ind.imgAlt; }
 
+    var hiw = document.getElementById('howItWorksImg');
+    if (hiw && ind.howItWorksImg) { hiw.src = ind.howItWorksImg; hiw.alt = ind.howItWorksAlt; }
+    var whyA = document.getElementById('whyImgA');
+    if (whyA && ind.whyImgA) { whyA.src = ind.whyImgA; whyA.alt = ind.whyImgAAlt; }
+    var whyB = document.getElementById('whyImgB');
+    if (whyB && ind.whyImgB) { whyB.src = ind.whyImgB; whyB.alt = ind.whyImgBAlt; }
+
     var sec = document.getElementById('industry-qa');
     var list = document.getElementById('industryQaList');
     if (sec && list) {
