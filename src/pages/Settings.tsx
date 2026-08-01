@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import BackHomeBar from "@/components/BackHomeBar";
 import TeamManagement from "@/components/TeamManagement";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
