@@ -23,10 +23,20 @@ type Sub = {
   trial_ends_at: string | null;
 };
 
+type ReferralSummary = {
+  signups: number;
+  conversions: number;
+  credit_available: number;
+  credit_earned_total: number;
+  credit_this_month: number;
+  monthly_cap: number;
+};
+
 const Settings = () => {
   const [sub, setSub] = useState<Sub | null>(null);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
+  const [referral, setReferral] = useState<ReferralSummary | null>(null);
 
   async function refresh() {
     setLoading(true);
@@ -37,12 +47,15 @@ const Settings = () => {
       .limit(1)
       .maybeSingle();
     setSub((data as Sub) ?? null);
+    const { data: summary } = await supabase.rpc("referral_summary");
+    setReferral((summary as unknown as ReferralSummary) ?? null);
     setLoading(false);
   }
 
   useEffect(() => {
     refresh();
   }, []);
+
 
   async function onCancel() {
     setCancelling(true);
@@ -127,7 +140,30 @@ const Settings = () => {
               </CardContent>
             )}
           </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Referral rewards</CardTitle>
+              <CardDescription>
+                Credit you earned by inviting other employers. It comes off your next payment automatically —
+                there is nothing to redeem.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <p className="text-3xl font-bold">
+                R{Number(referral?.credit_available ?? 0).toFixed(2)}
+                <span className="ml-2 align-middle text-sm font-normal text-muted-foreground">available credit</span>
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {referral?.signups ?? 0} people joined with your link · {referral?.conversions ?? 0} on a paid plan ·
+                R{Number(referral?.credit_earned_total ?? 0).toFixed(2)} earned in total
+              </p>
+              <a href="/account-app/refer" className="inline-block text-sm underline">
+                Open Refer &amp; Earn
+              </a>
+            </CardContent>
+          </Card>
           <TeamManagement />
+
         </section>
       </div>
     </div>

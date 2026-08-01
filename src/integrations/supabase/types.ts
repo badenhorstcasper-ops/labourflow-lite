@@ -843,6 +843,7 @@ export type Database = {
           plan_name: string
           raw_itn: Json | null
           referral_code: string | null
+          referral_credit_zar: number
           status: string
           updated_at: string
           user_id: string | null
@@ -859,6 +860,7 @@ export type Database = {
           plan_name: string
           raw_itn?: Json | null
           referral_code?: string | null
+          referral_credit_zar?: number
           status?: string
           updated_at?: string
           user_id?: string | null
@@ -875,6 +877,7 @@ export type Database = {
           plan_name?: string
           raw_itn?: Json | null
           referral_code?: string | null
+          referral_credit_zar?: number
           status?: string
           updated_at?: string
           user_id?: string | null
@@ -947,6 +950,140 @@ export type Database = {
           created_at?: string
           date?: string
           name?: string
+        }
+        Relationships: []
+      }
+      referral_codes: {
+        Row: {
+          code: string
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      referral_credits: {
+        Row: {
+          amount_zar: number
+          applied_at: string | null
+          created_at: string
+          id: string
+          note: string | null
+          plan_name: string | null
+          reversed_at: string | null
+          reversed_by: string | null
+          signup_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_zar: number
+          applied_at?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          plan_name?: string | null
+          reversed_at?: string | null
+          reversed_by?: string | null
+          signup_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_zar?: number
+          applied_at?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          plan_name?: string | null
+          reversed_at?: string | null
+          reversed_by?: string | null
+          signup_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_credits_signup_id_fkey"
+            columns: ["signup_id"]
+            isOneToOne: false
+            referencedRelation: "referral_signups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referral_settings: {
+        Row: {
+          id: number
+          monthly_cap_zar: number
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          monthly_cap_zar?: number
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          monthly_cap_zar?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      referral_signups: {
+        Row: {
+          blocked_reason: string | null
+          code: string
+          converted_at: string | null
+          converted_plan: string | null
+          created_at: string
+          device_id: string | null
+          id: string
+          referred_email: string | null
+          referred_user_id: string | null
+          referrer_user_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          blocked_reason?: string | null
+          code: string
+          converted_at?: string | null
+          converted_plan?: string | null
+          created_at?: string
+          device_id?: string | null
+          id?: string
+          referred_email?: string | null
+          referred_user_id?: string | null
+          referrer_user_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          blocked_reason?: string | null
+          code?: string
+          converted_at?: string | null
+          converted_plan?: string | null
+          created_at?: string
+          device_id?: string | null
+          id?: string
+          referred_email?: string | null
+          referred_user_id?: string | null
+          referrer_user_id?: string
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1447,6 +1584,7 @@ export type Database = {
         Returns: number
       }
       generate_referral_code: { Args: never; Returns: string }
+      get_or_create_referral_code: { Args: never; Returns: string }
       get_salesperson_sensitive: {
         Args: { _salesperson_id: string }
         Returns: {
@@ -1483,6 +1621,7 @@ export type Database = {
           read_ct: number
         }[]
       }
+      referral_summary: { Args: never; Returns: Json }
       register_device: {
         Args: { _device_id: string; _label?: string; _ua?: string }
         Returns: {

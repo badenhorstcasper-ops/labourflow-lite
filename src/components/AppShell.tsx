@@ -62,6 +62,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <Link className={linkCls("/account-app/verify-certificate")} to="/account-app/verify-certificate">Verify Sick Note</Link>
             <Link className={linkCls("/account-app/documents")} to="/account-app/documents">Documents</Link>
             <Link className={linkCls("/account-app/profile")} to="/account-app/profile">Profile</Link>
+            <Link className={linkCls("/account-app/refer")} to="/account-app/refer">Refer &amp; Earn</Link>
             <Link className={linkCls("/settings")} to="/settings">Billing</Link>
             {isAdmin && (
               <>
@@ -69,6 +70,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 <Link className={linkCls("/admin/overview")} to="/admin/overview">Owner</Link>
                 <Link className={linkCls("/admin/commissions")} to="/admin/commissions">Partners</Link>
                 <Link className={linkCls("/admin/marketing")} to="/admin/marketing">Marketing</Link>
+                <Link className={linkCls("/admin/referrals")} to="/admin/referrals">Referrals</Link>
                 <Link className={linkCls("/admin")} to="/admin">Admin</Link>
               </>
             )}
