@@ -10,6 +10,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 export function useLiveData<T>(
   loader: () => Promise<T>,
   intervalMs: number = 30_000,
+  /** When false, the loader is not run at all (e.g. still checking sign-in). */
+  enabled: boolean = true,
 ) {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<string | null>(null);
