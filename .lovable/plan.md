@@ -1,49 +1,58 @@
-## Goal
-On the `/restaurants` industry landing page, swap the generic/corporate images in the **"How It Works"** and **"Why iNRECO"** sections for visuals that clearly read as South African restaurant, café, or takeaway operations.
+# Apple Pay, Google Pay and Scan to Pay at checkout
 
-## Current state
-- The landing page is a single `index.html` file. Industry pages (`/restaurants`, `/supermarkets`) reuse the same HTML and swap only the hero image, title, badge, subtitle, and FAQ list via a small inline JS config object (`INDUSTRIES`).
-- The images to replace are:
-  1. **How It Works** — `inreco-how-it-works.jpg` (currently a corporate/logistics-style shot).
-  2. **Why iNRECO** — two stacked images: `inreco-why-a.jpg` and `inreco-why-b.jpg`.
-- These image references are hardcoded in `index.html` and are not yet part of the industry swap logic.
+Add wallet buttons and a QR "Scan to Pay" tab next to the existing pay buttons, everywhere the app charges someone through PayFast. Nothing about the current card/EFT flow changes.
 
-## Plan
+## Where these get added
 
-### 1. Generate new restaurant-specific images
-Generate three new images using the image generation tool:
-- **How It Works** (`inreco-how-it-works-restaurant.jpg`): A South African restaurant manager or owner using a phone/tablet on the restaurant floor or near the pass, with the warm bustle of a kitchen or service area in the background. Should feel practical and operational, not posed/corporate.
-- **Why iNRECO — top** (`inreco-why-restaurant-a.jpg`): A busy South African restaurant/café interior or front-of-house scene — staff serving, tables, coffee machine, POS/till. Should convey "this is built for my business."
-- **Why iNRECO — bottom** (`inreco-why-restaurant-b.jpg`): A close-up of a restaurant owner/manager reviewing something on a phone at a table or counter, with a relaxed but professional vibe.
+1. **Pricing / subscription checkout** (`/pricing`) — the main screen with Solo, Business and Professional. Each plan card keeps its current "Start 7-day free trial" and "Pay now" buttons, and gains the wallet buttons plus a "Scan to Pay" tab.
+2. **Upgrade / change plan pop-up on the landing app** (the plan picker inside `index.html`, used by `payWithPayfast`) — same three new options.
+3. **Settings → Billing** — today this screen only cancels. It gains a "Change plan" area that uses the same checkout options, so upgrades and downgrades happen in-app instead of bouncing to the pricing page.
 
-All three should match the existing dark blue brand palette and realistic photographic style, and should not contain text.
+Two things worth knowing before we build:
 
-### 2. Upload images as Lovable assets
-Use the `lovable-assets` CLI to upload the generated files and create `.asset.json` pointer files under `src/assets/`. Then remove the original generated files from the repo (only the pointer files remain).
+- **Partner billing does not charge anyone.** Approved partners get a free Solo account and the partner portal only shows payouts owed *to* them. There is no PayFast payment on any partner screen, so there is nothing to add there. If you want partners to pay for something in future, say the word and it becomes a fourth screen.
+- **Free trial and wallets.** A trial checkout sends R0.00 today and sets up a recurring debit. PayFast's recurring billing is built around cards, and the wallets (Apple Pay, Google Pay) are not guaranteed to be accepted for a R0 sign-up-and-store-card transaction. So: wallet buttons appear on the **"Pay now"** action (immediate payment) always, and on the **trial** action only after we confirm in the sandbox that PayFast accepts them there. If sandbox rejects it, the trial keeps the normal button and I'll tell you.
 
-### 3. Wire the images into the industry swap script
-Update the inline `INDUSTRIES` JavaScript in `index.html` for `/restaurants`:
-- Add new keys: `howItWorksImg`, `whyImgA`, `whyImgB` (or similar).
-- In the `DOMContentLoaded` handler, look up the relevant `<img>` elements by ID or class and replace their `src` and `alt` attributes when the current path is `/restaurants`.
-- Add `id` attributes to the three target `<img>` tags if they do not already have them, so the JS can target them reliably.
-- Keep the existing default images for `/supermarkets` and the base `/` landing page unchanged.
+## Wallet buttons
 
-### 4. Update alt text
-Make alt text specific to restaurants, e.g.:
-- How It Works: "Restaurant owner getting a labour-law answer from iNRECO during service."
-- Why A: "Busy South African restaurant floor — the kind of workplace iNRECO is built for."
-- Why B: "Restaurant manager checking iNRECO on his phone between shifts."
+- Tapping one runs the exact same checkout we run today — same amount, plan, reference, success and cancel links, same webhook. The only difference is one extra hidden field telling PayFast which method to open: `ap` for Apple Pay, `gp` for Google Pay.
+- Styling uses Apple's and Google's own black button look and logos, not our brand colours.
+- Apple Pay only shows on Safari / Apple devices. Google Pay only shows on Chrome, Android, or desktop Chrome. The other one is hidden.
 
-### 5. Verify
-- Preview the `/restaurants` page at mobile and desktop widths to confirm the new images load and the layout still stacks correctly.
-- Confirm `/supermarkets` and `/` still show the original images.
+## Scan to Pay (QR)
 
-## Files to change
-- `index.html` — add restaurant image assets to the industry swap script and add targetable IDs to the three image tags.
-- `src/assets/inreco-how-it-works-restaurant.jpg.asset.json` — new asset pointer.
-- `src/assets/inreco-why-restaurant-a.jpg.asset.json` — new asset pointer.
-- `src/assets/inreco-why-restaurant-b.jpg.asset.json` — new asset pointer.
+This works differently from the wallet buttons, and here is why.
 
-## Out of scope
-- No changes to pricing, hero image, FAQ copy, or navigation.
-- No changes to `/supermarkets` or the base `/` page images.
+PayFast's checkout is a signed form that gets **posted** from the browser — there is no plain web address we can drop into a QR code. So the QR will point at a short page on our own site, e.g. `app.inreco.co.za/pay/ABC123`, where `ABC123` is the reference for that already-created checkout. Whoever scans it lands on that page on their phone, sees the plan and amount, and is handed straight to PayFast with the same reference. Same money, same plan, same confirmations.
+
+Details:
+
+- It sits behind a clearly labelled **"Scan to Pay"** tab, not the default view.
+- The code is only drawn once the checkout details exist (amount, plan, reference).
+- The reference has a limited life. When it lapses the code greys out with a "Refresh code" button, so nobody can scan something stale.
+- Separately, PayFast itself lists a "Masterpass Scan to Pay" method (`mp`). That is PayFast showing *their* QR on *their* page, for the person already sitting at the checkout. It solves a different problem to yours, so I'll add it as a small extra choice inside the Scan to Pay tab but the cross-device QR above is the main one.
+
+## Cancel subscription
+
+The cancel button already exists in **Settings → Billing** and only shows while a plan is active or on trial. As part of this work I will:
+
+- Test it end to end on a live-style account: press cancel, confirm the plan flips to cancelled, confirm PayFast stops the recurring debit, confirm access is withdrawn correctly.
+- Add the same cancel option to the plan area we're adding in Settings so it is impossible to miss.
+- Make sure cancelling during the free trial stops the first debit ever happening.
+
+## Testing before I hand it back
+
+- Apple Pay button shows on an Apple browser only; Google Pay on Chrome/Android only.
+- Each wallet button lands on the right PayFast screen.
+- The QR scans on a phone and opens a working payment for the right amount.
+- A stale QR refuses to pay and offers a refresh.
+- A plain card checkout and a plain trial sign-up still behave exactly as they do today.
+- Cancel works.
+
+## Technical notes
+
+- `supabase/functions/payfast-checkout/index.ts` accepts an optional `paymentMethod` (`ap` | `gp` | `mp`), validated against a whitelist and added to the signed field set before the MD5 signature is built (order matters for the signature).
+- New edge function `payfast-resume-checkout`: given an `m_payment_id`, re-derives and re-signs the same field set from the stored `payfast_transactions` row, rejecting rows that are not `pending` or older than the session window. Used by the QR landing route.
+- New public route `/pay/:reference` (`src/pages/PayLink.tsx`) that calls the above and auto-posts to PayFast.
+- New shared component `src/components/PayfastPayOptions.tsx` holding the wallet buttons, device detection and the Scan to Pay tab; consumed by `Pricing.tsx`, `Settings.tsx`, and mirrored in the vanilla plan picker inside `index.html`.
+- QR rendering reuses the existing QR dependency already used by Refer & Earn.
