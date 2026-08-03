@@ -1,0 +1,1 @@
+ALTER TABLE public.payfast_transactions ADD COLUMN IF NOT EXISTS pay_mode text NOT NULL DEFAULT 'trial';

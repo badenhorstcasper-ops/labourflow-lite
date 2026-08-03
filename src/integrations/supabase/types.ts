@@ -838,6 +838,7 @@ export type Database = {
           email: string
           id: string
           m_payment_id: string
+          pay_mode: string
           payfast_token: string | null
           pf_payment_id: string | null
           plan_name: string
@@ -855,6 +856,7 @@ export type Database = {
           email: string
           id?: string
           m_payment_id: string
+          pay_mode?: string
           payfast_token?: string | null
           pf_payment_id?: string | null
           plan_name: string
@@ -872,6 +874,7 @@ export type Database = {
           email?: string
           id?: string
           m_payment_id?: string
+          pay_mode?: string
           payfast_token?: string | null
           pf_payment_id?: string | null
           plan_name?: string
