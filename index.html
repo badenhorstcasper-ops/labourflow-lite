@@ -1006,9 +1006,9 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
     <h2>Subscribe to keep using iNRECO</h2>
     <div class="modal-sub">Start a 7-day free trial on any plan. No charge during the trial, cancel anytime.</div>
     <div class="plans">
-      <div class="plan"><h3>Solo</h3><div class="price">R259<small>/month</small></div><ul><li>CARA AI adviser</li><li>All documents</li><li>CCMA deadline tracker</li><li>1 user</li></ul><button onclick="selectPlan('Solo')">Start 7-day free trial</button></div>
-      <div class="plan featured"><h3>Business</h3><div class="price">R599<small>/month</small></div><ul><li>Unlimited questions</li><li>Up to 5 registered users</li><li>All documents</li><li>CARA AI adviser</li><li>CCMA tracker</li></ul><button onclick="selectPlan('Business')">Start 7-day free trial</button></div>
-      <div class="plan"><h3>Professional</h3><div class="price">R1,499<small>/month</small></div><ul><li>Everything in Business</li><li>Up to 10 registered users</li><li>CARA as your dedicated AI adviser</li><li>WhatsApp support</li></ul><button onclick="selectPlan('Professional')">Start 7-day free trial</button></div>
+      <div class="plan"><h3>Solo</h3><div class="price">R259<small>/month</small></div><ul><li>CARA AI adviser</li><li>All documents</li><li>CCMA deadline tracker</li><li>1 user</li></ul><button onclick="selectPlan('Solo')">Start 7-day free trial</button><div class="pay-wallets" data-plan="Solo"></div></div>
+      <div class="plan featured"><h3>Business</h3><div class="price">R599<small>/month</small></div><ul><li>Unlimited questions</li><li>Up to 5 registered users</li><li>All documents</li><li>CARA AI adviser</li><li>CCMA tracker</li></ul><button onclick="selectPlan('Business')">Start 7-day free trial</button><div class="pay-wallets" data-plan="Business"></div></div>
+      <div class="plan"><h3>Professional</h3><div class="price">R1,499<small>/month</small></div><ul><li>Everything in Business</li><li>Up to 10 registered users</li><li>CARA as your dedicated AI adviser</li><li>WhatsApp support</li></ul><button onclick="selectPlan('Professional')">Start 7-day free trial</button><div class="pay-wallets" data-plan="Professional"></div></div>
       <div class="plan"><h3>Enterprise</h3><div class="price">R3,999<small>/month</small></div><ul><li>Everything in Professional</li><li>Up to 15 registered users</li><li>CARA as always-on IR adviser</li><li>Annual option — pay 10 get 12</li><li>WhatsApp support</li></ul><button onclick="selectPlan('Enterprise')">Start 7-day free trial</button></div>
     </div>
     <div style="margin-top:18px; padding-top:14px; border-top:1px solid var(--border); text-align:center;">
@@ -2315,9 +2315,10 @@ function submitPayfastForm(actionUrl, fields) {
   form.submit();
 }
 
-async function payWithPayfast(plan) {
+async function payWithPayfast(plan, opts) {
+  const options = opts || {};
   const amount = PLAN_AMOUNTS[plan];
-  if (!amount) { toast('Unknown plan: ' + plan, 'error'); return; }
+  if (!amount) { toast('Unknown plan: ' + plan, 'error'); return null; }
   let userId = null, email = null;
   try {
     const { data: { user } } = await supabase.auth.getUser();
@@ -2327,17 +2328,56 @@ async function payWithPayfast(plan) {
     // Stash the plan so we can resume checkout right after signup/login.
     try { localStorage.setItem('inreco.pendingPlan', plan); } catch (_) {}
     showScreen('signup');
-    return;
+    return null;
   }
   try {
-    const { data, error } = await supabase.functions.invoke('payfast-checkout', { body: { planName: plan, email } });
+    const body = { planName: plan, email };
+    if (options.method) { body.paymentMethod = options.method; body.mode = 'now'; }
+    if (options.mode) body.mode = options.mode;
+    const { data, error } = await supabase.functions.invoke('payfast-checkout', { body });
     if (error) throw error;
     if (!data || !data.actionUrl || !data.fields) throw new Error('Checkout could not start');
     try { localStorage.setItem('inreco.pendingEmail', email || ''); localStorage.setItem('inreco.pendingPlan', plan); } catch (_) {}
+    if (options.prepareOnly) return data;
     submitPayfastForm(data.actionUrl, data.fields);
+    return data;
   } catch (err) {
     toast((err && err.message) ? err.message : 'PayFast checkout could not start. Please try again.', 'error');
+    return null;
   }
+}
+
+/** Builds the small "Apple Pay / Google Pay / Scan to Pay" row inside each plan card. */
+function renderWalletRow(box) {
+  const plan = box.dataset.plan;
+  const ua = navigator.userAgent;
+  const isApple = ('ApplePaySession' in window) || (/iPhone|iPad|iPod|Macintosh/.test(ua) && /Safari/.test(ua) && !/Chrome|CriOS|Chromium|Edg|OPR|Android/.test(ua));
+  const isGoogle = /Android/.test(ua) || /Chrome|CriOS|Chromium|Edg/.test(ua);
+  const btn = 'display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin-top:6px;background:#000;color:#fff;border:none;border-radius:8px;padding:9px;font-size:13px;cursor:pointer;';
+  let html = '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:10px">Or pay today with</div>';
+  if (isApple) html += '<button type="button" data-m="ap" style="' + btn + '"> Pay with Apple Pay</button>';
+  if (isGoogle) html += '<button type="button" data-m="gp" style="' + btn + '">G Pay with Google Pay</button>';
+  html += '<button type="button" data-m="scan" style="background:none;border:none;color:var(--muted);font-size:12px;text-decoration:underline;margin-top:8px;cursor:pointer;width:100%">Scan to Pay</button><div data-qr style="text-align:center"></div>';
+  box.innerHTML = html;
+  box.querySelectorAll('button[data-m]').forEach((b) => {
+    b.onclick = async (e) => {
+      e.stopPropagation();
+      const method = b.dataset.m;
+      if (method !== 'scan') { closeUpgrade(); await payWithPayfast(plan, { method }); return; }
+      const holder = box.querySelector('[data-qr]');
+      holder.textContent = 'Creating your payment code…';
+      const data = await payWithPayfast(plan, { mode: 'now', prepareOnly: true });
+      if (!data || !data.mPaymentId) { holder.textContent = ''; return; }
+      try {
+        const QR = (await import('https://esm.sh/qrcode@1.5.4')).default;
+        const link = window.location.origin + '/pay/' + data.mPaymentId;
+        const img = await QR.toDataURL(link, { width: 240, margin: 1 });
+        holder.innerHTML = '<img src="' + img + '" alt="Payment code for the iNRECO ' + plan + ' plan" style="width:150px;height:150px;background:#fff;border-radius:8px;padding:6px;margin-top:8px"><div style="font-size:11px;color:var(--muted);margin-top:6px">Scan with your phone or banking app. Valid for 30 minutes.</div>';
+      } catch (_) {
+        holder.textContent = 'The payment code could not be created.';
+      }
+    };
+  });
 }
 
 function selectPlan(p) {
@@ -2345,6 +2385,7 @@ function selectPlan(p) {
   if (p === 'PAYG') { payWithPayfast('Solo'); return; } // map legacy PAYG → Solo
   payWithPayfast(p);
 }
+document.querySelectorAll('.pay-wallets').forEach(renderWalletRow);
 window.openUpgrade = openUpgrade; window.closeUpgrade = closeUpgrade;
 window.selectPlan = selectPlan; window.payWithPayfast = payWithPayfast;
 

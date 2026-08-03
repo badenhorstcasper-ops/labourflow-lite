@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/card";
 import InstallAppButton from "@/components/InstallAppButton";
 import BackHomeBar from "@/components/BackHomeBar";
+import PayfastPayOptions from "@/components/PayfastPayOptions";
 
 const TRIAL_DAYS = 7;
 
@@ -381,7 +382,16 @@ const Pricing = () => {
                           {new Date(billingDate).toLocaleDateString("en-ZA")}. Join now: billed
                           today, then monthly.
                         </p>
+                        <PayfastPayOptions
+                          planName={plan.name}
+                          priceLabel={plan.priceLabel}
+                          email={checkoutEmail}
+                          referralCode={referralCode}
+                          disabled={!canSubmit || busyPlan !== null}
+                          onError={setCheckoutError}
+                        />
                       </div>
+
                     )}
   
                   </CardContent>

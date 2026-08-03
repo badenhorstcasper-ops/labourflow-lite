@@ -19,6 +19,7 @@ import DocumentsPage from "@/pages/Documents";
 import GeneratePage from "@/pages/Generate";
 import CaraPage from "@/pages/Cara";
 import SharePage from "@/pages/Share";
+import PayLink from "@/pages/PayLink";
 import ContactPage from "@/pages/Contact";
 import HealthPage from "@/pages/Health";
 import VerifyCertificatePage from "@/pages/VerifyCertificate";
@@ -96,6 +97,7 @@ function AppRoutes() {
       <Route path="/payment-success" element={<PaymentSuccess />} />
       <Route path="/payment-cancelled" element={<PaymentCancelled />} />
       <Route path="/d/:token" element={<SharePage />} />
+      <Route path="/pay/:reference" element={<PayLink />} />
       <Route path="/contact" element={<ContactPage />} />
       <Route path="/terms" element={<Terms />} />
       <Route path="/privacy" element={<Privacy />} />
