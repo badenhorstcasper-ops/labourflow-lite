@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import BackHomeBar from "@/components/BackHomeBar";
 import TeamManagement from "@/components/TeamManagement";
+import PayfastPayOptions from "@/components/PayfastPayOptions";
+import { createCheckout, rememberPendingCheckout, submitPreparedCheckout } from "@/lib/payfast";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,11 +35,19 @@ type ReferralSummary = {
   monthly_cap: number;
 };
 
+const CHANGE_PLANS = [
+  { name: "Solo", priceLabel: "R259", suffix: "1 user, 2 devices" },
+  { name: "Business", priceLabel: "R599", suffix: "Up to 5 team members" },
+  { name: "Professional", priceLabel: "R1499", suffix: "Up to 10 team members" },
+];
+
 const Settings = () => {
   const [sub, setSub] = useState<Sub | null>(null);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
   const [referral, setReferral] = useState<ReferralSummary | null>(null);
+  const [email, setEmail] = useState("");
+  const [switching, setSwitching] = useState<string | null>(null);
 
   async function refresh() {
     setLoading(true);
@@ -53,9 +63,23 @@ const Settings = () => {
     setLoading(false);
   }
 
+  async function changePlan(planName: string) {
+    setSwitching(planName);
+    try {
+      const data = await createCheckout({ planName, email, mode: "now" });
+      rememberPendingCheckout(email, planName, data.mPaymentId);
+      submitPreparedCheckout(data.actionUrl!, data.fields!);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not start the plan change.");
+      setSwitching(null);
+    }
+  }
+
   useEffect(() => {
     refresh();
+    supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? ""));
   }, []);
+
 
 
   async function onCancel() {
@@ -114,33 +138,6 @@ const Settings = () => {
                     : "No active subscription."}
               </CardDescription>
             </CardHeader>
-            {canCancel && (
-              <CardContent>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive" disabled={cancelling}>
-                      {cancelling ? "Cancelling…" : "Cancel subscription"}
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Cancel your subscription?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Future debits will stop immediately. You'll lose access to CARA,
-                        the document generator and your dashboard. You can re-subscribe
-                        at any time.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Keep my plan</AlertDialogCancel>
-                      <AlertDialogAction onClick={onCancel}>
-                        Yes, cancel
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </CardContent>
-            )}
           </Card>
           <Card>
             <CardHeader>
