@@ -144,6 +144,73 @@ const Settings = () => {
           </Card>
           <Card>
             <CardHeader>
+              <CardTitle>Change plan</CardTitle>
+              <CardDescription>
+                Move up or down a plan at any time. Changing plan starts the new plan today and
+                replaces the old monthly amount.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-6 md:grid-cols-3">
+              {CHANGE_PLANS.map((p) => (
+                <div key={p.name} className="space-y-2 rounded-lg border p-4">
+                  <p className="font-semibold">{p.name}</p>
+                  <p className="text-2xl font-bold">{p.priceLabel}</p>
+                  <p className="text-xs text-muted-foreground">{p.suffix}</p>
+                  <Button
+                    type="button"
+                    className="w-full"
+                    disabled={!email || switching !== null || sub?.plan_name === p.name}
+                    onClick={() => changePlan(p.name)}
+                  >
+                    {sub?.plan_name === p.name
+                      ? "Current plan"
+                      : switching === p.name
+                        ? "Opening PayFast…"
+                        : `Switch to ${p.name}`}
+                  </Button>
+                  <PayfastPayOptions
+                    planName={p.name}
+                    priceLabel={p.priceLabel}
+                    email={email}
+                    disabled={!email || switching !== null}
+                    onError={(m) => toast.error(m)}
+                  />
+                </div>
+              ))}
+            </CardContent>
+            {canCancel && (
+              <CardContent className="border-t pt-6">
+                <p className="mb-2 text-sm text-muted-foreground">
+                  Would rather stop altogether? Cancelling now means no further debits — and if
+                  you're still in your free trial, nothing is ever taken.
+                </p>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" disabled={cancelling}>
+                      {cancelling ? "Cancelling…" : "Cancel subscription"}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Cancel your subscription?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Future debits will stop immediately. You'll lose access to CARA,
+                        the document generator and your dashboard. You can re-subscribe
+                        at any time.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Keep my plan</AlertDialogCancel>
+                      <AlertDialogAction onClick={onCancel}>Yes, cancel</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </CardContent>
+            )}
+          </Card>
+
+          <Card>
+            <CardHeader>
               <CardTitle>Referral rewards</CardTitle>
               <CardDescription>
                 Credit you earned by inviting other employers. It comes off your next payment automatically —
