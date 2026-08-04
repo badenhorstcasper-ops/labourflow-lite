@@ -20,14 +20,18 @@ export function usePageView() {
   useEffect(() => {
     // Skip admin & share routes from analytics noise
     if (location.pathname.startsWith("/admin")) return;
-    const payload = {
-      path: location.pathname,
-      referrer: document.referrer || null,
-      session_id: getSessionId(),
-      user_agent: navigator.userAgent.slice(0, 500),
-    };
-    supabase.from("page_views").insert(payload).then(({ error }) => {
+    (async () => {
+      // Record who is signed in, so the owner dashboard counts real usage.
+      const { data } = await supabase.auth.getSession();
+      const payload = {
+        path: location.pathname,
+        referrer: document.referrer || null,
+        session_id: getSessionId(),
+        user_id: data.session?.user.id ?? null,
+        user_agent: navigator.userAgent.slice(0, 500),
+      };
+      const { error } = await supabase.from("page_views").insert(payload);
       if (error && import.meta.env.DEV) console.warn("page_view insert failed", error);
-    });
+    })();
   }, [location.pathname]);
 }

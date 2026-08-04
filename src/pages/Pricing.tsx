@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { FunctionsHttpError } from "@supabase/supabase-js";
@@ -17,6 +17,7 @@ import {
 import InstallAppButton from "@/components/InstallAppButton";
 import BackHomeBar from "@/components/BackHomeBar";
 import PayfastPayOptions from "@/components/PayfastPayOptions";
+import { rememberTrialPlan, startFreeTrial as startTrial } from "@/lib/trial";
 
 const TRIAL_DAYS = 7;
 
@@ -163,6 +164,7 @@ const REASON_MESSAGES: Record<string, string> = {
 };
 
 const Pricing = () => {
+  const navigate = useNavigate();
   const [userId, setUserId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string>("");
   const [guestEmail, setGuestEmail] = useState<string>("");
@@ -235,6 +237,25 @@ const Pricing = () => {
     }
   }
 
+  /** Card-free 7-day trial. Signed-in people start instantly; visitors sign up first. */
+  async function startFreeTrial(plan: Plan) {
+    rememberTrialPlan(plan.name);
+    if (!userId) {
+      navigate(`/auth?mode=signup&plan=${encodeURIComponent(plan.name)}`);
+      return;
+    }
+    setBusyPlan(`${plan.name}:free`);
+    setCheckoutError(null);
+    const result = await startTrial(plan.name);
+    setBusyPlan(null);
+    if (!result) {
+      setCheckoutError("We could not start your free trial. Please try again in a moment.");
+      return;
+    }
+    navigate("/app");
+  }
+
+
 
   return (
     <>
@@ -253,10 +274,11 @@ const Pricing = () => {
           <header className="mx-auto mb-10 block w-full max-w-2xl text-center">
             <h1 className="text-3xl font-bold leading-tight tracking-tight">Start Free</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              Every paid plan starts with a <strong>7-day free trial</strong>. Your
-              card is secured today via PayFast (no money taken). The first debit
-              happens only after day 7, and only if you haven't cancelled.
+              Every paid plan starts with a <strong>7-day free trial — no card needed</strong>.
+              Create your account, use everything for a week, and only add payment details
+              when you decide to stay.
             </p>
+
             <p className="mt-1 text-xs text-muted-foreground">
               Secure recurring billing via PayFast.
               By subscribing you agree to our{" "}
@@ -283,22 +305,23 @@ const Pricing = () => {
           {!userId && (
             <div className="mx-auto mb-8 max-w-md rounded-lg border bg-card p-4">
               <Label htmlFor="guest-email" className="text-sm">
-                Your email
+                Your email (only needed if you want to pay right away)
               </Label>
               <Input
                 id="guest-email"
                 type="email"
-                required
                 placeholder="you@company.co.za"
                 value={guestEmail}
                 onChange={(e) => setGuestEmail(e.target.value)}
                 className="mt-2"
               />
               <p className="mt-2 text-xs text-muted-foreground">
-                We'll link this trial to your account when you sign up after checkout.
+                Starting the free trial doesn't need this — you'll create your account on the
+                next screen.
               </p>
             </div>
           )}
+
   
           {checkoutError && (
             <div className="mx-auto mb-6 max-w-2xl rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
@@ -357,20 +380,18 @@ const Pricing = () => {
                           type="button"
                           className="w-full"
                           variant={plan.highlight ? "default" : "outline"}
-                          disabled={!canSubmit || busyPlan !== null}
-                          onClick={() => startCheckout(plan, "trial")}
+                          disabled={busyPlan !== null}
+                          onClick={() => startFreeTrial(plan)}
                         >
-                          {busyPlan === `${plan.name}:trial`
-                            ? "Opening PayFast…"
-                            : canSubmit
-                              ? "Start 7-day free trial"
-                              : "Enter your email above"}
+                          {busyPlan === `${plan.name}:free`
+                            ? "Starting your trial…"
+                            : "Start free — no card needed"}
                         </Button>
                         <Button
                           type="button"
                           className="w-full"
                           variant="secondary"
-                          disabled={!canSubmit || busyPlan !== null}
+                          disabled={busyPlan !== null}
                           onClick={() => startCheckout(plan, "now")}
                         >
                           {busyPlan === `${plan.name}:now`
@@ -378,9 +399,8 @@ const Pricing = () => {
                             : `Join now & pay ${plan.priceLabel}`}
                         </Button>
                         <p className="text-center text-[11px] text-muted-foreground">
-                          Free trial: no charge today, first debit of {plan.priceLabel} on{" "}
-                          {new Date(billingDate).toLocaleDateString("en-ZA")}. Join now: billed
-                          today, then monthly.
+                          Free trial: 7 days of the full plan, no card and no charge. Join now:
+                          billed {plan.priceLabel} today, then monthly.
                         </p>
                         <PayfastPayOptions
                           planName={plan.name}
@@ -393,6 +413,7 @@ const Pricing = () => {
                       </div>
 
                     )}
+
   
                   </CardContent>
                 </Card>

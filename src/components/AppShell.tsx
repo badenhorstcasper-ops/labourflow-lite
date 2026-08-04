@@ -3,6 +3,8 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Home } from "lucide-react";
 import ReportProblemButton from "@/components/ReportProblemButton";
+import TrialEndingBanner from "@/components/TrialEndingBanner";
+
 import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -79,7 +81,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
         </div>
       </header>
-      <main className="container mx-auto max-w-7xl px-4 py-6 flex-1 pb-10">{children}</main>
+      <main className="container mx-auto max-w-7xl px-4 py-6 flex-1 pb-10">
+        <TrialEndingBanner />
+        {children}
+      </main>
+
       <div className="fixed bottom-10 right-3 z-50">
         <ReportProblemButton />
       </div>

@@ -24,3 +24,6 @@ verify_jwt = true
 
 [functions.referral-attach]
 verify_jwt = false
+
+[functions.start-trial]
+verify_jwt = false

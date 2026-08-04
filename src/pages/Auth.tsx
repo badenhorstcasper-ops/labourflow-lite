@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import BackHomeBar from "@/components/BackHomeBar";
+import { readTrialPlan, startFreeTrial } from "@/lib/trial";
 
 type Mode = "signup" | "login";
 
@@ -51,6 +52,15 @@ const Auth = () => {
     localStorage.removeItem("inreco.pendingPayment");
   }
 
+  /** Turns on the card-free trial when someone came in from a "Start free" button. */
+  async function startTrialIfRequested() {
+    const params = new URLSearchParams(window.location.search);
+    const plan = params.get("plan") || readTrialPlan();
+    if (!plan) return false;
+    const result = await startFreeTrial(plan);
+    return !!result;
+  }
+
   function nextPathAfterAuth(linked: boolean) {
     const pendingPayment = localStorage.getItem("inreco.pendingPayment");
     if (linked) {
@@ -68,9 +78,11 @@ const Auth = () => {
     // If already signed in, link any trial started before signup, then open the app.
     supabase.auth.getSession().then(({ data }) => {
       if (!data.session) return;
-      linkPendingSubscription().then((linked) => {
-        navigate(nextPathAfterAuth(linked), { replace: true });
-      });
+      (async () => {
+        const linked = await linkPendingSubscription();
+        const trialStarted = await startTrialIfRequested();
+        navigate(trialStarted ? "/app" : nextPathAfterAuth(linked), { replace: true });
+      })();
     });
   }, [navigate]);
 
@@ -97,19 +109,33 @@ const Auth = () => {
         const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
         if (signInErr) throw signInErr;
         const linked = await linkPendingSubscription();
-        navigate(nextPathAfterAuth(linked), { replace: true });
+        const trialStarted = await startTrialIfRequested();
+        navigate(trialStarted ? "/app" : nextPathAfterAuth(linked), { replace: true });
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         const linked = await linkPendingSubscription();
-        navigate(nextPathAfterAuth(linked), { replace: true });
+        const trialStarted = await startTrialIfRequested();
+        navigate(trialStarted ? "/app" : nextPathAfterAuth(linked), { replace: true });
       }
     } catch (err) {
+      const raw = err instanceof Error ? err.message : "Unknown error";
+      // Turn the technical wording into something a normal person understands.
+      let friendly = raw;
+      if (/weak|pwned/i.test(raw)) {
+        friendly =
+          "That password has appeared in a known data leak. Please pick a longer one — three random words works well.";
+      } else if (/already registered|already been registered/i.test(raw)) {
+        friendly = "There is already an account with this email. Try signing in instead.";
+      } else if (/invalid login credentials/i.test(raw)) {
+        friendly = "That email and password don't match. Check them, or use 'Forgot your password?'.";
+      }
       toast({
         title: mode === "signup" ? "Sign-up failed" : "Sign-in failed",
-        description: err instanceof Error ? err.message : "Unknown error",
+        description: friendly,
         variant: "destructive",
       });
+
     } finally {
       setBusy(false);
     }
@@ -156,7 +182,7 @@ const Auth = () => {
     }
     setBusy(true);
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: `${window.location.origin}/`,
+      redirect_uri: `${window.location.origin}/auth`,
     });
     if (result?.error) {
       setBusy(false);
@@ -167,7 +193,8 @@ const Auth = () => {
     if (!result?.redirected) {
       // Got tokens directly; go to dashboard
       const linked = await linkPendingSubscription();
-      navigate(nextPathAfterAuth(linked), { replace: true });
+      const trialStarted = await startTrialIfRequested();
+      navigate(trialStarted ? "/app" : nextPathAfterAuth(linked), { replace: true });
     }
   }
 
@@ -183,7 +210,7 @@ const Auth = () => {
             </h1>
             <CardDescription>
               {mode === "signup"
-                ? "Sign up to access CARA and your subscription."
+                ? "Create your account to start your 7-day free trial — no card needed."
                 : "Sign in to continue."}
             </CardDescription>
           </CardHeader>
@@ -206,11 +233,16 @@ const Auth = () => {
                   id="password"
                   type="password"
                   required
-                  minLength={6}
+                  minLength={8}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   autoComplete={mode === "signup" ? "new-password" : "current-password"}
                 />
+                {mode === "signup" && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    At least 8 characters. Three random words is easy to remember and hard to guess.
+                  </p>
+                )}
               </div>
               {mode === "signup" && (
                 <label className="flex items-start gap-2 text-xs text-muted-foreground">
