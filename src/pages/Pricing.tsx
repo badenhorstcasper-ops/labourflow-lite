@@ -305,22 +305,23 @@ const Pricing = () => {
           {!userId && (
             <div className="mx-auto mb-8 max-w-md rounded-lg border bg-card p-4">
               <Label htmlFor="guest-email" className="text-sm">
-                Your email
+                Your email (only needed if you want to pay right away)
               </Label>
               <Input
                 id="guest-email"
                 type="email"
-                required
                 placeholder="you@company.co.za"
                 value={guestEmail}
                 onChange={(e) => setGuestEmail(e.target.value)}
                 className="mt-2"
               />
               <p className="mt-2 text-xs text-muted-foreground">
-                We'll link this trial to your account when you sign up after checkout.
+                Starting the free trial doesn't need this — you'll create your account on the
+                next screen.
               </p>
             </div>
           )}
+
   
           {checkoutError && (
             <div className="mx-auto mb-6 max-w-2xl rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
