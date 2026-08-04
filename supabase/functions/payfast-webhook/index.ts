@@ -273,7 +273,12 @@ Deno.serve(async (req) => {
     const validMerchants = new Set([MERCHANT_ID]);
     if (PAYFAST_MODE === "sandbox") validMerchants.add(SANDBOX_MERCHANT_ID);
     if (!merchantId || !validMerchants.has(merchantId)) {
-      await logAttempt(supabase, { ...baseLog, outcome: "rejected", reason: "bad_merchant_id" });
+      await logAttempt(supabase, {
+        ...baseLog,
+        outcome: "rejected",
+        reason: `bad_merchant_id:${merchantId ?? "missing"} expected:${MERCHANT_ID}`,
+      });
+
       return ok();
     }
 
