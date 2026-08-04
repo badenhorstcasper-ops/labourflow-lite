@@ -357,20 +357,18 @@ const Pricing = () => {
                           type="button"
                           className="w-full"
                           variant={plan.highlight ? "default" : "outline"}
-                          disabled={!canSubmit || busyPlan !== null}
-                          onClick={() => startCheckout(plan, "trial")}
+                          disabled={busyPlan !== null}
+                          onClick={() => startFreeTrial(plan)}
                         >
-                          {busyPlan === `${plan.name}:trial`
-                            ? "Opening PayFast…"
-                            : canSubmit
-                              ? "Start 7-day free trial"
-                              : "Enter your email above"}
+                          {busyPlan === `${plan.name}:free`
+                            ? "Starting your trial…"
+                            : "Start free — no card needed"}
                         </Button>
                         <Button
                           type="button"
                           className="w-full"
                           variant="secondary"
-                          disabled={!canSubmit || busyPlan !== null}
+                          disabled={busyPlan !== null}
                           onClick={() => startCheckout(plan, "now")}
                         >
                           {busyPlan === `${plan.name}:now`
@@ -378,9 +376,8 @@ const Pricing = () => {
                             : `Join now & pay ${plan.priceLabel}`}
                         </Button>
                         <p className="text-center text-[11px] text-muted-foreground">
-                          Free trial: no charge today, first debit of {plan.priceLabel} on{" "}
-                          {new Date(billingDate).toLocaleDateString("en-ZA")}. Join now: billed
-                          today, then monthly.
+                          Free trial: 7 days of the full plan, no card and no charge. Join now:
+                          billed {plan.priceLabel} today, then monthly.
                         </p>
                         <PayfastPayOptions
                           planName={plan.name}
@@ -393,6 +390,7 @@ const Pricing = () => {
                       </div>
 
                     )}
+
   
                   </CardContent>
                 </Card>
