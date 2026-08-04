@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>iNRECO — AI Labour Compliance Assistant</title>
-<meta name="description" content="iNRECO powered by iNRECO: AI-driven Pocket Labour compliance guidance from CARA.">
+<meta name="description" content="iNRECO powered by iNRECO: AI-driven labour compliance guidance from CARA.">
 <style>
   :root {
     --navy: #0a1f44;
@@ -481,7 +481,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
         <span id="heroBadgeText">Powered by iNRECO</span>
       </div>
       <h1 id="heroTitle" style="color:#fff;font-weight:800">Your <span class="blue-text">Pocket Labour</span>&nbsp;<br>Consultant.</h1>
-      <p class="hero-sub" id="heroSub" style="color:#fff;font-weight:700">Instant AI-driven Pocket Labour compliance guidance from CARA. Warnings, hearings, CCMA, retrenchments — answered in seconds.</p>
+      <p class="hero-sub" id="heroSub" style="color:#fff;font-weight:700">Instant AI-driven labour compliance guidance from CARA. Warnings, hearings, CCMA, retrenchments — answered in seconds.</p>
       <p class="hero-sub2" id="heroSub2">Built for South African employers. Always on. Always compliant.</p>
       <div class="btn-row">
         <button type="button" class="btn-primary" onclick="window.location.href='/pricing'">Get Started <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
@@ -642,10 +642,10 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
     <div class="features-header">
       <p class="section-label">Features</p>
       <h2>Everything you need to <span class="blue-text">stay compliant</span>.</h2>
-      <p class="section-desc">CARA handles the complexity of Pocket Labour law so you don't have to.</p>
+      <p class="section-desc">CARA handles the complexity of labour law so you don't have to.</p>
     </div>
     <div class="features-grid">
-      <div class="feature-card"><div class="feat-icon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><h3>Instant AI Advice</h3><p>Ask CARA anything about Pocket Labour law and get precise, practical guidance in seconds.</p></div>
+      <div class="feature-card"><div class="feat-icon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><h3>Instant AI Advice</h3><p>Ask CARA anything about labour law and get precise, practical guidance in seconds.</p></div>
       <div class="feature-card"><div class="feat-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><h3>Document Generator</h3><p>Warnings, suspension letters, CCMA responses, PIPs — generated instantly from your facts.</p></div>
       <div class="feature-card"><div class="feat-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><h3>CCMA Deadline Tracker</h3><p>Never miss a 30-day CCMA referral window. Automatic alerts keep you ahead.</p></div>
       <div class="feature-card"><div class="feat-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><h3>Smart Wizards</h3><p>Guided intake for every matter type — AWOL, hearings, retrenchments, grievances and more.</p></div>
@@ -1294,7 +1294,7 @@ async function registerThisDevice() {
 async function enterApp() {
   await loadUsage();
   $('welcomeHeading').textContent =
-    `Hello, ${currentProfile.company_name}. I'm CARA, your Compliance and Relations Adviser. Ask me anything about Pocket Labour compliance for your ${currentProfile.sector.toLowerCase()} business.`;
+    `Hello, ${currentProfile.company_name}. I'm CARA, your Compliance and Relations Adviser. Ask me anything about labour compliance for your ${currentProfile.sector.toLowerCase()} business.`;
   showScreen('app');
   updateTrialBadge();
   try {
@@ -1348,7 +1348,7 @@ const TOPIC_SYSTEM_PROMPTS = {
 let currentTopicSystem = null;
 const QUICK_PROMPTS = {
   "No-show/AWOL":"An employee did not show up for work without notice. What steps should I take?",
-  "Issue warning":"How do I issue a written warning correctly under Pocket Labour law?",
+  "Issue warning":"How do I issue a written warning correctly under labour law?",
   "Disciplinary hearing":"Walk me through running a fair disciplinary hearing.",
   "CCMA referral":"An employee referred a dispute to the CCMA. What should I do?",
   "Grievance":"An employee lodged a grievance. What is the correct procedure?",
@@ -1917,7 +1917,7 @@ function checkRisk(docName) {
   const minorOffence = /minor|first offen|late|tardiness|small/.test(factText);
 
   if (isSuspensionNoPay) {
-    return { level:'high', message:'Suspension without pay before a hearing is generally unfair under Pocket Labour law and a frequent CCMA loss. Precautionary suspension must be on FULL PAY.', recommended:'Precautionary Suspension Letter' };
+    return { level:'high', message:'Suspension without pay before a hearing is generally unfair under labour law and a frequent CCMA loss. Precautionary suspension must be on FULL PAY.', recommended:'Precautionary Suspension Letter' };
   }
   if (isDismissal && shortAbsence) {
     return { level:'high', message:'Dismissing an employee for only 1–2 days of absence is highly likely to be ruled substantively unfair at the CCMA. Progressive discipline is required.', recommended:'Show-Cause Letter' };
@@ -1990,7 +1990,7 @@ async function generateDocument(docName, opts = {}) {
   }
 
   const factsText = Object.entries(currentMatter.facts).map(([k,v]) => `- ${k}: ${v}`).join('\n');
-  const prompt = `Draft the BODY of the following Pocket Labour document. Output ONLY the body text — no commentary, no preamble.\n\nDocument: ${docName}\nMatter type: ${currentMatter.topic}\n\nFacts (use these — do not ask for more):\n${factsText}\n\nSTRICT RULES:\n- DO NOT invent or include any letterhead, company name, logo line, address block, contact details, registration number, VAT number, website, or footer. These are added automatically by the system from the employer's saved company profile.\n- DO NOT write "LABOURFLOW", "iNRECO Consulting", "Powered by" or any platform/brand name. Never.\n- Start at the date line, then subject line, then salutation ("Dear <employee name>"), then the body, then closing ("Yours sincerely,"), then a blank line for the signatory. Do NOT type a company name or signatory name — leave it blank.\n- Use the employee name and date from the facts above.\n- Reference Pocket Labour law (LRA, BCEA, Schedule 8) where appropriate. Professional, concise tone.`;
+  const prompt = `Draft the BODY of the following labour document. Output ONLY the body text — no commentary, no preamble.\n\nDocument: ${docName}\nMatter type: ${currentMatter.topic}\n\nFacts (use these — do not ask for more):\n${factsText}\n\nSTRICT RULES:\n- DO NOT invent or include any letterhead, company name, logo line, address block, contact details, registration number, VAT number, website, or footer. These are added automatically by the system from the employer's saved company profile.\n- DO NOT write "LABOURFLOW", "iNRECO Consulting", "Powered by" or any platform/brand name. Never.\n- Start at the date line, then subject line, then salutation ("Dear <employee name>"), then the body, then closing ("Yours sincerely,"), then a blank line for the signatory. Do NOT type a company name or signatory name — leave it blank.\n- Use the employee name and date from the facts above.\n- Reference South African labour law (LRA, BCEA, Schedule 8) where appropriate. Professional, concise tone.`;
   try {
     const { data: { session } } = await supabase.auth.getSession();
     const token = session?.access_token || ANON_KEY;
@@ -1998,7 +1998,7 @@ async function generateDocument(docName, opts = {}) {
       method: 'POST',
       headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+token, 'apikey':ANON_KEY },
       body: JSON.stringify({
-        system: 'You are CARA, an Pocket Labour-law assistant. Output ONLY the body text of the requested document. Never include a letterhead, company name, address, logo, signatory name, or any brand/platform name (especially never "Labourflow", "iNRECO Consulting" or "Powered by"). The host application adds the employer letterhead, footer and signature line automatically.',
+        system: 'You are CARA, a South African labour-law assistant. Output ONLY the body text of the requested document. Never include a letterhead, company name, address, logo, signatory name, or any brand/platform name (especially never "Labourflow", "iNRECO Consulting" or "Powered by"). The host application adds the employer letterhead, footer and signature line automatically.',
         messages: [{ role:'user', content: prompt }],
         profile: currentProfile || {}
       })
