@@ -119,11 +119,23 @@ const Auth = () => {
         navigate(trialStarted ? "/app" : nextPathAfterAuth(linked), { replace: true });
       }
     } catch (err) {
+      const raw = err instanceof Error ? err.message : "Unknown error";
+      // Turn the technical wording into something a normal person understands.
+      let friendly = raw;
+      if (/weak|pwned/i.test(raw)) {
+        friendly =
+          "That password has appeared in a known data leak. Please pick a longer one — three random words works well.";
+      } else if (/already registered|already been registered/i.test(raw)) {
+        friendly = "There is already an account with this email. Try signing in instead.";
+      } else if (/invalid login credentials/i.test(raw)) {
+        friendly = "That email and password don't match. Check them, or use 'Forgot your password?'.";
+      }
       toast({
         title: mode === "signup" ? "Sign-up failed" : "Sign-in failed",
-        description: err instanceof Error ? err.message : "Unknown error",
+        description: friendly,
         variant: "destructive",
       });
+
     } finally {
       setBusy(false);
     }
