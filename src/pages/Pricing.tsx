@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { FunctionsHttpError } from "@supabase/supabase-js";
@@ -17,6 +17,7 @@ import {
 import InstallAppButton from "@/components/InstallAppButton";
 import BackHomeBar from "@/components/BackHomeBar";
 import PayfastPayOptions from "@/components/PayfastPayOptions";
+import { rememberTrialPlan, startFreeTrial as startTrial } from "@/lib/trial";
 
 const TRIAL_DAYS = 7;
 
@@ -163,6 +164,7 @@ const REASON_MESSAGES: Record<string, string> = {
 };
 
 const Pricing = () => {
+  const navigate = useNavigate();
   const [userId, setUserId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string>("");
   const [guestEmail, setGuestEmail] = useState<string>("");
