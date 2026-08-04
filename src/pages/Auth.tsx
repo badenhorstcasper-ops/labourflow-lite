@@ -233,11 +233,16 @@ const Auth = () => {
                   id="password"
                   type="password"
                   required
-                  minLength={6}
+                  minLength={8}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   autoComplete={mode === "signup" ? "new-password" : "current-password"}
                 />
+                {mode === "signup" && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    At least 8 characters. Three random words is easy to remember and hard to guess.
+                  </p>
+                )}
               </div>
               {mode === "signup" && (
                 <label className="flex items-start gap-2 text-xs text-muted-foreground">
