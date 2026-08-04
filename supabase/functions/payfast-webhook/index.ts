@@ -2,8 +2,11 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { crypto } from "https://deno.land/std@0.224.0/crypto/mod.ts";
 
-const MERCHANT_ID = "12090292";
+// The live merchant number comes from the saved PayFast settings so it can never
+// drift from the one used when the checkout was created.
+const MERCHANT_ID = (Deno.env.get("PAYFAST_MERCHANT_ID") || "12090292").trim();
 const SANDBOX_MERCHANT_ID = "10000100";
+
 const PAYFAST_MODE: "sandbox" | "live" =
   Deno.env.get("PAYFAST_MODE")?.toLowerCase() === "live" ? "live" : "sandbox";
 const PAYFAST_PASSPHRASE = (Deno.env.get("PAYFAST_PASSPHRASE_V2") || Deno.env.get("PAYFAST_PASSPHRASE") || "").trim();
