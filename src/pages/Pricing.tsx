@@ -274,10 +274,11 @@ const Pricing = () => {
           <header className="mx-auto mb-10 block w-full max-w-2xl text-center">
             <h1 className="text-3xl font-bold leading-tight tracking-tight">Start Free</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              Every paid plan starts with a <strong>7-day free trial</strong>. Your
-              card is secured today via PayFast (no money taken). The first debit
-              happens only after day 7, and only if you haven't cancelled.
+              Every paid plan starts with a <strong>7-day free trial — no card needed</strong>.
+              Create your account, use everything for a week, and only add payment details
+              when you decide to stay.
             </p>
+
             <p className="mt-1 text-xs text-muted-foreground">
               Secure recurring billing via PayFast.
               By subscribing you agree to our{" "}
