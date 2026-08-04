@@ -235,6 +235,25 @@ const Pricing = () => {
     }
   }
 
+  /** Card-free 7-day trial. Signed-in people start instantly; visitors sign up first. */
+  async function startFreeTrial(plan: Plan) {
+    rememberTrialPlan(plan.name);
+    if (!userId) {
+      navigate(`/auth?mode=signup&plan=${encodeURIComponent(plan.name)}`);
+      return;
+    }
+    setBusyPlan(`${plan.name}:free`);
+    setCheckoutError(null);
+    const result = await startTrial(plan.name);
+    setBusyPlan(null);
+    if (!result) {
+      setCheckoutError("We could not start your free trial. Please try again in a moment.");
+      return;
+    }
+    navigate("/app");
+  }
+
+
 
   return (
     <>
