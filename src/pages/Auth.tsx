@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import BackHomeBar from "@/components/BackHomeBar";
+import { readTrialPlan, startFreeTrial } from "@/lib/trial";
 
 type Mode = "signup" | "login";
 
@@ -51,6 +52,15 @@ const Auth = () => {
     localStorage.removeItem("inreco.pendingPayment");
   }
 
+  /** Turns on the card-free trial when someone came in from a "Start free" button. */
+  async function startTrialIfRequested() {
+    const params = new URLSearchParams(window.location.search);
+    const plan = params.get("plan") || readTrialPlan();
+    if (!plan) return false;
+    const result = await startFreeTrial(plan);
+    return !!result;
+  }
+
   function nextPathAfterAuth(linked: boolean) {
     const pendingPayment = localStorage.getItem("inreco.pendingPayment");
     if (linked) {
@@ -68,9 +78,11 @@ const Auth = () => {
     // If already signed in, link any trial started before signup, then open the app.
     supabase.auth.getSession().then(({ data }) => {
       if (!data.session) return;
-      linkPendingSubscription().then((linked) => {
-        navigate(nextPathAfterAuth(linked), { replace: true });
-      });
+      (async () => {
+        const linked = await linkPendingSubscription();
+        const trialStarted = await startTrialIfRequested();
+        navigate(trialStarted ? "/app" : nextPathAfterAuth(linked), { replace: true });
+      })();
     });
   }, [navigate]);
 
@@ -97,12 +109,14 @@ const Auth = () => {
         const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
         if (signInErr) throw signInErr;
         const linked = await linkPendingSubscription();
-        navigate(nextPathAfterAuth(linked), { replace: true });
+        const trialStarted = await startTrialIfRequested();
+        navigate(trialStarted ? "/app" : nextPathAfterAuth(linked), { replace: true });
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         const linked = await linkPendingSubscription();
-        navigate(nextPathAfterAuth(linked), { replace: true });
+        const trialStarted = await startTrialIfRequested();
+        navigate(trialStarted ? "/app" : nextPathAfterAuth(linked), { replace: true });
       }
     } catch (err) {
       toast({
@@ -156,7 +170,7 @@ const Auth = () => {
     }
     setBusy(true);
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: `${window.location.origin}/`,
+      redirect_uri: `${window.location.origin}/auth`,
     });
     if (result?.error) {
       setBusy(false);
@@ -167,7 +181,8 @@ const Auth = () => {
     if (!result?.redirected) {
       // Got tokens directly; go to dashboard
       const linked = await linkPendingSubscription();
-      navigate(nextPathAfterAuth(linked), { replace: true });
+      const trialStarted = await startTrialIfRequested();
+      navigate(trialStarted ? "/app" : nextPathAfterAuth(linked), { replace: true });
     }
   }
 
@@ -183,7 +198,7 @@ const Auth = () => {
             </h1>
             <CardDescription>
               {mode === "signup"
-                ? "Sign up to access CARA and your subscription."
+                ? "Create your account to start your 7-day free trial — no card needed."
                 : "Sign in to continue."}
             </CardDescription>
           </CardHeader>
