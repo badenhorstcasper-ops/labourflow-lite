@@ -2773,7 +2773,8 @@ window.removeDevice = removeDevice;
     // /pricing?reason=no_subscription and hide the marketing site entirely).
     // Only the installed phone app jumps straight in.
     if (launchedAsApp) {
-      await afterLogin();
+      // The app itself (React) takes over on a shortcut launch.
+      return;
     } else {
       showScreen('welcome');
       try {
@@ -2782,14 +2783,10 @@ window.removeDevice = removeDevice;
       } catch (_) {}
     }
   } else {
-    // When launched from the installed PWA / home-screen shortcut, skip the
-    // marketing landing. Someone who has never signed in here (for example a
-    // friend who installed a shared shortcut) goes straight to the plan
-    // choices; everyone else sees the login screen.
-    let hasAccount = false;
-    try { hasAccount = localStorage.getItem('inreco.hasAccount') === '1'; } catch (_) {}
-    if (launchedAsApp && !hasAccount) { window.location.href = '/pricing'; return; }
-    showScreen(launchedAsApp ? 'login' : 'welcome');
+    // Opened from the installed shortcut: the app itself decides where to go,
+    // so the marketing page must not step in here.
+    if (launchedAsApp) return;
+    showScreen('welcome');
   }
   // Seed history so first back press triggers popstate instead of leaving
   history.pushState({ navGuard: true }, '');
