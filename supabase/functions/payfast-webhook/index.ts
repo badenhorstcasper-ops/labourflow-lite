@@ -326,15 +326,22 @@ Deno.serve(async (req) => {
     if (paymentStatus === "CANCELLED") {
       await supabase
         .from("payfast_transactions")
-        .update({ status: "cancelled", pf_payment_id: pfPaymentId, payfast_token: payfastToken, raw_itn: data })
+        .update({ status: "cancelled", pf_payment_id: pfPaymentId, ...tokenPatch(payfastToken), raw_itn: data })
         .eq("id", tx.id);
 
-      const subscriptionId = await findSubscriptionId(supabase, tx, payfastToken);
-      if (subscriptionId) {
+      const sub = await findSubscription(supabase, tx, payfastToken);
+      if (sub) {
+        // Keep the customer going until the month they already paid for ends.
         await supabase
           .from("subscriptions")
-          .update({ status: "cancelled", updated_at: new Date().toISOString() })
-          .eq("id", subscriptionId);
+          .update({
+            status: "cancelled",
+            payfast_status: "stopped",
+            payfast_checked_at: new Date().toISOString(),
+            payfast_note: "PayFast reported the arrangement was cancelled",
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", sub.id);
       }
 
       await releaseReservedCredit(supabase, mPaymentId);
@@ -345,15 +352,30 @@ Deno.serve(async (req) => {
     if (paymentStatus === "FAILED") {
       await supabase
         .from("payfast_transactions")
-        .update({ status: "failed", pf_payment_id: pfPaymentId, payfast_token: payfastToken, raw_itn: data })
+        .update({ status: "failed", pf_payment_id: pfPaymentId, ...tokenPatch(payfastToken), raw_itn: data })
         .eq("id", tx.id);
 
-      const subscriptionId = await findSubscriptionId(supabase, tx, payfastToken);
-      if (subscriptionId) {
-        await supabase
-          .from("subscriptions")
-          .update({ status: "past_due", updated_at: new Date().toISOString() })
-          .eq("id", subscriptionId);
+      const sub = await findSubscription(supabase, tx, payfastToken);
+      if (sub) {
+        // A single failed debit is not proof of anything — ask PayFast first.
+        const token = payfastToken || sub.payfast_token;
+        const truth = token
+          ? await fetchPayfastSubscription(token)
+          : { state: "unknown" as const, runDate: null, detail: "no_token_on_file" };
+
+        const patch: Record<string, unknown> = {
+          payfast_status: truth.state,
+          payfast_checked_at: new Date().toISOString(),
+          payfast_note: `Failed debit; PayFast says ${truth.state} (${truth.detail})`,
+          updated_at: new Date().toISOString(),
+        };
+        if (truth.state === "stopped") {
+          patch.status = "past_due";
+        } else if (truth.state === "running" && truth.runDate) {
+          // Still running at PayFast — trust their next payment date.
+          patch.paid_until = new Date(`${truth.runDate}T00:00:00.000Z`).toISOString();
+        }
+        await supabase.from("subscriptions").update(patch).eq("id", sub.id);
       }
 
       await releaseReservedCredit(supabase, mPaymentId);
@@ -388,30 +410,56 @@ Deno.serve(async (req) => {
       .update({
         status: "complete",
         pf_payment_id: pfPaymentId,
-        payfast_token: payfastToken,
+        ...tokenPatch(payfastToken),
         raw_itn: data,
       })
       .eq("id", tx.id);
 
-    const subscriptionId = await findSubscriptionId(supabase, tx, payfastToken);
-    const subscriptionRow = {
-      user_id: tx.user_id,
+    const sub = await findSubscription(supabase, tx, payfastToken);
+    const interval: "monthly" | "yearly" =
+      (sub?.billing_interval as "monthly" | "yearly") ?? "monthly";
+
+    // Never let a cheaper or once-off purchase demote a live, paid-up plan.
+    const existingLive =
+      !!sub &&
+      (sub.status === "active" || sub.status === "trialing") &&
+      !!sub.paid_until &&
+      new Date(sub.paid_until).getTime() > Date.now();
+    const existingRank = PLAN_RANK[sub?.plan_name ?? ""] ?? 0;
+    const incomingRank = PLAN_RANK[tx.plan_name] ?? 0;
+    const keepExistingPlan = existingLive && incomingRank < existingRank;
+
+    const subscriptionRow: Record<string, unknown> = {
+      user_id: tx.user_id ?? sub?.user_id ?? null,
       email: tx.email,
-      plan_name: tx.plan_name,
+      plan_name: keepExistingPlan ? sub!.plan_name : tx.plan_name,
       status: paidToday ? "trialing" : "active",
       trial_ends_at: paidToday ? trialEndsAt : null,
-      payfast_token: payfastToken,
       pf_payment_id: pfPaymentId,
       // The real confirmation has landed — this is no longer provisional access.
       provisional_until: null,
+      payfast_status: "running",
+      payfast_checked_at: now,
+      payfast_note: keepExistingPlan
+        ? `Extra payment recorded; kept the better ${sub!.plan_name} plan`
+        : null,
       updated_at: now,
+      ...tokenPatch(payfastToken),
     };
 
-    if (subscriptionId) {
-      await supabase.from("subscriptions").update(subscriptionRow).eq("id", subscriptionId);
+    if (paidToday) {
+      // R0 signing-up debit: access runs to the first real billing date.
+      subscriptionRow.paid_until = trialEndsAt;
+    } else {
+      subscriptionRow.paid_until = nextPaidUntil(sub?.paid_until ?? null, interval);
+    }
+
+    if (sub) {
+      await supabase.from("subscriptions").update(subscriptionRow).eq("id", sub.id);
     } else {
       await supabase.from("subscriptions").insert(subscriptionRow);
     }
+
 
     // Attribute referral if one was captured at checkout.
     if (tx.referral_code) {
