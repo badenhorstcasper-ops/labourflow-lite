@@ -1,7 +1,15 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useSubscription } from "@/hooks/useSubscription";
+import GuestPreview from "@/pages/GuestPreview";
 
-export default function RequireSubscription({ children }: { children: React.ReactNode }) {
+export default function RequireSubscription({
+  children,
+  allowGuestPreview = false,
+}: {
+  children: React.ReactNode;
+  /** When true, a visitor without an account sees a try-it screen instead of being bounced. */
+  allowGuestPreview?: boolean;
+}) {
   const { loading, authed, isEntitled, status } = useSubscription();
   const location = useLocation();
 
@@ -14,6 +22,7 @@ export default function RequireSubscription({ children }: { children: React.Reac
   }
 
   if (!authed) {
+    if (allowGuestPreview) return <GuestPreview />;
     return <Navigate to="/auth" replace state={{ from: location.pathname }} />;
   }
 

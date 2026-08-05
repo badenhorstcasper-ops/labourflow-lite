@@ -5,6 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>iNRECO — AI Labour Compliance Assistant</title>
 <meta name="description" content="iNRECO Pocket Consultant: AI-driven South African labour compliance guidance from CARA. Start free — no card needed.">
+<script>
+  // When the home-screen shortcut is opened, never flash the marketing page:
+  // keep it blank for a moment while the app itself takes over.
+  (function () {
+    try {
+      var launched =
+        new URLSearchParams(location.search).get('app') === '1' ||
+        (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+        window.navigator.standalone === true;
+      if (launched) {
+        document.documentElement.style.visibility = 'hidden';
+        setTimeout(function () { document.documentElement.style.visibility = ''; }, 4000);
+      }
+    } catch (e) {}
+  })();
+</script>
 <style>
   :root {
     --navy: #0a1f44;
@@ -2757,7 +2773,8 @@ window.removeDevice = removeDevice;
     // /pricing?reason=no_subscription and hide the marketing site entirely).
     // Only the installed phone app jumps straight in.
     if (launchedAsApp) {
-      await afterLogin();
+      // The app itself (React) takes over on a shortcut launch.
+      return;
     } else {
       showScreen('welcome');
       try {
@@ -2766,14 +2783,10 @@ window.removeDevice = removeDevice;
       } catch (_) {}
     }
   } else {
-    // When launched from the installed PWA / home-screen shortcut, skip the
-    // marketing landing. Someone who has never signed in here (for example a
-    // friend who installed a shared shortcut) goes straight to the plan
-    // choices; everyone else sees the login screen.
-    let hasAccount = false;
-    try { hasAccount = localStorage.getItem('inreco.hasAccount') === '1'; } catch (_) {}
-    if (launchedAsApp && !hasAccount) { window.location.href = '/pricing'; return; }
-    showScreen(launchedAsApp ? 'login' : 'welcome');
+    // Opened from the installed shortcut: the app itself decides where to go,
+    // so the marketing page must not step in here.
+    if (launchedAsApp) return;
+    showScreen('welcome');
   }
   // Seed history so first back press triggers popstate instead of leaving
   history.pushState({ navGuard: true }, '');
@@ -2784,6 +2797,27 @@ supabase.auth.onAuthStateChange((_event, session) => {
   if (!session) { currentUser=null; currentProfile=null; }
   else { try { localStorage.setItem('inreco.hasAccount', '1'); } catch (_) {} }
 });
+</script>
+
+<!-- Always-there "install the app" pill, so the invitation is never more than one tap away. -->
+<button id="installPill" type="button" onclick="showInstallModal()"
+        style="display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom));z-index:9998;background:#2563eb;color:#fff;border:0;border-radius:999px;padding:12px 20px;font-weight:700;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,0.45);cursor:pointer;display:none;align-items:center;gap:8px;">
+  <img src="/favicon.png" alt="" width="20" height="20" style="border-radius:6px;" />
+  Install the app — free
+</button>
+<script>
+  (function () {
+    try {
+      var pill = document.getElementById('installPill');
+      if (!pill) return;
+      var standalone =
+        (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+        window.navigator.standalone === true;
+      var already = localStorage.getItem('inreco.pwaInstalled') === '1';
+      if (!standalone && !already) pill.style.display = 'inline-flex';
+      window.addEventListener('appinstalled', function () { pill.style.display = 'none'; });
+    } catch (e) {}
+  })();
 </script>
 
 <div id="installModal" role="dialog" aria-modal="true" aria-labelledby="installTitle"
