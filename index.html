@@ -5,6 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>iNRECO — AI Labour Compliance Assistant</title>
 <meta name="description" content="iNRECO Pocket Consultant: AI-driven South African labour compliance guidance from CARA. Start free — no card needed.">
+<script>
+  // When the home-screen shortcut is opened, never flash the marketing page:
+  // keep it blank for a moment while the app itself takes over.
+  (function () {
+    try {
+      var launched =
+        new URLSearchParams(location.search).get('app') === '1' ||
+        (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+        window.navigator.standalone === true;
+      if (launched) {
+        document.documentElement.style.visibility = 'hidden';
+        setTimeout(function () { document.documentElement.style.visibility = ''; }, 4000);
+      }
+    } catch (e) {}
+  })();
+</script>
 <style>
   :root {
     --navy: #0a1f44;
