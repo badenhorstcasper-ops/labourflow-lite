@@ -47,6 +47,8 @@ import { captureInviteFromUrl, attachInviteIfAny } from "@/lib/referral";
 import { supabase } from "@/integrations/supabase/client";
 
 
+import { isAppLaunch } from "@/lib/appLaunch";
+import LaunchRouter from "@/components/LaunchRouter";
 
 const queryClient = new QueryClient();
 
@@ -100,7 +102,7 @@ function AppRoutes() {
   return (
     <Routes>
       {/* Open routes */}
-      <Route path="/" element={<Index />} />
+      <Route path="/" element={isAppLaunch() ? <LaunchRouter /> : <Index />} />
       <Route path="/pricing" element={<Pricing />} />
       <Route path="/get" element={<GetApp />} />
       <Route path="/guides/uif-ufiling" element={<UifGuide />} />
@@ -137,7 +139,7 @@ function AppRoutes() {
 
 
       {/* Subscription-gated routes */}
-      <Route path="/app" element={gated(<CaraPage />)} />
+      <Route path="/app" element={gatedWithPreview(<CaraPage />)} />
       <Route path="/dashboard" element={gated(<Dashboard />)} />
       <Route path="/settings" element={gated(<Settings />)} />
       {/* Older links/bookmarks pointed at this address for billing. */}
