@@ -2802,6 +2802,27 @@ supabase.auth.onAuthStateChange((_event, session) => {
 });
 </script>
 
+<!-- Always-there "install the app" pill, so the invitation is never more than one tap away. -->
+<button id="installPill" type="button" onclick="showInstallModal()"
+        style="display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom));z-index:9998;background:#2563eb;color:#fff;border:0;border-radius:999px;padding:12px 20px;font-weight:700;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,0.45);cursor:pointer;display:none;align-items:center;gap:8px;">
+  <img src="/favicon.png" alt="" width="20" height="20" style="border-radius:6px;" />
+  Install the app — free
+</button>
+<script>
+  (function () {
+    try {
+      var pill = document.getElementById('installPill');
+      if (!pill) return;
+      var standalone =
+        (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+        window.navigator.standalone === true;
+      var already = localStorage.getItem('inreco.pwaInstalled') === '1';
+      if (!standalone && !already) pill.style.display = 'inline-flex';
+      window.addEventListener('appinstalled', function () { pill.style.display = 'none'; });
+    } catch (e) {}
+  })();
+</script>
+
 <div id="installModal" role="dialog" aria-modal="true" aria-labelledby="installTitle"
      style="display:none;position:fixed;inset:0;background:rgba(8,14,28,0.75);z-index:9999;align-items:center;justify-content:center;padding:20px;">
   <div style="background:#0f1d36;color:#fff;border:1px solid rgba(255,255,255,0.08);border-radius:16px;max-width:380px;width:100%;padding:24px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
