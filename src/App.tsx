@@ -4,51 +4,60 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
 import Index from "@/pages/Index";
-import AdminPage from "@/pages/Admin";
+const AdminPage = React.lazy(() => import("@/pages/Admin"));
 import { usePageView } from "@/hooks/usePageView";
-import Pricing from "@/pages/Pricing";
-import Auth from "@/pages/Auth";
-import ResetPassword from "@/pages/ResetPassword";
-import Dashboard from "@/pages/Dashboard";
-import Settings from "@/pages/Settings";
-import PaymentSuccess from "@/pages/PaymentSuccess";
-import PaymentCancelled from "@/pages/PaymentCancelled";
+const Pricing = React.lazy(() => import("@/pages/Pricing"));
+const Auth = React.lazy(() => import("@/pages/Auth"));
+const ResetPassword = React.lazy(() => import("@/pages/ResetPassword"));
+const Dashboard = React.lazy(() => import("@/pages/Dashboard"));
+const Settings = React.lazy(() => import("@/pages/Settings"));
+const PaymentSuccess = React.lazy(() => import("@/pages/PaymentSuccess"));
+const PaymentCancelled = React.lazy(() => import("@/pages/PaymentCancelled"));
 import NotFound from "@/pages/NotFound";
-import CompanyProfilePage from "@/pages/CompanyProfile";
-import DocumentsPage from "@/pages/Documents";
-import GeneratePage from "@/pages/Generate";
-import CaraPage from "@/pages/Cara";
-import SharePage from "@/pages/Share";
-import PayLink from "@/pages/PayLink";
-import ContactPage from "@/pages/Contact";
-import HealthPage from "@/pages/Health";
-import VerifyCertificatePage from "@/pages/VerifyCertificate";
-import Terms from "@/pages/Terms";
-import Privacy from "@/pages/Privacy";
-import Disclaimer from "@/pages/Disclaimer";
+const CompanyProfilePage = React.lazy(() => import("@/pages/CompanyProfile"));
+const DocumentsPage = React.lazy(() => import("@/pages/Documents"));
+const GeneratePage = React.lazy(() => import("@/pages/Generate"));
+const CaraPage = React.lazy(() => import("@/pages/Cara"));
+const SharePage = React.lazy(() => import("@/pages/Share"));
+const PayLink = React.lazy(() => import("@/pages/PayLink"));
+const ContactPage = React.lazy(() => import("@/pages/Contact"));
+const HealthPage = React.lazy(() => import("@/pages/Health"));
+const VerifyCertificatePage = React.lazy(() => import("@/pages/VerifyCertificate"));
+const Terms = React.lazy(() => import("@/pages/Terms"));
+const Privacy = React.lazy(() => import("@/pages/Privacy"));
+const Disclaimer = React.lazy(() => import("@/pages/Disclaimer"));
 import ContrastAudit from "@/components/dev/ContrastAudit";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import RequireSubscription from "@/components/RequireSubscription";
-import PartnerApply from "@/pages/PartnerApply";
-import PartnerPortal from "@/pages/PartnerPortal";
-import PartnerAgreement from "@/pages/PartnerAgreement";
-import PartnerMarketing from "@/pages/PartnerMarketing";
-import AdminCommissions from "@/pages/AdminCommissions";
-import AdminSalespersonNew from "@/pages/AdminSalespersonNew";
-import AdminOverview from "@/pages/AdminOverview";
-import AdminPartnerDecision from "@/pages/AdminPartnerDecision";
-import AdminMarketing from "@/pages/AdminMarketing";
-import AdminHealth from "@/pages/AdminHealth";
-import GetApp from "@/pages/GetApp";
-import UifGuide from "@/pages/UifGuide";
-import ReferEarn from "@/pages/ReferEarn";
-import AdminReferrals from "@/pages/AdminReferrals";
+const PartnerApply = React.lazy(() => import("@/pages/PartnerApply"));
+const PartnerPortal = React.lazy(() => import("@/pages/PartnerPortal"));
+const PartnerAgreement = React.lazy(() => import("@/pages/PartnerAgreement"));
+const PartnerMarketing = React.lazy(() => import("@/pages/PartnerMarketing"));
+const AdminCommissions = React.lazy(() => import("@/pages/AdminCommissions"));
+const AdminSalespersonNew = React.lazy(() => import("@/pages/AdminSalespersonNew"));
+const AdminOverview = React.lazy(() => import("@/pages/AdminOverview"));
+const AdminPartnerDecision = React.lazy(() => import("@/pages/AdminPartnerDecision"));
+const AdminMarketing = React.lazy(() => import("@/pages/AdminMarketing"));
+const AdminHealth = React.lazy(() => import("@/pages/AdminHealth"));
+const GetApp = React.lazy(() => import("@/pages/GetApp"));
+const UifGuide = React.lazy(() => import("@/pages/UifGuide"));
+const ReferEarn = React.lazy(() => import("@/pages/ReferEarn"));
+const AdminReferrals = React.lazy(() => import("@/pages/AdminReferrals"));
 import { captureInviteFromUrl, attachInviteIfAny } from "@/lib/referral";
 import { supabase } from "@/integrations/supabase/client";
 
 
 
 const queryClient = new QueryClient();
+
+/** Light placeholder while a screen's code loads (keeps the app feeling instant). */
+function PageLoader() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" aria-label="Loading" />
+    </div>
+  );
+}
 
 const gated = (el: React.ReactNode) => <RequireSubscription>{el}</RequireSubscription>;
 
@@ -151,7 +160,9 @@ export default function App() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
-          <AppRoutes />
+          <React.Suspense fallback={<PageLoader />}>
+            <AppRoutes />
+          </React.Suspense>
           <Toaster />
           {import.meta.env.DEV && <ContrastAudit />}
         </BrowserRouter>
