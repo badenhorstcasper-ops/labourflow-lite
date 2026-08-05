@@ -104,7 +104,10 @@ export default function AdminOverview() {
 
       {error && <div className="mb-4 text-sm text-destructive">{error}</div>}
 
+      <PaymentsStopped />
+
       {data && (
+
         <>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             {["Solo", "Business", "Professional", "Enterprise"].map((t) => (
