@@ -6,6 +6,7 @@ import App from "./App";
 import "./lib/documents/clientEntry";
 import { installGlobalErrorHandlers } from "./lib/errorLogger";
 import { initPwaInstall } from "./lib/pwaInstall";
+import { isAppLaunch } from "./lib/appLaunch";
 
 // Install global error catchers for ALL routes (legacy vanilla + React).
 installGlobalErrorHandlers();
@@ -43,6 +44,9 @@ function isRecoveryLink() {
 
 function shouldMountReact(pathname: string) {
   if (isRecoveryLink()) return true;
+  // Someone who opened the installed shortcut must never land on the
+  // marketing page — React takes over and sends them to the right screen.
+  if (isAppLaunch()) return true;
   return !LEGACY_ROUTES.includes(pathname);
 }
 
