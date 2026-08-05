@@ -1,6 +1,8 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { crypto } from "https://deno.land/std@0.224.0/crypto/mod.ts";
+import { fetchPayfastSubscription, nextPaidUntil, PLAN_RANK } from "../_shared/payfast.ts";
+
 
 // The live merchant number comes from the saved PayFast settings so it can never
 // drift from the one used when the checkout was created.
