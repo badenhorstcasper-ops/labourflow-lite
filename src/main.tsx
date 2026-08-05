@@ -71,5 +71,9 @@ if (shouldMountReact(window.location.pathname)) {
         <App />
       </StrictMode>,
     );
+    // The shortcut launch keeps the page blank until now; show it again.
+    document.documentElement.style.visibility = "";
   })();
+} else {
+  document.documentElement.style.visibility = "";
 }
