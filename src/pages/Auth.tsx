@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { Button } from "@/components/ui/button";
 import Seo from "@/components/Seo";
+import InstallCta from "@/components/InstallCta";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -314,6 +315,7 @@ const Auth = () => {
                 See plans
               </Link>
             </p>
+            <InstallCta variant="card" label="Add iNRECO to my home screen" />
           </CardContent>
         </Card>
       </div>
