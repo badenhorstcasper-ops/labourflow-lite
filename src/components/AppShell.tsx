@@ -89,7 +89,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-3xl flex-1 px-4 pb-28 pt-4">
+      <main key={pathname} className="app-page-enter mx-auto w-full max-w-3xl flex-1 px-4 pb-28 pt-4">
         <TrialEndingBanner />
         {children}
       </main>
