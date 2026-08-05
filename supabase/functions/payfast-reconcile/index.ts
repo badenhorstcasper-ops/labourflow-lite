@@ -198,5 +198,7 @@ Deno.serve(async (req) => {
     }
   }
 
+  // The unattended sweep never echoes customer details back.
+  if (!isAdmin) return json({ ok: true, checked: due.length });
   return json({ ok: true, checked: due.length, results });
 });
