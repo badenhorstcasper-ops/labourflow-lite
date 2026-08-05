@@ -9,6 +9,7 @@ export interface SubscriptionInfo {
   status: SubStatus;
   planName: string | null;
   trialEndsAt: string | null;
+  paidUntil: string | null;
   daysLeft: number | null;
   isEntitled: boolean; // true when trialing or active
   refresh: () => Promise<void>;
@@ -20,6 +21,7 @@ export function useSubscription(): SubscriptionInfo & { isAdmin: boolean } {
   const [status, setStatus] = useState<SubStatus>("none");
   const [planName, setPlanName] = useState<string | null>(null);
   const [trialEndsAt, setTrialEndsAt] = useState<string | null>(null);
+  const [paidUntil, setPaidUntil] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
   async function load() {
@@ -31,6 +33,7 @@ export function useSubscription(): SubscriptionInfo & { isAdmin: boolean } {
       setStatus("none");
       setPlanName(null);
       setTrialEndsAt(null);
+      setPaidUntil(null);
       setLoading(false);
       return;
     }
@@ -62,11 +65,13 @@ export function useSubscription(): SubscriptionInfo & { isAdmin: boolean } {
 
     const { data } = await supabase
       .from("subscriptions")
-      .select("plan_name, status, trial_ends_at")
+      .select("plan_name, status, trial_ends_at, paid_until")
       .eq("user_id", ownerId)
       .order("updated_at", { ascending: false })
       .limit(1)
       .maybeSingle();
+
+    setPaidUntil((data as { paid_until?: string | null } | null)?.paid_until ?? null);
 
     if (isAdmin) {
       // Admins always entitled. Reflect any real plan if present, else show "active".
@@ -104,11 +109,19 @@ export function useSubscription(): SubscriptionInfo & { isAdmin: boolean } {
         )
       : null;
 
+  // The month a customer already paid for keeps them in, even if a renewal
+  // message never arrived or a single debit bounced.
+  const paidUpNow = paidUntil ? new Date(paidUntil).getTime() > Date.now() : false;
+
   const trialExpired =
     status === "trialing" && trialEndsAt
       ? new Date(trialEndsAt).getTime() < Date.now()
       : false;
-  const isEntitled = isAdmin || status === "active" || (status === "trialing" && !trialExpired);
+  const isEntitled =
+    isAdmin ||
+    paidUpNow ||
+    (status === "active" && !paidUntil) ||
+    (status === "trialing" && !trialExpired);
 
   return {
     loading,
@@ -116,6 +129,7 @@ export function useSubscription(): SubscriptionInfo & { isAdmin: boolean } {
     status,
     planName,
     trialEndsAt,
+    paidUntil,
     daysLeft,
     isEntitled,
     isAdmin,

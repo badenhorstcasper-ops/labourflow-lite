@@ -11,6 +11,8 @@ import BackHomeBar from "@/components/BackHomeBar";
 import { useLiveData } from "@/hooks/useLiveData";
 import LiveStatus from "@/components/LiveStatus";
 import LiveHealthBanner from "@/components/LiveHealthBanner";
+import PaymentsStopped from "@/components/admin/PaymentsStopped";
+
 
 
 type LeagueRow = {
@@ -104,7 +106,10 @@ export default function AdminOverview() {
 
       {error && <div className="mb-4 text-sm text-destructive">{error}</div>}
 
+      <PaymentsStopped />
+
       {data && (
+
         <>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             {["Solo", "Business", "Professional", "Enterprise"].map((t) => (
