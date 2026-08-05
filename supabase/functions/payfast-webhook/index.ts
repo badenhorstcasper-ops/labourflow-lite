@@ -202,40 +202,58 @@ async function logAttempt(
   }
 }
 
-async function findSubscriptionId(
+type SubscriptionRow = {
+  id: string;
+  user_id: string | null;
+  plan_name: string | null;
+  status: string | null;
+  paid_until: string | null;
+  billing_interval: string | null;
+  payfast_token: string | null;
+};
+
+const SUB_COLUMNS = "id, user_id, plan_name, status, paid_until, billing_interval, payfast_token";
+
+/** Only write the card reference when PayFast actually sent one. */
+function tokenPatch(payfastToken: string | null) {
+  return payfastToken ? { payfast_token: payfastToken } : {};
+}
+
+async function findSubscription(
   supabase: ReturnType<typeof createClient>,
   tx: PayfastTransaction,
   payfastToken: string | null,
-) {
+): Promise<SubscriptionRow | null> {
   if (payfastToken) {
     const { data } = await supabase
       .from("subscriptions")
-      .select("id")
+      .select(SUB_COLUMNS)
       .eq("payfast_token", payfastToken)
       .limit(1)
       .maybeSingle();
-    if (data?.id) return data.id as string;
+    if (data) return data as unknown as SubscriptionRow;
   }
 
   if (tx.user_id) {
     const { data } = await supabase
       .from("subscriptions")
-      .select("id")
+      .select(SUB_COLUMNS)
       .eq("user_id", tx.user_id)
       .limit(1)
       .maybeSingle();
-    if (data?.id) return data.id as string;
+    if (data) return data as unknown as SubscriptionRow;
   }
 
   const { data } = await supabase
     .from("subscriptions")
-    .select("id")
+    .select(SUB_COLUMNS)
     .ilike("email", tx.email)
     .order("updated_at", { ascending: false })
     .limit(1)
     .maybeSingle();
-  return data?.id ? (data.id as string) : null;
+  return (data as unknown as SubscriptionRow) ?? null;
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
