@@ -1404,11 +1404,16 @@ export type Database = {
       }
       subscriptions: {
         Row: {
+          billing_interval: string
           created_at: string
           device_limit: number
           email: string | null
           id: string
           is_demo: boolean
+          paid_until: string | null
+          payfast_checked_at: string | null
+          payfast_note: string | null
+          payfast_status: string | null
           payfast_token: string | null
           pf_payment_id: string | null
           plan_name: string
@@ -1419,11 +1424,16 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          billing_interval?: string
           created_at?: string
           device_limit?: number
           email?: string | null
           id?: string
           is_demo?: boolean
+          paid_until?: string | null
+          payfast_checked_at?: string | null
+          payfast_note?: string | null
+          payfast_status?: string | null
           payfast_token?: string | null
           pf_payment_id?: string | null
           plan_name: string
@@ -1434,11 +1444,16 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          billing_interval?: string
           created_at?: string
           device_limit?: number
           email?: string | null
           id?: string
           is_demo?: boolean
+          paid_until?: string | null
+          payfast_checked_at?: string | null
+          payfast_note?: string | null
+          payfast_status?: string | null
           payfast_token?: string | null
           pf_payment_id?: string | null
           plan_name?: string
