@@ -27,3 +27,6 @@ verify_jwt = false
 
 [functions.start-trial]
 verify_jwt = false
+
+[functions.payfast-reconcile]
+verify_jwt = false
