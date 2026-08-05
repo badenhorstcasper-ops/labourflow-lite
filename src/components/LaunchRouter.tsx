@@ -14,7 +14,8 @@ export default function LaunchRouter() {
   useEffect(() => {
     if (loading) return;
     if (!authed) {
-      navigate("/auth?mode=signup", { replace: true });
+      // No account yet: let them try CARA first, then create one from there.
+      navigate("/app", { replace: true });
       return;
     }
     if (isEntitled) {
