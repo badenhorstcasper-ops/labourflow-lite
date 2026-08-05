@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import ReportProblemButton from "@/components/ReportProblemButton";
 import TrialEndingBanner from "@/components/TrialEndingBanner";
 import BottomNav from "@/components/BottomNav";
+import InstallCta from "@/components/InstallCta";
 
 import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
@@ -91,6 +92,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
       <main key={pathname} className="app-page-enter mx-auto w-full max-w-3xl flex-1 px-4 pb-28 pt-4">
         <TrialEndingBanner />
+        <InstallCta variant="banner" label="Add to my home screen" />
         {children}
       </main>
 
