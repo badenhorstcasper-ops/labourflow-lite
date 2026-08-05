@@ -1,19 +1,45 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Home } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { ArrowLeft } from "lucide-react";
 import ReportProblemButton from "@/components/ReportProblemButton";
 import TrialEndingBanner from "@/components/TrialEndingBanner";
+import BottomNav from "@/components/BottomNav";
 
 import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 
+/** Links that live in the "More" sheet instead of crowding the app. */
+const moreLinks = [
+  { to: "/account-app/verify-certificate", label: "Verify sick note" },
+  { to: "/account-app/profile", label: "Company profile" },
+  { to: "/account-app/refer", label: "Refer & earn" },
+  { to: "/settings", label: "Billing" },
+  { to: "/get", label: "Share / install the app" },
+];
+
+const adminLinks = [
+  { to: "/admin/overview", label: "Owner" },
+  { to: "/admin/commissions", label: "Partners" },
+  { to: "/admin/marketing", label: "Marketing" },
+  { to: "/admin/referrals", label: "Referrals" },
+  { to: "/admin", label: "Admin" },
+];
+
+const legalLinks = [
+  { to: "/terms", label: "Terms" },
+  { to: "/privacy", label: "Privacy" },
+  { to: "/disclaimer", label: "Disclaimer" },
+];
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { status, daysLeft } = useSubscription();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+
   useEffect(() => {
     (async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -23,84 +49,93 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     })();
   }, []);
 
-  const linkCls = (p: string) =>
-    `shrink-0 px-3 py-1.5 rounded-md text-sm transition ${
-      pathname === p
-        ? "bg-primary text-primary-foreground"
-        : "text-muted-foreground hover:text-foreground hover:bg-muted"
-    }`;
+  useEffect(() => {
+    setMoreOpen(false);
+  }, [pathname]);
+
   const goBack = () => {
     if (window.history.length > 1) navigate(-1);
     else navigate("/app");
   };
+
+  const sheetItem =
+    "flex min-h-[56px] items-center rounded-xl px-4 text-base font-medium text-foreground transition-colors hover:bg-muted active:bg-muted";
+
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <header className="border-b bg-background/95">
-        <div className="container mx-auto max-w-7xl px-4 py-3">
-          <div className="flex w-full min-w-0 flex-col gap-3">
-          <div className="flex min-w-0 items-center justify-center gap-2 md:justify-start">
-            <Button variant="ghost" size="sm" onClick={goBack} aria-label="Go back">
-              <ArrowLeft className="h-4 w-4" />
-              <span className="hidden sm:inline">Back</span>
-            </Button>
-            <Link to="/app" aria-label="CARA home" className="p-1.5 rounded hover:bg-muted">
-              <Home className="h-4 w-4" />
+      <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 pt-[env(safe-area-inset-top)]">
+        <div className="mx-auto flex h-14 w-full max-w-3xl items-center gap-2 px-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={goBack}
+            aria-label="Go back"
+            className="h-11 w-11 shrink-0"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <Link to="/app" className="truncate text-lg font-bold tracking-tight">
+            iNRECO
+          </Link>
+          {status === "trialing" && daysLeft !== null && (
+            <Link
+              to="/pricing"
+              className="ml-auto inline-flex items-center rounded-full bg-primary/15 px-3 py-1.5 text-xs font-semibold text-primary"
+              title="Trial in progress"
+            >
+              {daysLeft} {daysLeft === 1 ? "day" : "days"} left
             </Link>
-            <Link to="/app" className="font-bold tracking-tight text-lg">iNRECO</Link>
-            {status === "trialing" && daysLeft !== null && (
-              <Link
-                to="/pricing"
-                className="ml-1 inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary hover:bg-primary/20"
-                title="Trial in progress"
-              >
-                Trial: {daysLeft} {daysLeft === 1 ? "day" : "days"} left
-              </Link>
-            )}
-          </div>
-          <nav className="-mx-4 flex max-w-none items-center gap-1 overflow-x-auto px-4 pb-1 md:mx-0 md:max-w-full md:flex-wrap md:justify-center md:overflow-visible md:px-0 md:pb-0">
-            <Link className={linkCls("/app")} to="/app">CARA</Link>
-            <Link className={linkCls("/dashboard")} to="/dashboard">Dashboard</Link>
-            <Link className={linkCls("/account-app/generate")} to="/account-app/generate">Generate Docs</Link>
-            <Link className={linkCls("/account-app/verify-certificate")} to="/account-app/verify-certificate">Verify Sick Note</Link>
-            <Link className={linkCls("/account-app/documents")} to="/account-app/documents">Documents</Link>
-            <Link className={linkCls("/account-app/profile")} to="/account-app/profile">Profile</Link>
-            <Link className={linkCls("/account-app/refer")} to="/account-app/refer">Refer &amp; Earn</Link>
-            <Link className={linkCls("/settings")} to="/settings">Billing</Link>
-            {isAdmin && (
-              <>
-                <span className="mx-1 h-4 w-px bg-border" aria-hidden />
-                <Link className={linkCls("/admin/overview")} to="/admin/overview">Owner</Link>
-                <Link className={linkCls("/admin/commissions")} to="/admin/commissions">Partners</Link>
-                <Link className={linkCls("/admin/marketing")} to="/admin/marketing">Marketing</Link>
-                <Link className={linkCls("/admin/referrals")} to="/admin/referrals">Referrals</Link>
-                <Link className={linkCls("/admin")} to="/admin">Admin</Link>
-              </>
-            )}
-          </nav>
-          </div>
-
+          )}
         </div>
       </header>
-      <main className="container mx-auto max-w-7xl px-4 py-6 flex-1 pb-10">
+
+      <main key={pathname} className="app-page-enter mx-auto w-full max-w-3xl flex-1 px-4 pb-28 pt-4">
         <TrialEndingBanner />
         {children}
       </main>
 
-      <div className="fixed bottom-10 right-3 z-50">
+      <div className="fixed bottom-24 right-4 z-50">
         <ReportProblemButton />
       </div>
-      <footer className="fixed bottom-0 left-0 right-0 z-40 border-t bg-background">
-        <div className="px-3 py-1 flex items-center justify-center gap-2 text-[10px] leading-none text-muted-foreground whitespace-nowrap overflow-x-auto">
-          <Link to="/terms" className="hover:underline">Terms</Link>
-          <span aria-hidden>·</span>
-          <Link to="/privacy" className="hover:underline">Privacy</Link>
-          <span aria-hidden>·</span>
-          <Link to="/disclaimer" className="hover:underline">Disclaimer</Link>
-          <span aria-hidden>·</span>
-          <Link to="/get" className="hover:underline">Share / install the app</Link>
 
-        </div>
-      </footer>
+      <BottomNav onMore={() => setMoreOpen(true)} />
+
+      <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
+        <SheetContent
+          side="bottom"
+          className="max-h-[85vh] overflow-y-auto rounded-t-3xl pb-[calc(1.5rem+env(safe-area-inset-bottom))]"
+        >
+          <SheetHeader className="text-left">
+            <SheetTitle>More</SheetTitle>
+          </SheetHeader>
+          <div className="mt-4 flex flex-col gap-1">
+            {moreLinks.map((l) => (
+              <Link key={l.to} to={l.to} className={sheetItem}>
+                {l.label}
+              </Link>
+            ))}
+            {isAdmin && (
+              <>
+                <div className="mt-4 px-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Owner tools
+                </div>
+                {adminLinks.map((l) => (
+                  <Link key={l.to} to={l.to} className={sheetItem}>
+                    {l.label}
+                  </Link>
+                ))}
+              </>
+            )}
+            <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 px-4 pb-2 text-sm text-muted-foreground">
+              {legalLinks.map((l) => (
+                <Link key={l.to} to={l.to} className="hover:underline">
+                  {l.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
