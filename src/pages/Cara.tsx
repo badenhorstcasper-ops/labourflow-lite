@@ -11,6 +11,7 @@ import { TEMPLATE_REGISTRY } from "@/lib/documents/templates";
 import MicButton from "@/components/cara/MicButton";
 const logoUrl = "/logo.png";
 import { toast } from "sonner";
+import { takeGuestDraft } from "@/lib/appLaunch";
 
 const AUTO_SEND_KEY = "cara.voice.autoSend";
 
@@ -70,6 +71,16 @@ export default function CaraPage() {
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages, busy]);
+
+  // If they typed a question before signing up, ask it for them now.
+  const draftDone = useRef(false);
+  useEffect(() => {
+    if (!ready || draftDone.current) return;
+    draftDone.current = true;
+    const draft = takeGuestDraft();
+    if (draft) void send(draft);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready]);
 
   const greeting = useMemo(() => {
     const who = companyName || "there";
