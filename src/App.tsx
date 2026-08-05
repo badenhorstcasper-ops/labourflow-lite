@@ -60,6 +60,10 @@ function PageLoader() {
 }
 
 const gated = (el: React.ReactNode) => <RequireSubscription>{el}</RequireSubscription>;
+/** Same protection, but visitors get a try-it screen instead of a dead end. */
+const gatedWithPreview = (el: React.ReactNode) => (
+  <RequireSubscription allowGuestPreview>{el}</RequireSubscription>
+);
 
 function useCaptureRef() {
   const search = typeof window !== "undefined" ? window.location.search : "";
