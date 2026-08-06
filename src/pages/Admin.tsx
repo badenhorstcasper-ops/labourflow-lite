@@ -35,6 +35,7 @@ type Stats = {
   signups: { week: number; month: number };
   pageViews: { day: number; week: number; month: number };
   topPaths: { path: string; count: number }[];
+  funnel?: { key: string; label: string; count: number }[];
   recentSignups: { id: string; email: string; created_at: string }[];
   recentDocuments: { id: string; doc_type: string; created_at: string }[];
   recentErrors: ErrorRow[];
@@ -127,6 +128,33 @@ export default function AdminPage() {
             <Stat label="Page views (7d)" value={stats.pageViews.week} />
             <Stat label="Page views (30d)" value={stats.pageViews.month} />
           </div>
+
+          <Card className="mb-6">
+            <CardHeader><CardTitle className="text-base">Advert funnel (7d)</CardTitle></CardHeader>
+            <CardContent>
+              {!stats.funnel || stats.funnel.every((f) => f.count === 0) ? (
+                <p className="text-sm text-muted-foreground">
+                  No steps recorded yet — this fills up as visitors arrive from adverts.
+                </p>
+              ) : (
+                <ul className="text-sm divide-y">
+                  {stats.funnel.map((f, i) => {
+                    const top = stats.funnel?.[0]?.count ?? 0;
+                    const pct = top ? Math.round((f.count / top) * 100) : 0;
+                    return (
+                      <li key={f.key} className="flex items-center justify-between gap-3 py-2">
+                        <span className="truncate pr-2">{f.label}</span>
+                        <span className="font-mono">
+                          {f.count}
+                          {i > 0 && <span className="ml-2 text-muted-foreground">{pct}%</span>}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card>

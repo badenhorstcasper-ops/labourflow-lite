@@ -84,6 +84,31 @@ Deno.serve(async (req) => {
     const topPaths = Object.entries(pathCounts).sort((a, b) => b[1] - a[1]).slice(0, 10)
       .map(([path, count]) => ({ path, count }));
 
+    // Advert funnel (last 7 days), counted by unique visitor session.
+    const { data: eventRows } = await admin
+      .from("page_views")
+      .select("event, session_id")
+      .not("event", "is", null)
+      .gte("created_at", week)
+      .limit(5000);
+    const stepSessions: Record<string, Set<string>> = {};
+    (eventRows ?? []).forEach((r: any) => {
+      const k = r.event as string;
+      (stepSessions[k] ??= new Set()).add(r.session_id ?? r.id ?? Math.random().toString());
+    });
+    const STEP_ORDER = [
+      ["landed", "Opened the landing page"],
+      ["asked_question", "Asked a question"],
+      ["saw_answer", "Got an answer"],
+      ["tapped_signup", "Tapped create account"],
+      ["signed_up", "Finished sign-up"],
+    ] as const;
+    const funnel = STEP_ORDER.map(([key, label]) => ({
+      key,
+      label,
+      count: stepSessions[key]?.size ?? 0,
+    }));
+
     const OWNER_EMAILS = new Set(["casperbadenhorst77@outlook.com", "badenhorst.casper@gmail.com"]);
     const demoSignups = allUsers.filter((u: any) => OWNER_EMAILS.has((u.email ?? "").toLowerCase())).length;
     const realSignups = Math.max(0, totalSignups - demoSignups);
@@ -103,6 +128,7 @@ Deno.serve(async (req) => {
       signups: { week: signupsWeek, month: signupsMonth },
       pageViews: { day: pv1, week: pv7, month: pv30 },
       topPaths,
+      funnel,
       recentSignups,
       recentDocuments: recentDocs.data ?? [],
       recentErrors: recentErrors.data ?? [],
