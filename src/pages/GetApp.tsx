@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import InstallCta from "@/components/InstallCta";
 import Seo from "@/components/Seo";
 import { routeMessage } from "@/lib/cara/router";
+import { renderMarkdownLite } from "@/lib/cara/renderMarkdownLite";
 import { saveGuestDraft } from "@/lib/appLaunch";
 import { trackStep } from "@/lib/funnel";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -124,8 +125,8 @@ const GetApp = () => {
                   <p className="ml-auto max-w-[85%] rounded-2xl bg-primary px-4 py-2 text-sm text-primary-foreground">
                     {question}
                   </p>
-                  <div className="max-w-[95%] whitespace-pre-wrap rounded-2xl bg-muted px-4 py-3 text-sm">
-                    {answer}
+                  <div className="max-w-[95%] rounded-2xl bg-muted px-4 py-3 text-sm leading-relaxed">
+                    {answer ? renderMarkdownLite(answer) : null}
                   </div>
                 </div>
               )}
