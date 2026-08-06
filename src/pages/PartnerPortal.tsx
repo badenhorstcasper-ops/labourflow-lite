@@ -21,11 +21,11 @@ export default function PartnerPortal() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) { nav("/auth?redirect=/partner"); return; }
     const uid = session.user.id;
-    const { data } = await supabase.from("salespersons").select("*").eq("user_id", uid).maybeSingle();
+    const { data } = await supabase.from("salespersons").select(SP_FIELDS).eq("user_id", uid).maybeSingle();
     if (!data) {
       const em = session.user.email?.toLowerCase();
       if (em) {
-        const { data: byEmail } = await supabase.from("salespersons").select("*").ilike("email", em).maybeSingle();
+        const { data: byEmail } = await supabase.from("salespersons").select(SP_FIELDS).ilike("email", em).maybeSingle();
         setSp((byEmail as SP) || null);
       }
     } else {
