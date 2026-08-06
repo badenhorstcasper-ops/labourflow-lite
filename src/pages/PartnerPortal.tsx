@@ -10,6 +10,11 @@ type SP = { id: string; full_name: string; email: string; phone: string | null; 
 type Calc = { id: string; calendar_month: string; active_subs_count: number; cancellations_count: number; gross_commission_zar: number; status: string; paid_at: string | null };
 type Sales = { total: number; last30: number; last90: number };
 
+// Only the everyday partner details. Banking details and ID number are never
+// read from here — those come from the audited admin-only lookup.
+const SP_FIELDS =
+  "id, user_id, full_name, email, phone, referral_code, status, approved_at, notice_end_date, demo_revoked_at, created_at, updated_at";
+
 export default function PartnerPortal() {
   const nav = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -21,11 +26,11 @@ export default function PartnerPortal() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) { nav("/auth?redirect=/partner"); return; }
     const uid = session.user.id;
-    const { data } = await supabase.from("salespersons").select("*").eq("user_id", uid).maybeSingle();
+    const { data } = await supabase.from("salespersons").select(SP_FIELDS).eq("user_id", uid).maybeSingle();
     if (!data) {
       const em = session.user.email?.toLowerCase();
       if (em) {
-        const { data: byEmail } = await supabase.from("salespersons").select("*").ilike("email", em).maybeSingle();
+        const { data: byEmail } = await supabase.from("salespersons").select(SP_FIELDS).ilike("email", em).maybeSingle();
         setSp((byEmail as SP) || null);
       }
     } else {

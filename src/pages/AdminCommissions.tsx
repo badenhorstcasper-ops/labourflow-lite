@@ -27,7 +27,12 @@ export default function AdminCommissions() {
 
   async function loadAll() {
     const [sp, ca, ra] = await Promise.all([
-      supabase.from("salespersons").select("*").order("created_at", { ascending: false }),
+      supabase
+        .from("salespersons")
+        .select(
+          "id, user_id, full_name, email, phone, referral_code, status, approved_at, notice_end_date, demo_revoked_at, notes, created_at, updated_at",
+        )
+        .order("created_at", { ascending: false }),
       supabase.from("commission_calculations").select("*").order("calendar_month", { ascending: false }),
       supabase.from("commission_rates").select("*").order("active_from", { ascending: false }),
     ]);
