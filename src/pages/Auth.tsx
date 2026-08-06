@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { trackStep } from "@/lib/funnel";
 import { lovable } from "@/integrations/lovable";
 import { Button } from "@/components/ui/button";
 import Seo from "@/components/Seo";
@@ -109,6 +110,7 @@ const Auth = () => {
         // Auto-confirm is on, so sign them in immediately.
         const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
         if (signInErr) throw signInErr;
+        void trackStep("/auth", "signed_up");
         const linked = await linkPendingSubscription();
         const trialStarted = await startTrialIfRequested();
         navigate(trialStarted ? "/app" : nextPathAfterAuth(linked), { replace: true });
