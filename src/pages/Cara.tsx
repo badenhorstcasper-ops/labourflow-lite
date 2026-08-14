@@ -12,6 +12,7 @@ import MicButton from "@/components/cara/MicButton";
 const logoUrl = "/logo.png";
 import { toast } from "sonner";
 import { takeGuestDraft } from "@/lib/appLaunch";
+import { signInPath } from "@/lib/authRedirect";
 
 const AUTO_SEND_KEY = "cara.voice.autoSend";
 
@@ -51,7 +52,7 @@ export default function CaraPage() {
     (async () => {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) {
-        navigate("/auth", { replace: true });
+        navigate(signInPath("/app"), { replace: true });
         return;
       }
       const { data: ownerData } = await supabase.rpc("current_account_owner");

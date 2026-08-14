@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2, Upload, Trash2, Check, X, Copy } from "lucide-react";
 import BackHomeBar from "@/components/BackHomeBar";
+import { signInPath } from "@/lib/authRedirect";
 
 type OfficialAsset = { name: string; size: number };
 
@@ -40,7 +41,7 @@ export default function AdminMarketing() {
   useEffect(() => {
     (async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { nav("/auth"); return; }
+      if (!session) { nav(signInPath("/admin/marketing")); return; }
       const { data: isAdmin } = await supabase.rpc("has_role", {
         _user_id: session.user.id, _role: "admin",
       });

@@ -1,6 +1,7 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useSubscription } from "@/hooks/useSubscription";
 import GuestPreview from "@/pages/GuestPreview";
+import { signInPath } from "@/lib/authRedirect";
 
 export default function RequireSubscription({
   children,
@@ -23,7 +24,7 @@ export default function RequireSubscription({
 
   if (!authed) {
     if (allowGuestPreview) return <GuestPreview />;
-    return <Navigate to="/auth" replace state={{ from: location.pathname }} />;
+    return <Navigate to={signInPath(location.pathname + location.search)} replace />;
   }
 
   if (!isEntitled) {

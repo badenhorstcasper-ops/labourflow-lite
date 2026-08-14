@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import BackHomeBar from "@/components/BackHomeBar";
+import { signInPath } from "@/lib/authRedirect";
 
 export default function AdminSalespersonNew() {
   const nav = useNavigate();
@@ -19,7 +20,7 @@ export default function AdminSalespersonNew() {
 
   useEffect(() => { (async () => {
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session) { nav("/auth"); return; }
+    if (!session) { nav(signInPath("/admin/salespersons/new")); return; }
     const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: session.user.id, _role: "admin" });
     if (!isAdmin) { nav("/"); return; }
     setReady(true);

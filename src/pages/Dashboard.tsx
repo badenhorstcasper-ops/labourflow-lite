@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { FileText, FilePlus2, Building2, CreditCard, Activity, LifeBuoy, LogOut } from "lucide-react";
 import { TEMPLATE_REGISTRY } from "@/lib/documents/templates";
+import { signInPath } from "@/lib/authRedirect";
 
 type Sub = { plan_name: string | null; status: string | null };
 type DocRow = {
@@ -34,7 +35,7 @@ export default function Dashboard() {
     (async () => {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) {
-        navigate("/auth", { replace: true });
+        navigate(signInPath("/dashboard"), { replace: true });
         return;
       }
       setEmail(u.user.email || "");

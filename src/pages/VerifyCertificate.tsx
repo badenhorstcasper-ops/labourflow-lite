@@ -44,6 +44,7 @@ import {
 } from "@/lib/verifyCertificate/charges";
 import { generateDocument } from "@/lib/documents";
 import type { DocumentTemplate } from "@/lib/documents";
+import { signInPath } from "@/lib/authRedirect";
 
 const CATEGORIES = [
   "Medical Practitioner",
@@ -128,7 +129,7 @@ export default function VerifyCertificatePage() {
     (async () => {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) {
-        navigate("/auth", { replace: true });
+        navigate(signInPath("/account-app/verify-certificate"), { replace: true });
         return;
       }
       setUserId(u.user.id);
