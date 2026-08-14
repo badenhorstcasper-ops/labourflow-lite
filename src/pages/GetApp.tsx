@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Send, Sparkles, ShieldCheck, FileText, MapPin } from "lucide-react";
+import { Send, Sparkles, ShieldCheck, FileText, MapPin, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import InstallCta from "@/components/InstallCta";
@@ -16,6 +16,26 @@ const EXAMPLES = [
   "What must a valid sick note contain?",
   "How much notice pay must I give?",
 ];
+
+/** The same six real situations as the home page, so the whole journey matches. */
+const SITUATIONS: { label: string; q: string }[] = [
+  {
+    label: "Employee misconduct",
+    q: "An employee committed misconduct at work. What are my options and next steps?",
+  },
+  {
+    label: "Absent without leave",
+    q: "My employee has been absent for three days without contacting us. What do I do?",
+  },
+  { label: "Disciplinary hearing", q: "How do I run a fair disciplinary hearing?" },
+  { label: "CCMA notice", q: "I received a CCMA notice. What must I do and by when?" },
+  { label: "Retrenchment", q: "I need to retrench staff. What is the correct process?" },
+  {
+    label: "Grievance",
+    q: "An employee lodged a grievance against a manager. How do I handle it?",
+  },
+];
+
 
 /**
  * Where people land from an advert. It keeps the advert's promise straight
@@ -40,7 +60,12 @@ const GetApp = () => {
       } catch (_) {}
     }
     void trackStep("/get", "landed");
+    // Arriving from a "what do you need help with?" card: answer it immediately.
+    const q = searchParams.get("q");
+    if (q && q.trim() && !used) ask(q.trim());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
+
 
   const ref = searchParams.get("ref");
   const refQs = ref ? `&ref=${encodeURIComponent(ref)}` : "";
@@ -95,12 +120,33 @@ const GetApp = () => {
           </div>
 
           <h1 className="mt-6 text-2xl font-bold leading-tight sm:text-3xl">
-            Ask a South African labour question. Free, right now.
+            Have a labour problem? Ask CARA.
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            No account, no card, no waiting. Tap a question below or type your own and CARA
-            answers on this page.
+            Tell CARA what happened and she'll tell you what to do next. Free, right now — no
+            account, no card, no waiting.
           </p>
+
+          {!question && (
+            <div className="mt-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                What do you need help with?
+              </p>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                {SITUATIONS.map((s) => (
+                  <button
+                    key={s.label}
+                    type="button"
+                    onClick={() => ask(s.q)}
+                    className="min-h-[52px] rounded-xl border bg-card px-3 text-sm font-medium"
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
 
           <Card className="mt-5">
             <CardContent className="space-y-4 p-4">
@@ -194,6 +240,14 @@ const GetApp = () => {
                 Made in South Africa by iNRECO, a working labour consultancy.
               </p>
             </div>
+            <div className="flex items-start gap-3">
+              <Lock className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+              <p className="text-xs text-muted-foreground">
+                Your staff details stay in your private vault — encrypted, never sold, never
+                shared with other businesses, and deleted whenever you ask.
+              </p>
+            </div>
+
           </div>
 
           <InstallCta variant="card" className="mt-6" label="Add iNRECO to my phone" />
