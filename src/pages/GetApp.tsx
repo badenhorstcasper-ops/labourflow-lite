@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Send, Sparkles, ShieldCheck, FileText, MapPin } from "lucide-react";
+import { Send, Sparkles, ShieldCheck, FileText, MapPin, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import InstallCta from "@/components/InstallCta";
