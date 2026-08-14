@@ -96,7 +96,7 @@ export default function ContactPage() {
                 </div>
               ) : (
                 <form onSubmit={onSubmit} className="space-y-4">
-                  <div style={{ position: "absolute", left: "-10000px" }} aria-hidden>
+                  <div style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)", whiteSpace: "nowrap" }} aria-hidden>
                     <Label htmlFor="website">Website</Label>
                     <Input
                       id="website"

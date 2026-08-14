@@ -169,9 +169,9 @@ export default function PartnerApply() {
           <CardContent className="space-y-4">
             {step === 1 && (
               <>
-                <div><Label>Full name</Label><Input value={full_name} onChange={(e) => setName(e.target.value)} /></div>
-                <div><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
-                <div><Label>Phone</Label><Input value={phone} onChange={(e) => setPhone(e.target.value)} /></div>
+                <div><Label htmlFor="pa-full-name">Full name</Label><Input id="pa-full-name" value={full_name} onChange={(e) => setName(e.target.value)} /></div>
+                <div><Label htmlFor="pa-email">Email</Label><Input id="pa-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
+                <div><Label htmlFor="pa-phone">Phone</Label><Input id="pa-phone" value={phone} onChange={(e) => setPhone(e.target.value)} /></div>
                 <Button className="w-full" onClick={next} disabled={!canStep1}>Continue</Button>
               </>
             )}
@@ -181,9 +181,9 @@ export default function PartnerApply() {
                   We need your ID and banking so we can pay your commission and comply with SARS.
                   This information is stored securely and only visible to iNRECO admin.
                 </p>
-                <div><Label>ID number (13 digits)</Label><Input value={id_number} onChange={(e) => setIdNumber(e.target.value.replace(/\D/g, "").slice(0, 13))} /></div>
+                <div><Label htmlFor="pa-id-number">ID number (13 digits)</Label><Input id="pa-id-number" value={id_number} onChange={(e) => setIdNumber(e.target.value.replace(/\D/g, "").slice(0, 13))} /></div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><Label>Bank</Label><Input value={bank_name} onChange={(e) => setBank(e.target.value)} /></div>
+                  <div><Label htmlFor="pa-bank">Bank</Label><Input id="pa-bank" value={bank_name} onChange={(e) => setBank(e.target.value)} /></div>
                   <div>
                     <Label>Account type</Label>
                     <select className="w-full border rounded-md h-10 px-3 bg-background" value={account_type} onChange={(e) => setType(e.target.value)}>
@@ -191,10 +191,10 @@ export default function PartnerApply() {
                     </select>
                   </div>
                 </div>
-                <div><Label>Account holder</Label><Input value={account_holder} onChange={(e) => setHolder(e.target.value)} /></div>
+                <div><Label htmlFor="pa-account-holder">Account holder</Label><Input id="pa-account-holder" value={account_holder} onChange={(e) => setHolder(e.target.value)} /></div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><Label>Account number</Label><Input value={account_number} onChange={(e) => setAcct(e.target.value)} /></div>
-                  <div><Label>Branch code</Label><Input value={branch_code} onChange={(e) => setBranch(e.target.value)} /></div>
+                  <div><Label htmlFor="pa-account-number">Account number</Label><Input id="pa-account-number" value={account_number} onChange={(e) => setAcct(e.target.value)} /></div>
+                  <div><Label htmlFor="pa-branch-code">Branch code</Label><Input id="pa-branch-code" value={branch_code} onChange={(e) => setBranch(e.target.value)} /></div>
                 </div>
                 <div className="flex gap-2">
                   <Button variant="outline" onClick={back}>Back</Button>

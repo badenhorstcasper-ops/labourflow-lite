@@ -112,7 +112,7 @@ export default function GuestPreview() {
                     placeholder="Type your labour question…"
                     className="h-[52px] flex-1 rounded-xl border bg-background px-4 text-base"
                   />
-                  <Button type="submit" size="icon" className="h-[52px] w-[52px]">
+                  <Button type="submit" size="icon" aria-label="Send question to CARA" className="h-[52px] w-[52px]">
                     <Send className="h-5 w-5" />
                   </Button>
                 </form>
