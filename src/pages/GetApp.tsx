@@ -17,6 +17,26 @@ const EXAMPLES = [
   "How much notice pay must I give?",
 ];
 
+/** The same six real situations as the home page, so the whole journey matches. */
+const SITUATIONS: { label: string; q: string }[] = [
+  {
+    label: "Employee misconduct",
+    q: "An employee committed misconduct at work. What are my options and next steps?",
+  },
+  {
+    label: "Absent without leave",
+    q: "My employee has been absent for three days without contacting us. What do I do?",
+  },
+  { label: "Disciplinary hearing", q: "How do I run a fair disciplinary hearing?" },
+  { label: "CCMA notice", q: "I received a CCMA notice. What must I do and by when?" },
+  { label: "Retrenchment", q: "I need to retrench staff. What is the correct process?" },
+  {
+    label: "Grievance",
+    q: "An employee lodged a grievance against a manager. How do I handle it?",
+  },
+];
+
+
 /**
  * Where people land from an advert. It keeps the advert's promise straight
  * away: ask a real South African labour question and get a real answer here,
@@ -40,7 +60,12 @@ const GetApp = () => {
       } catch (_) {}
     }
     void trackStep("/get", "landed");
+    // Arriving from a "what do you need help with?" card: answer it immediately.
+    const q = searchParams.get("q");
+    if (q && q.trim() && !used) ask(q.trim());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
+
 
   const ref = searchParams.get("ref");
   const refQs = ref ? `&ref=${encodeURIComponent(ref)}` : "";
