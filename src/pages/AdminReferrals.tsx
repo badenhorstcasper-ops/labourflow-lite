@@ -4,6 +4,7 @@ import BackHomeBar from "@/components/BackHomeBar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { signInPath } from "@/lib/authRedirect";
 
 type Signup = {
   id: string;
@@ -48,12 +49,17 @@ export default function AdminReferrals() {
   useEffect(() => {
     (async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { setAllowed(false); return; }
+      if (!session) {
+        // Send visitors to sign in and bring them straight back here afterwards.
+        window.location.replace(signInPath("/admin/referrals"));
+        return;
+      }
       const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: session.user.id, _role: "admin" });
       setAllowed(!!isAdmin);
       if (isAdmin) await load();
     })();
   }, []);
+
 
   async function saveCap() {
     setSaving(true);

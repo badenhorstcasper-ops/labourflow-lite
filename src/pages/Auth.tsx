@@ -12,6 +12,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import BackHomeBar from "@/components/BackHomeBar";
 import { readTrialPlan, startFreeTrial } from "@/lib/trial";
+import { readRedirectTarget } from "@/lib/authRedirect";
+
 
 type Mode = "signup" | "login";
 
@@ -64,13 +66,17 @@ const Auth = () => {
   }
 
   function nextPathAfterAuth(linked: boolean) {
+    // If they were sent here from a page that needs an account, go back there.
+    const wanted = readRedirectTarget();
     const pendingPayment = localStorage.getItem("inreco.pendingPayment");
     if (linked) {
       clearPendingSubscription();
-      return "/app";
+      return wanted || "/app";
     }
-    return pendingPayment ? `/payment-success?m=${encodeURIComponent(pendingPayment)}` : "/app";
+    if (pendingPayment) return `/payment-success?m=${encodeURIComponent(pendingPayment)}`;
+    return wanted || "/app";
   }
+
 
   useEffect(() => {
     // If they paid as a guest, pre-fill the email

@@ -8,6 +8,7 @@ import BackHomeBar from "@/components/BackHomeBar";
 import { useLiveData } from "@/hooks/useLiveData";
 import LiveStatus from "@/components/LiveStatus";
 import LiveHealthBanner from "@/components/LiveHealthBanner";
+import { signInPath } from "@/lib/authRedirect";
 
 
 type ErrorRow = {
@@ -49,7 +50,7 @@ export default function AdminPage() {
   useEffect(() => {
     (async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { navigate("/auth"); return; }
+      if (!session) { navigate(signInPath("/admin")); return; }
       const { data: isAdmin } = await supabase.rpc("has_role", {
         _user_id: session.user.id,
         _role: "admin",

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import BackHomeBar from "@/components/BackHomeBar";
+import { signInPath } from "@/lib/authRedirect";
 
 type SP = { id: string; full_name: string; email: string; phone: string | null; referral_code: string | null; status: string; created_at: string; notice_end_date?: string | null; terminated_reason?: string | null };
 type Calc = { id: string; salesperson_id: string; calendar_month: string; active_subs_count: number; cancellations_count: number; gross_commission_zar: number; status: string; paid_at: string | null };
@@ -43,7 +44,7 @@ export default function AdminCommissions() {
 
   useEffect(() => { (async () => {
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session) { nav("/auth"); return; }
+    if (!session) { nav(signInPath("/admin/commissions")); return; }
     const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: session.user.id, _role: "admin" });
     if (!isAdmin) { nav("/"); return; }
     await loadAll();
