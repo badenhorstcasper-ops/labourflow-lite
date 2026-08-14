@@ -240,6 +240,14 @@ const GetApp = () => {
                 Made in South Africa by iNRECO, a working labour consultancy.
               </p>
             </div>
+            <div className="flex items-start gap-3">
+              <Lock className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+              <p className="text-xs text-muted-foreground">
+                Your staff details stay in your private vault — encrypted, never sold, never
+                shared with other businesses, and deleted whenever you ask.
+              </p>
+            </div>
+
           </div>
 
           <InstallCta variant="card" className="mt-6" label="Add iNRECO to my phone" />
