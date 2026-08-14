@@ -120,12 +120,33 @@ const GetApp = () => {
           </div>
 
           <h1 className="mt-6 text-2xl font-bold leading-tight sm:text-3xl">
-            Ask a South African labour question. Free, right now.
+            Have a labour problem? Ask CARA.
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            No account, no card, no waiting. Tap a question below or type your own and CARA
-            answers on this page.
+            Tell CARA what happened and she'll tell you what to do next. Free, right now — no
+            account, no card, no waiting.
           </p>
+
+          {!question && (
+            <div className="mt-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                What do you need help with?
+              </p>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                {SITUATIONS.map((s) => (
+                  <button
+                    key={s.label}
+                    type="button"
+                    onClick={() => ask(s.q)}
+                    className="min-h-[52px] rounded-xl border bg-card px-3 text-sm font-medium"
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
 
           <Card className="mt-5">
             <CardContent className="space-y-4 p-4">
