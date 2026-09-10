@@ -2542,7 +2542,8 @@ window.openUpgrade = openUpgrade; window.closeUpgrade = closeUpgrade;
 window.selectPlan = selectPlan; window.payWithPayfast = payWithPayfast;
 
 // --- Sharing ---
-const APP_URL = 'https://app.inreco.co.za' + (window.INRECO_SHARE_PATH && window.INRECO_SHARE_PATH !== '/get' ? window.INRECO_SHARE_PATH : '');
+// Worked out at tap-time so industry pages always share their own address.
+const appUrl = () => 'https://app.inreco.co.za' + (window.INRECO_SHARE_PATH && window.INRECO_SHARE_PATH !== '/get' ? window.INRECO_SHARE_PATH : '');
 const APP_SHARE_MSG = 'I use iNRECO for instant IR guidance — try it free:';
 const APP_SHARE_TAGLINE = 'Get instant IR guidance in your pocket — powered by iNRECO';
 
