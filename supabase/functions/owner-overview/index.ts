@@ -74,9 +74,15 @@ Deno.serve(async (req) => {
     month: paidSubs.filter((s) => (s.created_at as string) >= MONTH).length,
   };
 
-  // Signups (auth.users) in recent windows
+  // Signups (auth.users) in recent windows — exclude owner/test/demo accounts
+  const OWNER_EMAILS = new Set(["casperbadenhorst77@outlook.com", "badenhorst.casper@gmail.com"]);
+  const demoEmails = new Set((subs ?? []).filter((s) => s.is_demo).map((s) => ((s.email as string) || "").toLowerCase()));
+  const isTestAccount = (email?: string | null) => {
+    const e = (email ?? "").toLowerCase();
+    return OWNER_EMAILS.has(e) || demoEmails.has(e);
+  };
   const { data: usersData } = await admin.auth.admin.listUsers({ page: 1, perPage: 500 });
-  const users = usersData?.users ?? [];
+  const users = (usersData?.users ?? []).filter((u) => !isTestAccount(u.email));
   const signups = {
     day: users.filter((u) => Date.parse(u.created_at) >= Date.parse(DAY)).length,
     week: users.filter((u) => Date.parse(u.created_at) >= Date.parse(WEEK)).length,
