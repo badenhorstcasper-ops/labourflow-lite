@@ -639,7 +639,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
     /* Share links keep people on the industry page */
     var url = 'https://app.inreco.co.za' + path;
     var msg = ind.shareText + ': ' + url;
-    document.querySelectorAll('a[href*="wa.me"]').forEach(function (a) {
+    document.querySelectorAll('a[href*="wa.me/?text="]').forEach(function (a) {
       a.href = 'https://wa.me/?text=' + encodeURIComponent(msg);
     });
     document.querySelectorAll('a[href^="mailto:?subject=iNRECO"]').forEach(function (a) {
@@ -2542,7 +2542,8 @@ window.openUpgrade = openUpgrade; window.closeUpgrade = closeUpgrade;
 window.selectPlan = selectPlan; window.payWithPayfast = payWithPayfast;
 
 // --- Sharing ---
-const APP_URL = 'https://app.inreco.co.za' + (window.INRECO_SHARE_PATH && window.INRECO_SHARE_PATH !== '/get' ? window.INRECO_SHARE_PATH : '');
+// Worked out at tap-time so industry pages always share their own address.
+const appUrl = () => 'https://app.inreco.co.za' + (window.INRECO_SHARE_PATH && window.INRECO_SHARE_PATH !== '/get' ? window.INRECO_SHARE_PATH : '');
 const APP_SHARE_MSG = 'I use iNRECO for instant IR guidance — try it free:';
 const APP_SHARE_TAGLINE = 'Get instant IR guidance in your pocket — powered by iNRECO';
 
@@ -2552,10 +2553,10 @@ function shareWhatsApp(text) {
 function shareEmail(subject, body) {
   window.location.href = 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
 }
-function shareAppWhatsApp() { shareWhatsApp(APP_SHARE_MSG + ' ' + APP_URL); }
-function shareAppEmail() { shareEmail('iNRECO — IR guidance in your pocket', APP_SHARE_TAGLINE + '\n\n' + APP_URL); }
+function shareAppWhatsApp() { shareWhatsApp(APP_SHARE_MSG + ' ' + appUrl()); }
+function shareAppEmail() { shareEmail('iNRECO — IR guidance in your pocket', APP_SHARE_TAGLINE + '\n\n' + appUrl()); }
 function copyAppLink() {
-  navigator.clipboard.writeText(APP_URL);
+  navigator.clipboard.writeText(appUrl());
   const t = document.createElement('div');
   t.textContent = '✓ Link copied';
   t.style.cssText = 'position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--success); color:#fff; padding:8px 14px; border-radius:999px; z-index:9999; font-size:13px;';
@@ -2581,8 +2582,8 @@ function openShareAdviceModal(adviceText) {
     </div>`;
   const prefix = 'IR guidance from iNRECO:\n\n';
   box.querySelector('.wizard-close').onclick = () => overlay.remove();
-  box.querySelector('[data-act="wa"]').onclick = () => shareWhatsApp(prefix + adviceText + '\n\n' + APP_URL);
-  box.querySelector('[data-act="email"]').onclick = () => shareEmail('IR guidance from iNRECO', prefix + adviceText + '\n\n' + APP_URL);
+  box.querySelector('[data-act="wa"]').onclick = () => shareWhatsApp(prefix + adviceText + '\n\n' + appUrl());
+  box.querySelector('[data-act="email"]').onclick = () => shareEmail('IR guidance from iNRECO', prefix + adviceText + '\n\n' + appUrl());
   box.querySelector('[data-act="copy"]').onclick = () => navigator.clipboard.writeText(prefix + adviceText);
   overlay.appendChild(box); document.body.appendChild(overlay);
 }
@@ -2593,7 +2594,7 @@ function openShareAppModal() {
   overlay.className = 'wizard-overlay show'; overlay.style.zIndex = 600;
   const box = document.createElement('div');
   box.className = 'wizard'; box.style.maxWidth = '420px';
-  const qrSrc = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(APP_URL);
+  const qrSrc = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(appUrl());
   box.innerHTML = `
     <div class="wizard-header">
       <div><h2>Share iNRECO</h2><p>${APP_SHARE_TAGLINE}</p></div>
@@ -2602,7 +2603,7 @@ function openShareAppModal() {
     <div style="background:#fff; border-radius:10px; padding:14px; display:flex; justify-content:center;">
       <img src="${qrSrc}" alt="QR code" width="220" height="220" style="display:block;">
     </div>
-    <div style="text-align:center; font-size:13px; color:var(--muted); word-break:break-all;">${APP_URL}</div>
+    <div style="text-align:center; font-size:13px; color:var(--muted); word-break:break-all;">${appUrl()}</div>
     <div style="display:flex; flex-direction:column; gap:8px;">
       <button class="wiz-submit" data-act="wa" style="background:#22c55e;">💬 Share on WhatsApp</button>
       <button class="wiz-submit" data-act="email" style="background:var(--accent);">📧 Share via Email</button>
