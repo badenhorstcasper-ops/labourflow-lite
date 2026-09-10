@@ -639,7 +639,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
     /* Share links keep people on the industry page */
     var url = 'https://app.inreco.co.za' + path;
     var msg = ind.shareText + ': ' + url;
-    document.querySelectorAll('a[href*="wa.me"]').forEach(function (a) {
+    document.querySelectorAll('a[href*="wa.me/?text="]').forEach(function (a) {
       a.href = 'https://wa.me/?text=' + encodeURIComponent(msg);
     });
     document.querySelectorAll('a[href^="mailto:?subject=iNRECO"]').forEach(function (a) {
