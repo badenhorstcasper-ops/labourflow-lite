@@ -62,9 +62,11 @@ Deno.serve(async (req) => {
       admin.from("error_logs").select("id, short_id, message, route, severity, created_at, email").eq("resolved", false).order("created_at", { ascending: false }).limit(15),
     ]);
 
-    // Recent signups via admin.auth + week/month counts
+    // Recent signups via admin.auth + week/month counts (real users only — no owner/test)
+    const OWNER_EMAILS_SET = new Set(["casperbadenhorst77@outlook.com", "badenhorst.casper@gmail.com"]);
     const { data: recentUsersData } = await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
-    const allUsers = recentUsersData?.users ?? [];
+    const allUsers = (recentUsersData?.users ?? [])
+      .filter((u: any) => !OWNER_EMAILS_SET.has((u.email ?? "").toLowerCase()));
     const recentSignups = allUsers.slice(0, 10).map((u: any) => ({
       id: u.id, email: u.email, created_at: u.created_at,
     }));
