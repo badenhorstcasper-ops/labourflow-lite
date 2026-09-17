@@ -115,6 +115,53 @@ function req(label: string) {
   );
 }
 
+/** What we keep on the device so an unfinished check survives a refresh or back press. */
+type Draft = {
+  step: 1 | 2 | 3;
+  form: FormState;
+  hpcsa: RegisterStatus;
+  pcns: RegisterStatus;
+  notes: string;
+  verificationId: string | null;
+  outcome: Outcome | null;
+};
+
+function loadDraft(key: string): Draft | null {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const d = JSON.parse(raw) as Draft;
+    if (!d || typeof d !== "object" || !d.form) return null;
+    // A finished check does not need resuming.
+    if (d.step === 3) return null;
+    const hasAnything = Object.values(d.form).some((v) => typeof v === "string" && v.trim());
+    if (!hasAnything) return null;
+    return { ...d, form: { ...EMPTY, ...d.form } };
+  } catch {
+    return null;
+  }
+}
+
+function saveDraft(key: string, d: Draft) {
+  try {
+    if (d.step === 3) {
+      localStorage.removeItem(key);
+      return;
+    }
+    localStorage.setItem(key, JSON.stringify(d));
+  } catch {
+    /* storage unavailable — nothing more we can do */
+  }
+}
+
+function clearDraft(key: string) {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    /* ignore */
+  }
+}
+
 export default function VerifyCertificatePage() {
   const navigate = useNavigate();
   const [ownerId, setOwnerId] = useState<string | null>(null);
