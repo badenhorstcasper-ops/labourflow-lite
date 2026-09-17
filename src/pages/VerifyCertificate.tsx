@@ -497,6 +497,7 @@ function NewCheckFlow({
   }
 
   function resetAll() {
+    clearDraft(draftKey);
     setStep(1);
     setForm(EMPTY);
     setFile(null);
@@ -506,6 +507,9 @@ function NewCheckFlow({
     setVerificationId(null);
     setOutcome(null);
     setShowCharges(false);
+    setRestored(false);
+    setEditingStep1(false);
+    setEditBackup(null);
   }
 
   async function downloadChargesDocx() {
