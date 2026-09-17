@@ -403,6 +403,22 @@ function NewCheckFlow({
         practice_phone: form.practice_phone.trim() || null,
         reason_for_check: form.reason_for_check || null,
       };
+      // Correcting details on a check that was already started: update it in place.
+      if (verificationId) {
+        const { account_owner_id: _o, created_by_user_id: _c, ...updatePayload } = insertPayload;
+        const { error: updErr } = await supabase
+          .from("medical_cert_verifications")
+          .update(updatePayload)
+          .eq("id", verificationId);
+        if (updErr) throw updErr;
+        await insertAudit(verificationId, "details_amended", updatePayload);
+        setEditingStep1(false);
+        setEditBackup(null);
+        toast.success("Details updated.");
+        setSaving(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from("medical_cert_verifications")
         .insert(insertPayload)
