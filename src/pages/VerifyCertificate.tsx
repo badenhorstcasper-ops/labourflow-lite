@@ -650,6 +650,36 @@ function NewCheckFlow({
               </Button>
             </div>
           )}
+          {step === 2 && !editingStep1 && (
+            <div className="flex justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setEditBackup(form);
+                  setEditingStep1(true);
+                }}
+              >
+                Edit details
+              </Button>
+            </div>
+          )}
+          {step === 2 && editingStep1 && (
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  if (editBackup) setForm(editBackup);
+                  setEditBackup(null);
+                  setEditingStep1(false);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button onClick={saveStep1} disabled={!formValid || saving}>
+                {saving ? "Saving…" : "Save changes"}
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
