@@ -273,17 +273,45 @@ function NewCheckFlow({
   userEmail: string | null;
   onSaved: () => void;
 }) {
-  const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [form, setForm] = useState<FormState>(EMPTY);
+  const draftKey = `inreco.mcv.draft.${userId}`;
+  const saved = useMemo(() => loadDraft(draftKey), [draftKey]);
+
+  const [step, setStep] = useState<1 | 2 | 3>(saved?.step ?? 1);
+  const [form, setForm] = useState<FormState>(saved?.form ?? EMPTY);
   const [file, setFile] = useState<File | null>(null);
-  const [hpcsa, setHpcsa] = useState<RegisterStatus>("");
-  const [pcns, setPcns] = useState<RegisterStatus>("");
-  const [notes, setNotes] = useState("");
+  const [hpcsa, setHpcsa] = useState<RegisterStatus>(saved?.hpcsa ?? "");
+  const [pcns, setPcns] = useState<RegisterStatus>(saved?.pcns ?? "");
+  const [notes, setNotes] = useState(saved?.notes ?? "");
   const [saving, setSaving] = useState(false);
-  const [verificationId, setVerificationId] = useState<string | null>(null);
-  const [outcome, setOutcome] = useState<Outcome | null>(null);
+  const [verificationId, setVerificationId] = useState<string | null>(saved?.verificationId ?? null);
+  const [outcome, setOutcome] = useState<Outcome | null>(saved?.outcome ?? null);
   const [showCharges, setShowCharges] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [restored, setRestored] = useState(!!saved);
+  const [editingStep1, setEditingStep1] = useState(false);
+  const [editBackup, setEditBackup] = useState<FormState | null>(null);
+
+  const locked1 = step > 1 && !editingStep1;
+
+  // Keep everything typed so far on this device, so nothing is lost if the
+  // screen is closed, refreshed, or the back button is pressed.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      saveDraft(draftKey, { step, form, hpcsa, pcns, notes, verificationId, outcome });
+    }, 250);
+    return () => clearTimeout(t);
+  }, [draftKey, step, form, hpcsa, pcns, notes, verificationId, outcome]);
+
+  // Back button moves between steps instead of leaving the screen.
+  useEffect(() => {
+    if (step === 1) return;
+    window.history.pushState({ mcvStep: step }, "");
+    const onPop = () => {
+      setStep((s) => (s > 1 ? ((s - 1) as 1 | 2 | 3) : 1));
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [step]);
 
   const formValid =
     form.employee_name.trim() &&
