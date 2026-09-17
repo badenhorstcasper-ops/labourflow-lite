@@ -115,6 +115,53 @@ function req(label: string) {
   );
 }
 
+/** What we keep on the device so an unfinished check survives a refresh or back press. */
+type Draft = {
+  step: 1 | 2 | 3;
+  form: FormState;
+  hpcsa: RegisterStatus;
+  pcns: RegisterStatus;
+  notes: string;
+  verificationId: string | null;
+  outcome: Outcome | null;
+};
+
+function loadDraft(key: string): Draft | null {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const d = JSON.parse(raw) as Draft;
+    if (!d || typeof d !== "object" || !d.form) return null;
+    // A finished check does not need resuming.
+    if (d.step === 3) return null;
+    const hasAnything = Object.values(d.form).some((v) => typeof v === "string" && v.trim());
+    if (!hasAnything) return null;
+    return { ...d, form: { ...EMPTY, ...d.form } };
+  } catch {
+    return null;
+  }
+}
+
+function saveDraft(key: string, d: Draft) {
+  try {
+    if (d.step === 3) {
+      localStorage.removeItem(key);
+      return;
+    }
+    localStorage.setItem(key, JSON.stringify(d));
+  } catch {
+    /* storage unavailable — nothing more we can do */
+  }
+}
+
+function clearDraft(key: string) {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    /* ignore */
+  }
+}
+
 export default function VerifyCertificatePage() {
   const navigate = useNavigate();
   const [ownerId, setOwnerId] = useState<string | null>(null);
@@ -273,17 +320,45 @@ function NewCheckFlow({
   userEmail: string | null;
   onSaved: () => void;
 }) {
-  const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [form, setForm] = useState<FormState>(EMPTY);
+  const draftKey = `inreco.mcv.draft.${userId}`;
+  const saved = useMemo(() => loadDraft(draftKey), [draftKey]);
+
+  const [step, setStep] = useState<1 | 2 | 3>(saved?.step ?? 1);
+  const [form, setForm] = useState<FormState>(saved?.form ?? EMPTY);
   const [file, setFile] = useState<File | null>(null);
-  const [hpcsa, setHpcsa] = useState<RegisterStatus>("");
-  const [pcns, setPcns] = useState<RegisterStatus>("");
-  const [notes, setNotes] = useState("");
+  const [hpcsa, setHpcsa] = useState<RegisterStatus>(saved?.hpcsa ?? "");
+  const [pcns, setPcns] = useState<RegisterStatus>(saved?.pcns ?? "");
+  const [notes, setNotes] = useState(saved?.notes ?? "");
   const [saving, setSaving] = useState(false);
-  const [verificationId, setVerificationId] = useState<string | null>(null);
-  const [outcome, setOutcome] = useState<Outcome | null>(null);
+  const [verificationId, setVerificationId] = useState<string | null>(saved?.verificationId ?? null);
+  const [outcome, setOutcome] = useState<Outcome | null>(saved?.outcome ?? null);
   const [showCharges, setShowCharges] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [restored, setRestored] = useState(!!saved);
+  const [editingStep1, setEditingStep1] = useState(false);
+  const [editBackup, setEditBackup] = useState<FormState | null>(null);
+
+  const locked1 = step > 1 && !editingStep1;
+
+  // Keep everything typed so far on this device, so nothing is lost if the
+  // screen is closed, refreshed, or the back button is pressed.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      saveDraft(draftKey, { step, form, hpcsa, pcns, notes, verificationId, outcome });
+    }, 250);
+    return () => clearTimeout(t);
+  }, [draftKey, step, form, hpcsa, pcns, notes, verificationId, outcome]);
+
+  // Back button moves between steps instead of leaving the screen.
+  useEffect(() => {
+    if (step === 1) return;
+    window.history.pushState({ mcvStep: step }, "");
+    const onPop = () => {
+      setStep((s) => (s > 1 ? ((s - 1) as 1 | 2 | 3) : 1));
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [step]);
 
   const formValid =
     form.employee_name.trim() &&
@@ -328,6 +403,22 @@ function NewCheckFlow({
         practice_phone: form.practice_phone.trim() || null,
         reason_for_check: form.reason_for_check || null,
       };
+      // Correcting details on a check that was already started: update it in place.
+      if (verificationId) {
+        const { account_owner_id: _o, created_by_user_id: _c, ...updatePayload } = insertPayload;
+        const { error: updErr } = await supabase
+          .from("medical_cert_verifications")
+          .update(updatePayload)
+          .eq("id", verificationId);
+        if (updErr) throw updErr;
+        await insertAudit(verificationId, "details_amended", updatePayload);
+        setEditingStep1(false);
+        setEditBackup(null);
+        toast.success("Details updated.");
+        setSaving(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from("medical_cert_verifications")
         .insert(insertPayload)
@@ -406,6 +497,7 @@ function NewCheckFlow({
   }
 
   function resetAll() {
+    clearDraft(draftKey);
     setStep(1);
     setForm(EMPTY);
     setFile(null);
@@ -415,6 +507,9 @@ function NewCheckFlow({
     setVerificationId(null);
     setOutcome(null);
     setShowCharges(false);
+    setRestored(false);
+    setEditingStep1(false);
+    setEditBackup(null);
   }
 
   async function downloadChargesDocx() {
@@ -468,6 +563,19 @@ function NewCheckFlow({
 
   return (
     <div className="space-y-6">
+      {restored && step < 3 && (
+        <Alert>
+          <AlertDescription className="text-sm flex flex-wrap items-center justify-between gap-2">
+            <span>
+              Continuing your unfinished check{form.employee_name ? ` for ${form.employee_name}` : ""}.
+              {file ? "" : " If you had attached a certificate file, please attach it again."}
+            </span>
+            <Button variant="outline" size="sm" onClick={resetAll}>
+              Start a new one instead
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
       <Alert>
         <AlertDescription className="text-sm">
           This information is processed solely to verify the validity of the certificate and, where
@@ -490,55 +598,55 @@ function NewCheckFlow({
             Fill in as much of the rest as you have.
           </p>
           <div className="grid gap-4 md:grid-cols-2">
-            <Field label={req("Employee name")} disabled={step > 1}>
-              <Input value={form.employee_name} onChange={(e) => setForm({ ...form, employee_name: e.target.value })} disabled={step > 1} />
+            <Field label={req("Employee name")} disabled={locked1}>
+              <Input value={form.employee_name} onChange={(e) => setForm({ ...form, employee_name: e.target.value })} disabled={locked1} />
             </Field>
-            <Field label="Employee number" disabled={step > 1}>
-              <Input value={form.employee_number} onChange={(e) => setForm({ ...form, employee_number: e.target.value })} disabled={step > 1} />
+            <Field label="Employee number" disabled={locked1}>
+              <Input value={form.employee_number} onChange={(e) => setForm({ ...form, employee_number: e.target.value })} disabled={locked1} />
             </Field>
-            <Field label="Incapacity from" disabled={step > 1}>
-              <Input type="date" value={form.incapacity_from} onChange={(e) => setForm({ ...form, incapacity_from: e.target.value })} disabled={step > 1} />
+            <Field label="Incapacity from" disabled={locked1}>
+              <Input type="date" value={form.incapacity_from} onChange={(e) => setForm({ ...form, incapacity_from: e.target.value })} disabled={locked1} />
             </Field>
-            <Field label="Incapacity to" disabled={step > 1}>
-              <Input type="date" value={form.incapacity_to} onChange={(e) => setForm({ ...form, incapacity_to: e.target.value })} disabled={step > 1} />
+            <Field label="Incapacity to" disabled={locked1}>
+              <Input type="date" value={form.incapacity_to} onChange={(e) => setForm({ ...form, incapacity_to: e.target.value })} disabled={locked1} />
             </Field>
-            <Field label="Date certificate issued" disabled={step > 1}>
-              <Input type="date" value={form.cert_issued_on} onChange={(e) => setForm({ ...form, cert_issued_on: e.target.value })} disabled={step > 1} />
+            <Field label="Date certificate issued" disabled={locked1}>
+              <Input type="date" value={form.cert_issued_on} onChange={(e) => setForm({ ...form, cert_issued_on: e.target.value })} disabled={locked1} />
             </Field>
-            <Field label="Date submitted to employer" disabled={step > 1}>
-              <Input type="date" value={form.cert_submitted_on} onChange={(e) => setForm({ ...form, cert_submitted_on: e.target.value })} disabled={step > 1} />
+            <Field label="Date submitted to employer" disabled={locked1}>
+              <Input type="date" value={form.cert_submitted_on} onChange={(e) => setForm({ ...form, cert_submitted_on: e.target.value })} disabled={locked1} />
             </Field>
-            <Field label={req("Practitioner full name")} disabled={step > 1}>
-              <Input value={form.practitioner_name} onChange={(e) => setForm({ ...form, practitioner_name: e.target.value })} disabled={step > 1} />
+            <Field label={req("Practitioner full name")} disabled={locked1}>
+              <Input value={form.practitioner_name} onChange={(e) => setForm({ ...form, practitioner_name: e.target.value })} disabled={locked1} />
             </Field>
-            <Field label={req("Practice / registration number")} disabled={step > 1}>
-              <Input value={form.practice_number} onChange={(e) => setForm({ ...form, practice_number: e.target.value })} disabled={step > 1} />
+            <Field label={req("Practice / registration number")} disabled={locked1}>
+              <Input value={form.practice_number} onChange={(e) => setForm({ ...form, practice_number: e.target.value })} disabled={locked1} />
             </Field>
-            <Field label={req("Professional category")} disabled={step > 1}>
-              <Select value={form.professional_category} onValueChange={(v) => setForm({ ...form, professional_category: v })} disabled={step > 1}>
+            <Field label={req("Professional category")} disabled={locked1}>
+              <Select value={form.professional_category} onValueChange={(v) => setForm({ ...form, professional_category: v })} disabled={locked1}>
                 <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
                 <SelectContent>
                   {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Reason for check" disabled={step > 1}>
-              <Select value={form.reason_for_check} onValueChange={(v) => setForm({ ...form, reason_for_check: v })} disabled={step > 1}>
+            <Field label="Reason for check" disabled={locked1}>
+              <Select value={form.reason_for_check} onValueChange={(v) => setForm({ ...form, reason_for_check: v })} disabled={locked1}>
                 <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
                 <SelectContent>
                   {REASONS.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Practice name" disabled={step > 1}>
-              <Input value={form.practice_name} onChange={(e) => setForm({ ...form, practice_name: e.target.value })} disabled={step > 1} />
+            <Field label="Practice name" disabled={locked1}>
+              <Input value={form.practice_name} onChange={(e) => setForm({ ...form, practice_name: e.target.value })} disabled={locked1} />
             </Field>
-            <Field label="Practice phone" disabled={step > 1}>
-              <Input value={form.practice_phone} onChange={(e) => setForm({ ...form, practice_phone: e.target.value })} disabled={step > 1} />
+            <Field label="Practice phone" disabled={locked1}>
+              <Input value={form.practice_phone} onChange={(e) => setForm({ ...form, practice_phone: e.target.value })} disabled={locked1} />
             </Field>
             <div className="md:col-span-2">
-              <Field label="Practice address" disabled={step > 1}>
-                <Textarea rows={2} value={form.practice_address} onChange={(e) => setForm({ ...form, practice_address: e.target.value })} disabled={step > 1} />
+              <Field label="Practice address" disabled={locked1}>
+                <Textarea rows={2} value={form.practice_address} onChange={(e) => setForm({ ...form, practice_address: e.target.value })} disabled={locked1} />
               </Field>
             </div>
             <div className="md:col-span-2">
@@ -547,7 +655,7 @@ function NewCheckFlow({
                 type="file"
                 accept="image/*,application/pdf"
                 onChange={(e) => setFile(e.target.files?.[0] || null)}
-                disabled={step > 1}
+                disabled={locked1}
                 className="mt-1"
               />
             </div>
@@ -556,6 +664,36 @@ function NewCheckFlow({
             <div className="flex justify-end">
               <Button onClick={saveStep1} disabled={!formValid || saving}>
                 {saving ? "Saving…" : "Save & continue"}
+              </Button>
+            </div>
+          )}
+          {step === 2 && !editingStep1 && (
+            <div className="flex justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setEditBackup(form);
+                  setEditingStep1(true);
+                }}
+              >
+                Edit details
+              </Button>
+            </div>
+          )}
+          {step === 2 && editingStep1 && (
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  if (editBackup) setForm(editBackup);
+                  setEditBackup(null);
+                  setEditingStep1(false);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button onClick={saveStep1} disabled={!formValid || saving}>
+                {saving ? "Saving…" : "Save changes"}
               </Button>
             </div>
           )}
