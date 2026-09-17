@@ -563,6 +563,19 @@ function NewCheckFlow({
 
   return (
     <div className="space-y-6">
+      {restored && step < 3 && (
+        <Alert>
+          <AlertDescription className="text-sm flex flex-wrap items-center justify-between gap-2">
+            <span>
+              Continuing your unfinished check{form.employee_name ? ` for ${form.employee_name}` : ""}.
+              {file ? "" : " If you had attached a certificate file, please attach it again."}
+            </span>
+            <Button variant="outline" size="sm" onClick={resetAll}>
+              Start a new one instead
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
       <Alert>
         <AlertDescription className="text-sm">
           This information is processed solely to verify the validity of the certificate and, where
