@@ -490,55 +490,55 @@ function NewCheckFlow({
             Fill in as much of the rest as you have.
           </p>
           <div className="grid gap-4 md:grid-cols-2">
-            <Field label={req("Employee name")} disabled={step > 1}>
-              <Input value={form.employee_name} onChange={(e) => setForm({ ...form, employee_name: e.target.value })} disabled={step > 1} />
+            <Field label={req("Employee name")} disabled={locked1}>
+              <Input value={form.employee_name} onChange={(e) => setForm({ ...form, employee_name: e.target.value })} disabled={locked1} />
             </Field>
-            <Field label="Employee number" disabled={step > 1}>
-              <Input value={form.employee_number} onChange={(e) => setForm({ ...form, employee_number: e.target.value })} disabled={step > 1} />
+            <Field label="Employee number" disabled={locked1}>
+              <Input value={form.employee_number} onChange={(e) => setForm({ ...form, employee_number: e.target.value })} disabled={locked1} />
             </Field>
-            <Field label="Incapacity from" disabled={step > 1}>
-              <Input type="date" value={form.incapacity_from} onChange={(e) => setForm({ ...form, incapacity_from: e.target.value })} disabled={step > 1} />
+            <Field label="Incapacity from" disabled={locked1}>
+              <Input type="date" value={form.incapacity_from} onChange={(e) => setForm({ ...form, incapacity_from: e.target.value })} disabled={locked1} />
             </Field>
-            <Field label="Incapacity to" disabled={step > 1}>
-              <Input type="date" value={form.incapacity_to} onChange={(e) => setForm({ ...form, incapacity_to: e.target.value })} disabled={step > 1} />
+            <Field label="Incapacity to" disabled={locked1}>
+              <Input type="date" value={form.incapacity_to} onChange={(e) => setForm({ ...form, incapacity_to: e.target.value })} disabled={locked1} />
             </Field>
-            <Field label="Date certificate issued" disabled={step > 1}>
-              <Input type="date" value={form.cert_issued_on} onChange={(e) => setForm({ ...form, cert_issued_on: e.target.value })} disabled={step > 1} />
+            <Field label="Date certificate issued" disabled={locked1}>
+              <Input type="date" value={form.cert_issued_on} onChange={(e) => setForm({ ...form, cert_issued_on: e.target.value })} disabled={locked1} />
             </Field>
-            <Field label="Date submitted to employer" disabled={step > 1}>
-              <Input type="date" value={form.cert_submitted_on} onChange={(e) => setForm({ ...form, cert_submitted_on: e.target.value })} disabled={step > 1} />
+            <Field label="Date submitted to employer" disabled={locked1}>
+              <Input type="date" value={form.cert_submitted_on} onChange={(e) => setForm({ ...form, cert_submitted_on: e.target.value })} disabled={locked1} />
             </Field>
-            <Field label={req("Practitioner full name")} disabled={step > 1}>
-              <Input value={form.practitioner_name} onChange={(e) => setForm({ ...form, practitioner_name: e.target.value })} disabled={step > 1} />
+            <Field label={req("Practitioner full name")} disabled={locked1}>
+              <Input value={form.practitioner_name} onChange={(e) => setForm({ ...form, practitioner_name: e.target.value })} disabled={locked1} />
             </Field>
-            <Field label={req("Practice / registration number")} disabled={step > 1}>
-              <Input value={form.practice_number} onChange={(e) => setForm({ ...form, practice_number: e.target.value })} disabled={step > 1} />
+            <Field label={req("Practice / registration number")} disabled={locked1}>
+              <Input value={form.practice_number} onChange={(e) => setForm({ ...form, practice_number: e.target.value })} disabled={locked1} />
             </Field>
-            <Field label={req("Professional category")} disabled={step > 1}>
-              <Select value={form.professional_category} onValueChange={(v) => setForm({ ...form, professional_category: v })} disabled={step > 1}>
+            <Field label={req("Professional category")} disabled={locked1}>
+              <Select value={form.professional_category} onValueChange={(v) => setForm({ ...form, professional_category: v })} disabled={locked1}>
                 <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
                 <SelectContent>
                   {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Reason for check" disabled={step > 1}>
-              <Select value={form.reason_for_check} onValueChange={(v) => setForm({ ...form, reason_for_check: v })} disabled={step > 1}>
+            <Field label="Reason for check" disabled={locked1}>
+              <Select value={form.reason_for_check} onValueChange={(v) => setForm({ ...form, reason_for_check: v })} disabled={locked1}>
                 <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
                 <SelectContent>
                   {REASONS.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Practice name" disabled={step > 1}>
-              <Input value={form.practice_name} onChange={(e) => setForm({ ...form, practice_name: e.target.value })} disabled={step > 1} />
+            <Field label="Practice name" disabled={locked1}>
+              <Input value={form.practice_name} onChange={(e) => setForm({ ...form, practice_name: e.target.value })} disabled={locked1} />
             </Field>
-            <Field label="Practice phone" disabled={step > 1}>
-              <Input value={form.practice_phone} onChange={(e) => setForm({ ...form, practice_phone: e.target.value })} disabled={step > 1} />
+            <Field label="Practice phone" disabled={locked1}>
+              <Input value={form.practice_phone} onChange={(e) => setForm({ ...form, practice_phone: e.target.value })} disabled={locked1} />
             </Field>
             <div className="md:col-span-2">
-              <Field label="Practice address" disabled={step > 1}>
-                <Textarea rows={2} value={form.practice_address} onChange={(e) => setForm({ ...form, practice_address: e.target.value })} disabled={step > 1} />
+              <Field label="Practice address" disabled={locked1}>
+                <Textarea rows={2} value={form.practice_address} onChange={(e) => setForm({ ...form, practice_address: e.target.value })} disabled={locked1} />
               </Field>
             </div>
             <div className="md:col-span-2">
@@ -547,7 +547,7 @@ function NewCheckFlow({
                 type="file"
                 accept="image/*,application/pdf"
                 onChange={(e) => setFile(e.target.files?.[0] || null)}
-                disabled={step > 1}
+                disabled={locked1}
                 className="mt-1"
               />
             </div>
