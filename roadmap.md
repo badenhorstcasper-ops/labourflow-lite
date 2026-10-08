@@ -1,3 +1,3 @@
 - [x] Replace app and shared-link branding with the supplied logo.
 - [x] Add logo or CARA choice before installation with the same app identity.
-- [ ] Verify branding, icon selection and installation links in the browser.
+- [x] Verify branding, icon selection and installation links in the browser.

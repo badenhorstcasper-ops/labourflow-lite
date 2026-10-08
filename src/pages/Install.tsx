@@ -3,8 +3,6 @@ import { Button } from "@/components/ui/button";
 import BackHomeBar from "@/components/BackHomeBar";
 import { getInstallPrompt, triggerInstall, subscribeInstall, isStandalone } from "@/lib/pwaInstall";
 import { useEffect } from "react";
-import logo from "@/assets/shortcut-logo-192.png.asset.json";
-import cara from "@/assets/shortcut-cara-192.png.asset.json";
 
 export default function Install() {
   const selected = new URLSearchParams(window.location.search).get("icon") === "cara" ? "cara" : "logo";
