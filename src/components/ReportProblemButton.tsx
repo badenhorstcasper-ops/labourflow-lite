@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogD
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getLastError } from "@/lib/errorLogger";
+import { CircleAlert } from "lucide-react";
 
 export default function ReportProblemButton({ variant = "ghost" as const, className }: { variant?: "ghost" | "outline" | "default"; className?: string }) {
   const [open, setOpen] = useState(false);
@@ -47,7 +48,10 @@ export default function ReportProblemButton({ variant = "ghost" as const, classN
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant={variant} size="sm" className={className}>Report a problem</Button>
+        <Button variant={variant} size="sm" className={className} aria-label="Report a problem">
+          <CircleAlert className="h-5 w-5" />
+          <span className="hidden sm:inline">Report a problem</span>
+        </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

@@ -4,7 +4,15 @@ import { supabase } from "@/integrations/supabase/client";
 import AppShell from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Send, Lightbulb, Sparkles, MessageCircleMore } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronRight,
+  Lightbulb,
+  MessageCircleMore,
+  Search,
+  Send,
+  Sparkles,
+} from "lucide-react";
 import { TOPICS, getTopicByKey } from "@/lib/cara/knowledge";
 import { routeMessage } from "@/lib/cara/router";
 import { TEMPLATE_REGISTRY } from "@/lib/documents/templates";
@@ -215,58 +223,60 @@ export default function CaraPage() {
   return (
     <AppShell>
       <div className="flex flex-col gap-4">
-        {/* Topic chips — AARTO and Foreign Nationals grouped to reduce clutter */}
-        <TopicChips busy={busy} onPick={(prompt) => send(prompt)} />
-
         {profileMissing && (
           <Card className="border-primary/40 bg-primary/10">
-            <CardContent className="p-3 flex flex-wrap items-center justify-between gap-3">
-              <p className="text-sm">
+            <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-muted-foreground">
                 Add your company details so they appear on every document CARA creates.
               </p>
-              <Button size="sm" asChild>
+              <Button size="sm" asChild className="w-full sm:w-auto">
                 <Link to="/account-app/profile">Complete profile →</Link>
               </Button>
             </CardContent>
           </Card>
         )}
 
-        {/* Chat area */}
-        <div
-          ref={scrollRef}
-          className="flex-1 min-h-[55vh] max-h-[65vh] overflow-y-auto rounded-lg border bg-card p-4"
-        >
-          {messages.length === 0 ? (
-            <EmptyState greeting={greeting} onExample={tryExample} />
-          ) : (
-            <div className="space-y-4">
-              {messages.map((m) => (
-                <MessageBubble
-                  key={m.id}
-                  msg={m}
-                  navigate={navigate}
-                  onFollowUp={(q) => send(q)}
-                  onExpand={(topicKey) => expandWithAi(topicKey)}
-                  busy={busy}
-                />
-              ))}
-              {busy && (
-                <div className="text-sm text-muted-foreground italic">CARA is thinking…</div>
-              )}
+        <section aria-labelledby="cara-heading" className="overflow-hidden rounded-lg border bg-card">
+          <div className="border-b px-4 py-4">
+            <div className="flex items-center gap-3">
+              <img src={logoUrl} alt="" className="h-11 w-11 rounded-lg" />
+              <div className="min-w-0">
+                <h1 id="cara-heading" className="text-xl font-bold">Ask CARA</h1>
+                <p className="text-sm text-muted-foreground">Your pocket labour consultant</p>
+              </div>
             </div>
-          )}
-        </div>
+          </div>
 
-        {/* Composer */}
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            send(input);
-          }}
-          className="flex flex-col gap-2"
-        >
-          <div className="flex items-end gap-2">
+          <div ref={scrollRef} className="min-h-[240px] max-h-[48vh] overflow-y-auto px-4 py-4">
+            {messages.length === 0 ? (
+              <EmptyState greeting={greeting} onExample={tryExample} />
+            ) : (
+              <div className="space-y-4">
+                {messages.map((m) => (
+                  <MessageBubble
+                    key={m.id}
+                    msg={m}
+                    navigate={navigate}
+                    onFollowUp={(q) => send(q)}
+                    onExpand={(topicKey) => expandWithAi(topicKey)}
+                    busy={busy}
+                  />
+                ))}
+                {busy && <div className="text-sm italic text-muted-foreground">CARA is thinking…</div>}
+              </div>
+            )}
+          </div>
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              send(input);
+            }}
+            className="border-t bg-background/50 p-3"
+          >
+            <label htmlFor="cara-question" className="sr-only">Ask CARA a question</label>
             <textarea
+              id="cara-question"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
@@ -275,36 +285,36 @@ export default function CaraPage() {
                   send(input);
                 }
               }}
-              placeholder="Ask CARA — type or tap the mic to talk…"
-              rows={2}
-              className="flex-1 resize-none rounded-md border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              placeholder="Describe what happened at work…"
+              rows={3}
+              className="w-full resize-none rounded-lg border bg-background px-4 py-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               disabled={busy}
             />
-            <MicButton
-              disabled={busy}
-              onTranscript={(text) => {
-                if (autoSend) {
-                  send(text);
-                } else {
-                  setInput((prev) => (prev.trim() ? `${prev.trim()} ${text}` : text));
-                }
-              }}
-            />
-            <Button type="submit" size="icon" disabled={busy || !input.trim()} aria-label="Send">
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>
-          <label className="flex items-center gap-2 text-xs text-muted-foreground select-none">
-            <input
-              type="checkbox"
-              checked={autoSend}
-              onChange={(e) => setAutoSend(e.target.checked)}
-              className="h-3.5 w-3.5 rounded border-input"
-            />
-            Auto-send voice messages when I stop talking (hands-free)
-          </label>
-        </form>
+            <div className="mt-2 flex items-center gap-2">
+              <MicButton
+                disabled={busy}
+                onTranscript={(text) => {
+                  if (autoSend) send(text);
+                  else setInput((prev) => (prev.trim() ? `${prev.trim()} ${text}` : text));
+                }}
+              />
+              <label className="mr-auto flex min-h-11 items-center gap-2 px-1 text-xs text-muted-foreground select-none">
+                <input
+                  type="checkbox"
+                  checked={autoSend}
+                  onChange={(e) => setAutoSend(e.target.checked)}
+                  className="h-4 w-4 rounded border-input"
+                />
+                Send voice automatically
+              </label>
+              <Button type="submit" size="icon" disabled={busy || !input.trim()} aria-label="Send question">
+                <Send className="h-5 w-5" />
+              </Button>
+            </div>
+          </form>
+        </section>
 
+        <TopicBrowser busy={busy} onPick={(prompt) => send(prompt)} />
       </div>
     </AppShell>
   );
@@ -314,22 +324,21 @@ const AARTO_KEYS = ["aarto_overview", "licence_lost", "licence_hidden", "aarto_d
 const VISA_KEYS = ["visa_overview", "visa_expired", "asylum_permit", "visa_verification", "visa_dismissal_fairness"];
 const GOV_KEYS = ["gov_tools_overview", "ufiling", "compensation_fund", "employment_equity_reports", "essa_public_employment", "labour_complaint", "labour_market_stats", "esa_bill_2026"];
 
-function TopicChips({ busy, onPick }: { busy: boolean; onPick: (prompt: string) => void }) {
-  const [openGroup, setOpenGroup] = useState<null | "aarto" | "visa" | "gov">(null);
+const TOPIC_GROUPS = [
+  { key: "conduct", label: "Conduct & discipline", helper: "Warnings, hearings, grievances and workplace conduct", keys: ["warning", "hearing", "grievance", "suspension", "harassment", "ccma", "union"] },
+  { key: "attendance", label: "Attendance, leave & working time", helper: "Absence, sick leave, hours and overtime", keys: ["awol", "sick_leave", "hours"] },
+  { key: "employment", label: "Performance & employment changes", helper: "Performance, probation, incapacity, resignation and retrenchment", keys: ["performance", "probation", "incapacity", "resignation", "retrenchment"] },
+  { key: "aarto", label: "Drivers & AARTO", helper: "Driving offences, licence checks and fleet policies", keys: AARTO_KEYS },
+  { key: "visa", label: "Foreign nationals", helper: "Visa checks, expiry, permits and fair process", keys: VISA_KEYS },
+  { key: "gov", label: "Government tools & links", helper: "UIF, Compensation Fund, Employment Equity and official services", keys: GOV_KEYS },
+] as const;
+
+function TopicBrowser({ busy, onPick }: { busy: boolean; onPick: (prompt: string) => void }) {
+  const [expanded, setExpanded] = useState(false);
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [query, setQuery] = useState("");
-  const mainTopics = TOPICS.filter((t) => !AARTO_KEYS.includes(t.key) && !VISA_KEYS.includes(t.key) && !GOV_KEYS.includes(t.key));
-  const aartoTopics = TOPICS.filter((t) => AARTO_KEYS.includes(t.key));
-  const visaTopics = TOPICS.filter((t) => VISA_KEYS.includes(t.key));
-  const govTopics = TOPICS.filter((t) => GOV_KEYS.includes(t.key));
-
-
-  const chipCls = "px-3 py-1.5 rounded-full border bg-card hover:bg-muted text-sm transition disabled:opacity-50";
-  const groupCls = "px-3 py-1.5 rounded-full border border-primary/40 bg-card hover:bg-muted text-sm font-medium transition disabled:opacity-50";
-  const subCls = "px-3 py-1.5 rounded-full border bg-background hover:bg-muted text-xs transition disabled:opacity-50";
-
   const q = query.trim().toLowerCase();
-  const isSearching = q.length > 0;
-  const matches = isSearching
+  const matches = q
     ? TOPICS.filter((t) =>
         t.label.toLowerCase().includes(q) ||
         t.prompt.toLowerCase().includes(q) ||
@@ -337,144 +346,85 @@ function TopicChips({ busy, onPick }: { busy: boolean; onPick: (prompt: string) 
       )
     : [];
 
-  const activeSubs =
-    openGroup === "aarto" ? aartoTopics :
-    openGroup === "visa" ? visaTopics :
-    openGroup === "gov" ? govTopics : [];
-  const activeHelper =
-    openGroup === "aarto"
-      ? "For employers dealing with employee driving offences, fines, or lost licences. Pick the situation closest to yours."
-      : openGroup === "visa"
-      ? "For employers with foreign national staff — visa checks, expiry, and lawful next steps. Pick the situation closest to yours."
-      : openGroup === "gov"
-      ? "Official Department of Employment and Labour online services — uFiling, Compensation Fund, Employment Equity, ESSA, complaints — plus the new 2026 Amendment Bill on foreign nationals. Tap the closest one."
-      : "";
-
-
   return (
-    <div className="flex flex-col gap-3">
-      {/* Start Here CTA */}
-      <Card className="border-primary/50 bg-primary/5">
-        <CardContent className="p-3 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-start gap-2">
-            <Sparkles className="h-4 w-4 mt-0.5 text-primary shrink-0" />
-            <div className="text-sm">
-              <span className="font-semibold">Start here:</span>{" "}
-              <span className="text-muted-foreground">
-                New to CARA? Tap a topic below, or describe your situation in your own words — CARA will guide you step by step.
-              </span>
-            </div>
+    <section aria-labelledby="topics-heading" className="overflow-hidden rounded-lg border bg-card">
+      <Button
+        type="button"
+        variant="ghost"
+        onClick={() => setExpanded((value) => !value)}
+        aria-expanded={expanded}
+        className="h-14 w-full justify-between rounded-none px-4"
+      >
+        <span id="topics-heading" className="flex items-center gap-2"><Search className="h-5 w-5 text-primary" /> Browse common topics</span>
+        <ChevronDown className={`h-5 w-5 transition-transform ${expanded ? "rotate-180" : ""}`} />
+      </Button>
+
+      {expanded && (
+        <div className="border-t p-3">
+          <div className="relative mb-3">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+            <label htmlFor="topic-search" className="sr-only">Search CARA topics</label>
+            <input
+              id="topic-search"
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search topics"
+              className="h-12 w-full rounded-lg border bg-background pl-10 pr-4 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            />
           </div>
-          <Button
-            size="sm"
-            disabled={busy}
-            onClick={() => onPick("I'm not sure where to start. Walk me through how CARA can help me with staff issues in my business.")}
-          >
-            Show me how it works
-          </Button>
-        </CardContent>
-      </Card>
 
-      {/* Search */}
-      <div className="flex justify-center">
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search topics (e.g. licence, visa, warning)…"
-          className="w-full max-w-md rounded-full border bg-background px-4 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        />
-      </div>
-
-      {isSearching ? (
-        <div className="flex flex-wrap gap-2 justify-center rounded-lg border bg-muted/40 p-2">
-          {matches.length === 0 ? (
-            <p className="text-xs text-muted-foreground py-1">No topics match "{query}". Try different words, or just ask CARA below.</p>
+          {q ? (
+            <div className="divide-y overflow-hidden rounded-lg border">
+              {matches.length === 0 ? (
+                <p className="p-4 text-sm text-muted-foreground">No matching topics. Describe the situation to CARA above.</p>
+              ) : matches.map((topic) => (
+                <Button key={topic.key} variant="ghost" disabled={busy} onClick={() => { onPick(topic.prompt); setQuery(""); setExpanded(false); }} className="h-auto min-h-14 w-full justify-between rounded-none px-4 py-3 text-left font-medium whitespace-normal">
+                  {topic.label}<ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
+                </Button>
+              ))}
+            </div>
           ) : (
-            matches.map((t) => (
-              <button key={t.key} onClick={() => { onPick(t.prompt); setQuery(""); }} disabled={busy} className={chipCls}>
-                {t.label}
-              </button>
-            ))
+            <div className="divide-y overflow-hidden rounded-lg border">
+              {TOPIC_GROUPS.map((group) => {
+                const isOpen = openGroup === group.key;
+                const topics = TOPICS.filter((topic) => group.keys.includes(topic.key as never));
+                return (
+                  <div key={group.key}>
+                    <Button variant="ghost" onClick={() => setOpenGroup(isOpen ? null : group.key)} aria-expanded={isOpen} className="h-auto min-h-14 w-full justify-between rounded-none px-4 py-3 text-left whitespace-normal">
+                      <span><span className="block font-semibold">{group.label}</span><span className="mt-0.5 block text-xs font-normal text-muted-foreground">{group.helper}</span></span>
+                      <ChevronDown className={`h-5 w-5 shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                    </Button>
+                    {isOpen && (
+                      <div className="border-t bg-background/50 px-2 py-1">
+                        {topics.map((topic) => (
+                          <Button key={topic.key} variant="ghost" disabled={busy} onClick={() => { onPick(topic.prompt); setExpanded(false); setOpenGroup(null); }} className="h-auto min-h-14 w-full justify-between rounded-md px-3 py-3 text-left text-sm font-medium whitespace-normal">
+                            {topic.label}<ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                          </Button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
-      ) : (
-        <>
-          <div className="flex flex-wrap gap-2 justify-center">
-            {mainTopics.map((t) => (
-              <button key={t.key} onClick={() => onPick(t.prompt)} disabled={busy} className={chipCls}>
-                {t.label}
-              </button>
-            ))}
-            <button
-              onClick={() => setOpenGroup(openGroup === "aarto" ? null : "aarto")}
-              disabled={busy}
-              className={groupCls}
-              aria-expanded={openGroup === "aarto"}
-            >
-              Drivers / AARTO {openGroup === "aarto" ? "▲" : "▾"}
-            </button>
-            <button
-              onClick={() => setOpenGroup(openGroup === "visa" ? null : "visa")}
-              disabled={busy}
-              className={groupCls}
-              aria-expanded={openGroup === "visa"}
-            >
-              Foreign Nationals {openGroup === "visa" ? "▲" : "▾"}
-            </button>
-            <button
-              onClick={() => setOpenGroup(openGroup === "gov" ? null : "gov")}
-              disabled={busy}
-              className={groupCls}
-              aria-expanded={openGroup === "gov"}
-            >
-              Gov tools & links {openGroup === "gov" ? "▲" : "▾"}
-            </button>
-
-          </div>
-          {activeSubs.length > 0 && (
-            <div className="flex flex-col gap-2 rounded-lg border bg-muted/40 p-2">
-              <p className="text-xs text-muted-foreground text-center px-2">{activeHelper}</p>
-              <div className="flex flex-wrap gap-2 justify-center">
-                {activeSubs.map((t) => (
-                  <button
-                    key={t.key}
-                    onClick={() => { onPick(t.prompt); setOpenGroup(null); }}
-                    disabled={busy}
-                    className={subCls}
-                  >
-                    {t.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </>
       )}
-    </div>
+    </section>
   );
 }
 
 function EmptyState({ greeting, onExample }: { greeting: string; onExample: () => void }) {
   return (
-    <div className="flex flex-col items-center text-center gap-4 py-6">
-      <img src={logoUrl} alt="iNRECO" className="h-20 w-20 rounded-2xl" />
-      <p className="text-base font-medium max-w-xl">{greeting}</p>
-      <Card className="bg-muted/40 max-w-md">
-        <CardContent className="p-3 text-sm text-muted-foreground">
-          <span aria-hidden>👆</span> <span className="font-medium text-foreground">Tap a topic above</span> to get an instant, plain-English answer — or type your own question below.
-        </CardContent>
-      </Card>
-      <Button variant="outline" size="sm" onClick={onExample}>
-        <Lightbulb className="h-4 w-4 mr-1.5" /> Try an example
+    <div className="mx-auto flex max-w-lg flex-col gap-3 py-2 text-left">
+      <p className="text-base font-medium leading-relaxed">{greeting}</p>
+      <p className="text-sm leading-relaxed text-muted-foreground">
+        Tell me what happened, when it happened, and whether there were previous warnings. I’ll guide you step by step.
+      </p>
+      <Button variant="outline" size="sm" onClick={onExample} className="mt-1 w-full justify-start sm:w-auto">
+        <Lightbulb className="h-4 w-4" /> Show me an example
       </Button>
-      <Card className="bg-muted/40 max-w-md">
-        <CardContent className="p-3 text-xs text-muted-foreground">
-          When you describe your situation, give as much detail as possible — what happened,
-          when, previous warnings, and the employee's position. The more you tell CARA
-          upfront, the faster she can help.
-        </CardContent>
-      </Card>
     </div>
   );
 }
@@ -528,7 +478,7 @@ function MessageBubble({
               size="sm"
               variant="outline"
               disabled={busy}
-              onClick={() => onExpand(msg.groundingTopicKey!)}
+              onClick={() => msg.groundingTopicKey && onExpand(msg.groundingTopicKey)}
             >
               <MessageCircleMore className="h-3.5 w-3.5 mr-1.5" />
               Ask CARA for more detail
