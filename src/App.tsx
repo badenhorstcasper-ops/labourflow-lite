@@ -43,6 +43,7 @@ const AdminPartnerDecision = lazyWithRetry(() => import("@/pages/AdminPartnerDec
 const AdminMarketing = lazyWithRetry(() => import("@/pages/AdminMarketing"));
 const AdminHealth = lazyWithRetry(() => import("@/pages/AdminHealth"));
 const GetApp = lazyWithRetry(() => import("@/pages/GetApp"));
+const Install = lazyWithRetry(() => import("@/pages/Install"));
 const UifGuide = lazyWithRetry(() => import("@/pages/UifGuide"));
 const ReferEarn = lazyWithRetry(() => import("@/pages/ReferEarn"));
 const AdminReferrals = lazyWithRetry(() => import("@/pages/AdminReferrals"));
@@ -108,6 +109,7 @@ function AppRoutes() {
       <Route path="/" element={isAppLaunch() ? <LaunchRouter /> : <Index />} />
       <Route path="/pricing" element={<Pricing />} />
       <Route path="/get" element={<GetApp />} />
+      <Route path="/install" element={<Install />} />
       <Route path="/guides/uif-ufiling" element={<UifGuide />} />
 
       <Route path="/auth" element={<Auth />} />

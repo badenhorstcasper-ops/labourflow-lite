@@ -55,6 +55,8 @@ export default function InstallCta({
     : "Open your browser menu (⋮) and tap Install app or Add to Home screen.";
 
   const handleClick = async () => {
+    window.location.assign("/install");
+    return;
     if (isIOS || !getInstallPrompt()) {
       setShowSteps(true);
       return;

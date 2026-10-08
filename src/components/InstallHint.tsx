@@ -57,6 +57,8 @@ const InstallHint = () => {
   };
 
   const triggerInstall = async () => {
+    window.location.assign("/install");
+    return;
     if (!deferred) return;
     await deferred.prompt();
     await deferred.userChoice;

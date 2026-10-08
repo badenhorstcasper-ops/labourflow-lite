@@ -29,6 +29,8 @@ const InstallAppButton = () => {
   if (installed) return null;
 
   const handleClick = async () => {
+    window.location.assign("/install");
+    return;
     const result = await triggerInstall();
     if (result === "accepted") {
       try {
