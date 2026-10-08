@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { FilePlus2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import AppShell from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -321,6 +322,13 @@ export default function CaraPage() {
         </section>
 
         <TopicBrowser busy={busy} onPick={(prompt) => send(prompt)} />
+
+        <Button asChild variant="outline" className="w-full h-14 text-base justify-start gap-3">
+          <Link to="/dashboard#quick-start">
+            <FilePlus2 className="h-5 w-5 text-primary" aria-hidden="true" />
+            Quick start: pick a template
+          </Link>
+        </Button>
       </div>
     </AppShell>
   );
