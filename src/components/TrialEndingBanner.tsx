@@ -18,11 +18,11 @@ export default function TrialEndingBanner() {
           : `Your free trial ends in ${daysLeft} ${daysLeft === 1 ? "day" : "days"}.`}
       </p>
       <p className="mt-1 text-muted-foreground">
-        Add your payment details to keep CARA, your documents and sick-note checks working.
+        When the trial ends, CARA, documents and sick-note checks lock until you pick a plan.
         {planName ? ` You are on the ${planName} plan.` : ""}
       </p>
       <Button asChild size="sm" className="mt-3">
-        <Link to="/settings">Add payment details</Link>
+        <Link to="/pricing">Choose a plan now</Link>
       </Button>
     </div>
   );
