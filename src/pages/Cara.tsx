@@ -243,13 +243,13 @@ export default function CaraPage() {
           </Card>
         )}
 
-        <section aria-labelledby="cara-heading" className="overflow-hidden rounded-lg border bg-card">
-          <div className="border-b px-4 py-4">
+        <section aria-labelledby="cara-heading" className="overflow-hidden rounded-2xl border bg-card shadow-raised">
+          <div className="bg-gradient-brand px-4 py-5 text-primary-foreground">
             <div className="flex items-center gap-3">
-              <img src={logoUrl} alt="" className="h-11 w-11 rounded-lg" />
+              <img src={logoUrl} alt="" className="h-12 w-12 rounded-xl bg-card p-0.5 shadow-soft" />
               <div className="min-w-0">
-                <h1 id="cara-heading" className="text-xl font-bold">Ask CARA</h1>
-                <p className="text-sm text-muted-foreground">Your pocket labour consultant</p>
+                <h1 id="cara-heading" className="!text-xl !font-extrabold !text-primary-foreground">Ask CARA</h1>
+                <p className="flex items-center gap-1.5 text-sm text-primary-foreground/80"><span className="h-2 w-2 rounded-full bg-success-soft" aria-hidden="true" />Your pocket labour consultant · online</p>
               </div>
             </div>
           </div>
@@ -294,7 +294,7 @@ export default function CaraPage() {
               }}
               placeholder="Describe what happened at work…"
               rows={3}
-              className="w-full resize-none rounded-lg border bg-background px-4 py-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="w-full resize-none rounded-xl border bg-card px-4 py-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               disabled={busy}
             />
             <div className="mt-2 flex items-center gap-2">
@@ -325,7 +325,7 @@ export default function CaraPage() {
 
         <Button asChild variant="outline" className="w-full h-14 text-base justify-start gap-3">
           <Link to="/dashboard#quick-start">
-            <FilePlus2 className="h-5 w-5 text-primary" aria-hidden="true" />
+            <FilePlus2 className="h-5 w-5 text-teal" aria-hidden="true" />
             Quick start: pick a template
           </Link>
         </Button>
@@ -361,7 +361,7 @@ function TopicBrowser({ busy, onPick }: { busy: boolean; onPick: (prompt: string
     : [];
 
   return (
-    <section aria-labelledby="topics-heading" className="overflow-hidden rounded-lg border bg-card">
+    <section aria-labelledby="topics-heading" className="overflow-hidden rounded-2xl border bg-card shadow-soft">
       <Button
         type="button"
         variant="ghost"
@@ -369,7 +369,7 @@ function TopicBrowser({ busy, onPick }: { busy: boolean; onPick: (prompt: string
         aria-expanded={expanded}
         className="h-14 w-full justify-between rounded-none px-4"
       >
-        <span id="topics-heading" className="flex items-center gap-2"><Search className="h-5 w-5 text-primary" /> Browse common topics</span>
+        <span id="topics-heading" className="flex items-center gap-2"><Search className="h-5 w-5 text-teal" /> Browse common topics</span>
         <ChevronDown className={`h-5 w-5 transition-transform ${expanded ? "rotate-180" : ""}`} />
       </Button>
 
@@ -463,10 +463,10 @@ function MessageBubble({
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
       <div
-        className={`max-w-[85%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap ${
+        className={`max-w-[85%] rounded-2xl px-4 py-3 text-[15px] leading-relaxed whitespace-pre-wrap ${
           isUser
-            ? "bg-primary text-primary-foreground"
-            : "bg-muted text-foreground"
+            ? "rounded-br-md bg-primary text-primary-foreground"
+            : "rounded-bl-md border border-teal/15 bg-teal-soft text-foreground"
         }`}
       >
         {renderMarkdownLite(msg.text)}
