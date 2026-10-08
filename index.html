@@ -441,6 +441,76 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
 .hero-content>*{animation:fadeUp .7s ease both}
 .hero-badge{animation-delay:.1s}.screen h1{animation-delay:.2s}.hero-sub{animation-delay:.3s}.hero-sub2{animation-delay:.35s}.btn-row{animation-delay:.45s}
 
+/* The public front door uses the same premium light language as the app. */
+#screen-welcome{
+  --navy:#102a56;--navy2:#173b6d;--bg:#f5f9fc;
+  --primary:#102a56;--primary2:#0c2146;--soft:#087f83;
+  --accent:#087f83;--text:#122440;--muted:#52637a;
+  --surface:#ffffff;--border:#d8e3eb;
+  background:var(--bg);color:var(--text);
+}
+#screen-welcome .hero{min-height:auto;background:#edf7f8;padding-top:112px}
+#screen-welcome .hero-bg{opacity:.045;mix-blend-mode:multiply}
+#screen-welcome .hero-overlay{background:linear-gradient(125deg,rgba(245,249,252,.98),rgba(237,247,248,.93) 58%,rgba(218,241,238,.88))}
+#screen-welcome .hero-inner{gap:64px}
+#screen-welcome .hero-badge{border-color:rgba(8,127,131,.22);background:rgba(8,127,131,.08);color:#087076;letter-spacing:.12em}
+#screen-welcome .hero-content>div:nth-child(2)>div{color:var(--muted)!important}
+#screen-welcome .screen h1,#screen-welcome h1{color:var(--navy)!important;letter-spacing:0}
+#screen-welcome .blue-text{background:none;-webkit-text-fill-color:currentColor;color:#087f83}
+#screen-welcome .hero-sub{color:var(--text)!important}
+#screen-welcome .hero-sub2{color:var(--muted)}
+#screen-welcome .btn-primary{min-height:56px;justify-content:center;background:var(--navy);box-shadow:0 8px 22px rgba(16,42,86,.18)}
+#screen-welcome .btn-primary:hover{background:var(--navy2);box-shadow:0 10px 28px rgba(16,42,86,.24)}
+#screen-welcome .btn-ghost{min-height:56px;justify-content:center;background:#fff;color:var(--navy);border-color:#bfd2de}
+#screen-welcome .btn-ghost:hover{border-color:var(--soft);background:#f0fbfa}
+#screen-welcome .contact-chip{background:#fff!important;color:var(--navy)!important;border-color:var(--border)!important}
+#screen-welcome .cara-hero-card{position:absolute;right:-20px;bottom:-24px;width:230px;padding:12px;background:#fff;border:1px solid var(--border);border-radius:16px;box-shadow:0 16px 38px rgba(16,42,86,.18);z-index:2}
+#screen-welcome .cara-hero-person{display:flex;align-items:center;gap:12px}
+#screen-welcome .cara-hero-person img{width:76px;height:76px;border-radius:50%;object-fit:cover;background:#e8f7f5}
+#screen-welcome .cara-hero-name{font-size:1rem;font-weight:800;color:var(--navy)}
+#screen-welcome .cara-hero-status{display:flex;align-items:center;gap:6px;margin-top:3px;font-size:.72rem;color:var(--muted)}
+#screen-welcome .cara-online{width:8px;height:8px;border-radius:50%;background:#279b62;box-shadow:0 0 0 3px rgba(39,155,98,.12)}
+#screen-welcome .cara-hero-role{margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:.72rem;line-height:1.45;color:var(--muted)}
+#screen-welcome .hero-img{box-shadow:0 22px 52px rgba(16,42,86,.2)}
+#screen-welcome .hero-img-glow{background:radial-gradient(circle,rgba(8,127,131,.15),transparent 70%)}
+#screen-welcome section{background:var(--bg);color:var(--text)}
+#screen-welcome .features-bg{background:#edf4f8}
+#screen-welcome .why-bg{background:#eaf7f5}
+#screen-welcome .feature-card,#screen-welcome .price-card{background:#fff;border-color:var(--border);box-shadow:0 8px 26px rgba(16,42,86,.06)}
+#screen-welcome .feature-card:hover{border-color:rgba(8,127,131,.38);box-shadow:0 14px 34px rgba(16,42,86,.11)}
+#screen-welcome .feat-icon,#screen-welcome .why-icon{background:#eaf7f5;border-color:#bce1dd}
+#screen-welcome .feat-icon svg,#screen-welcome .why-icon svg,#screen-welcome .check-list li svg,#screen-welcome .price-features li svg{stroke:#087f83}
+#screen-welcome .why-point{border-left-color:#55aaa8}
+#screen-welcome .split-img,#screen-welcome .why-imgs img{box-shadow:0 16px 36px rgba(16,42,86,.14)}
+#screen-welcome .split-badge{background:#fff;box-shadow:0 10px 26px rgba(16,42,86,.16)}
+#screen-welcome .price-amount{background:none;-webkit-text-fill-color:currentColor;color:var(--navy)}
+#screen-welcome .btn-price{min-height:48px;background:#edf7f8;border-color:#8fc5c4;color:#075f65}
+#screen-welcome .price-card .btn-price[style]{background:#fff!important;border-color:#bfd2de!important;color:var(--navy)!important}
+#screen-welcome .cta-section{background:linear-gradient(135deg,#102a56,#135461)}
+#screen-welcome .cta-section h2,#screen-welcome .cta-section p{color:#fff!important}
+#screen-welcome #caraDemo{background:#fff!important;border-color:var(--border)!important;box-shadow:0 18px 46px rgba(16,42,86,.12)!important}
+#screen-welcome #caraDemo>div:first-child{border-color:var(--border)!important}
+#screen-welcome footer:not(.app-footer){background:#fff}
+
+@media(max-width:900px){
+  #screen-welcome .hero{padding:72px 20px 52px}
+  #screen-welcome .hero-inner{gap:26px}
+  #screen-welcome .hero-img-wrap{display:flex;order:-1;max-width:310px;width:100%;margin:0 auto 4px;min-height:188px}
+  #screen-welcome .hero-img-wrap .hero-img,#screen-welcome .hero-img-wrap .hero-img-glow{display:none}
+  #screen-welcome .cara-hero-card{position:relative;right:auto;bottom:auto;width:100%;padding:16px}
+  #screen-welcome .cara-hero-person img{width:104px;height:104px}
+  #screen-welcome .cara-hero-name{font-size:1.2rem}
+  #screen-welcome .cara-hero-status,#screen-welcome .cara-hero-role{font-size:.8rem}
+  #screen-welcome .hero-content{text-align:left}
+  #screen-welcome .hero-content>div:nth-child(2){display:none}
+  #screen-welcome .screen h1,#screen-welcome h1{font-size:2.35rem;margin-bottom:18px}
+  #screen-welcome .btn-row{display:grid;grid-template-columns:1fr}
+  #screen-welcome .btn-row .btn-ghost{grid-row:1}
+  #screen-welcome .inreco-getrow{justify-content:stretch!important}
+  #screen-welcome .inreco-getrow>*{width:100%}
+  #screen-welcome section{padding:58px 20px}
+}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <!-- already added -->
@@ -500,9 +570,9 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
       <p class="hero-sub" id="heroSub" style="color:#fff;font-weight:700">Your labour adviser, on your phone, day and night. Tell CARA what happened — she asks the right questions, warns you where the risk is, tells you what to do next and writes the letters.</p>
       <p class="hero-sub2" id="heroSub2">Built for South African employers. Practical guidance to help you handle labour matters correctly.</p>
       <div class="btn-row">
-        <button type="button" class="btn-primary" onclick="window.location.href='/pricing'">Start your 7-day free trial <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
+        <a href="/get" class="btn-primary">Ask CARA a question free <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
         <button type="button" id="heroOpenApp" class="btn-primary" style="display:none" onclick="window.location.href='/app'">Open the app</button>
-        <a href="/get" class="btn-ghost">Ask CARA a question free</a>
+        <button type="button" class="btn-ghost" onclick="window.location.href='/pricing'">Start your 7-day free trial</button>
 
       </div>
     <div class="inreco-getrow" style="margin-top:26px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:center">
@@ -527,6 +597,16 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
     <div class="hero-img-wrap">
       <div class="hero-img-glow"></div>
       <img id="heroShot" src="/__l5e/assets-v1/5cd70fc9-0d15-451f-b7b0-d5f130ae5cf1/inreco-hero.jpg" alt="iNRECO Pocket Consultant shown on a phone and laptop" width="1200" height="912" loading="lazy" style="width:100%;height:auto;border-radius:16px;box-shadow:0 24px 60px rgba(0,0,0,.55)" />
+      <div class="cara-hero-card" aria-label="Meet CARA, your online labour consultant">
+        <div class="cara-hero-person">
+          <img src="/__l5e/assets-v1/75de326f-bb26-4204-b451-585792599db9/cara-avatar.png" alt="CARA, iNRECO's Compliance and Relations Adviser" width="104" height="104" />
+          <div>
+            <div class="cara-hero-name">Meet CARA</div>
+            <div class="cara-hero-status"><span class="cara-online" aria-hidden="true"></span>Online now</div>
+          </div>
+        </div>
+        <div class="cara-hero-role">South African labour guidance, whenever you need it.</div>
+      </div>
     </div>
   </div>
 </section>
