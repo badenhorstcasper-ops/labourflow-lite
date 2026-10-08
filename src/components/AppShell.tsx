@@ -96,8 +96,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         {children}
       </main>
 
-      <div className="fixed bottom-24 right-4 z-50">
-        <ReportProblemButton />
+      <div className="fixed bottom-20 right-3 z-40 sm:bottom-24 sm:right-4">
+        <ReportProblemButton className="h-11 w-11 rounded-full border bg-background p-0 shadow-md sm:h-11 sm:w-auto sm:rounded-lg sm:px-4" />
       </div>
 
       <BottomNav onMore={() => setMoreOpen(true)} />
