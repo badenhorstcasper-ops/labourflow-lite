@@ -5,7 +5,7 @@ import AppShell from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { FileText, FilePlus2, Building2, CreditCard, Activity, LifeBuoy, LogOut } from "lucide-react";
+import { FileText, FilePlus2, CreditCard, LifeBuoy } from "lucide-react";
 import { TEMPLATE_REGISTRY } from "@/lib/documents/templates";
 import { signInPath } from "@/lib/authRedirect";
 
@@ -58,11 +58,6 @@ export default function Dashboard() {
     })();
   }, [navigate]);
 
-  async function signOut() {
-    await supabase.auth.signOut();
-    navigate("/", { replace: true });
-  }
-
   async function downloadPath(path: string | null) {
     if (!path) return;
     const { data, error } = await supabase.storage.from("documents").createSignedUrl(path, 60 * 5);
@@ -80,23 +75,16 @@ export default function Dashboard() {
     return <AppShell><p className="text-muted-foreground">Loading…</p></AppShell>;
   }
 
-  const greetingName = companyName || (email ? email.split("@")[0] : "there");
-
   return (
     <AppShell>
       <div className="space-y-6">
-        <div className="flex items-start justify-between gap-3 flex-wrap">
-          <div>
-            <h1 className="text-2xl font-bold">Welcome, {greetingName}</h1>
-            <p className="text-sm text-muted-foreground">
-              {sub?.plan_name
-                ? <>You're on the <span className="font-medium text-foreground">{sub.plan_name}</span> plan ({sub.status || "active"}).</>
-                : <>No active plan yet. <Link to="/pricing" className="underline">See plans</Link>.</>}
-            </p>
-          </div>
-          <Button variant="outline" size="sm" onClick={signOut}>
-            <LogOut className="h-4 w-4 mr-1.5" /> Sign out
-          </Button>
+        <div>
+          <h1 className="text-2xl font-bold">Home</h1>
+          <p className="text-sm text-muted-foreground">
+            {sub?.plan_name
+              ? <>{companyName ? `${companyName} · ` : ""}{sub.plan_name} plan ({sub.status || "active"})</>
+              : <>{companyName ? `${companyName} · ` : ""}No active plan yet. <Link to="/pricing" className="underline">See plans</Link>.</>}
+          </p>
         </div>
 
         {(sub?.plan_name === "Professional" || sub?.plan_name === "Enterprise") && (
@@ -154,25 +142,11 @@ export default function Dashboard() {
             cta="View documents"
           />
           <ActionCard
-            icon={<Building2 className="h-5 w-5" />}
-            title="Company profile"
-            description="Branding and details shown on every document."
-            href="/account-app/profile"
-            cta="Edit profile"
-          />
-          <ActionCard
             icon={<CreditCard className="h-5 w-5" />}
             title="Subscription"
             description="Manage your plan and billing."
             href="/settings"
             cta="Manage"
-          />
-          <ActionCard
-            icon={<Activity className="h-5 w-5" />}
-            title="System health"
-            description="Check backend, storage and integrations."
-            href="/account-app/health"
-            cta="Open health"
           />
           <ActionCard
             icon={<LifeBuoy className="h-5 w-5" />}
