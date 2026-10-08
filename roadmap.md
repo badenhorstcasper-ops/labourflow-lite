@@ -1,3 +1,3 @@
 - [x] Correct homepage CARA conversation contrast.
 - [x] Audit and correct shared and page-specific contrast after the light redesign.
-- [ ] Verify public and signed-in screens with automated contrast checks and screenshots.
+- [x] Verify public and signed-in screens with automated contrast checks and screenshots (40 desktop and 40 phone-sized checks; no detected text-contrast failures).
