@@ -9,6 +9,7 @@ import { routeMessage } from "@/lib/cara/router";
 import { renderMarkdownLite } from "@/lib/cara/renderMarkdownLite";
 import { TOPICS } from "@/lib/cara/knowledge";
 import { saveGuestDraft } from "@/lib/appLaunch";
+import caraAvatar from "@/assets/cara-avatar.png.asset.json";
 
 const EXAMPLES = [
   "An employee was rude to a customer. Can I issue a final written warning?",
@@ -60,7 +61,7 @@ export default function GuestPreview() {
       <div className="min-h-screen bg-background pb-16">
         <div className="mx-auto w-full max-w-3xl px-4 pt-6">
           <div className="flex items-center gap-3">
-            <img src="/icon-192.png" alt="" width={44} height={44} className="rounded-xl" />
+            <img src={caraAvatar.url} alt="CARA" width={56} height={56} className="h-14 w-14 shrink-0 rounded-full object-cover" />
             <div>
               <h1 className="text-xl font-bold leading-tight">Ask CARA</h1>
               <p className="text-xs text-muted-foreground">
