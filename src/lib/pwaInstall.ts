@@ -76,6 +76,16 @@ export async function triggerInstall(): Promise<"accepted" | "dismissed" | "unav
 
 export function initPwaInstall() {
   if (typeof window === "undefined") return;
+  // Choose before the browser evaluates installability. Both manifests keep
+  // the same app identity and launch address; only the device picture differs.
+  let icon = "logo";
+  try {
+    const requested = window.location.pathname === "/install" ? new URLSearchParams(window.location.search).get("icon") : null;
+    icon = requested === "cara" || requested === "logo" ? requested : localStorage.getItem("inreco.shortcutIcon") === "cara" ? "cara" : "logo";
+    localStorage.setItem("inreco.shortcutIcon", icon);
+  } catch { /* Browser storage may be disabled. */ }
+  document.querySelector<HTMLLinkElement>('link[rel="manifest"]')?.setAttribute("href", icon === "cara" ? "/manifest-cara.json" : "/manifest.json");
+  document.querySelector<HTMLLinkElement>('link[rel="apple-touch-icon"]')?.setAttribute("href", icon === "cara" ? "/cara-icon-192.png" : "/icon-192.png");
   const store = getStore();
   if ((store as Store & { started?: boolean }).started) return;
   (store as Store & { started?: boolean }).started = true;

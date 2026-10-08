@@ -1,3 +1,3 @@
-- [x] Correct homepage CARA conversation contrast.
-- [x] Audit and correct shared and page-specific contrast after the light redesign.
-- [x] Verify public and signed-in screens with automated contrast checks and screenshots (40 desktop and 40 phone-sized checks; no detected text-contrast failures).
+- [x] Replace app and shared-link branding with the supplied logo.
+- [x] Add logo or CARA choice before installation with the same app identity.
+- [x] Verify branding, icon selection and installation links in the browser.

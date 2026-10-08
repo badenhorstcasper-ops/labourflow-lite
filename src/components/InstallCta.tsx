@@ -54,21 +54,7 @@ export default function InstallCta({
     ? "On iPhone or iPad: tap the Share icon at the bottom of Safari, then tap Add to Home Screen."
     : "Open your browser menu (⋮) and tap Install app or Add to Home screen.";
 
-  const handleClick = async () => {
-    if (isIOS || !getInstallPrompt()) {
-      setShowSteps(true);
-      return;
-    }
-    const result = await triggerInstall();
-    if (result === "accepted") {
-      try {
-        localStorage.setItem("inreco.pwaInstalled", "1");
-      } catch (_) {}
-      setInstalled(true);
-    } else if (result === "unavailable") {
-      setShowSteps(true);
-    }
-  };
+  const handleClick = () => window.location.assign("/install");
 
   const button = (
     <Button onClick={handleClick} className="w-full gap-2">

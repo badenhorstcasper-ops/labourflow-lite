@@ -56,13 +56,7 @@ const InstallHint = () => {
     setVisible(false);
   };
 
-  const triggerInstall = async () => {
-    if (!deferred) return;
-    await deferred.prompt();
-    await deferred.userChoice;
-    setDeferred(null);
-    dismiss();
-  };
+  const triggerInstall = () => window.location.assign("/install");
 
   return (
     <Card className="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-md border-primary/20 shadow-lg sm:inset-x-auto sm:right-4">
@@ -99,7 +93,7 @@ const InstallHint = () => {
           </p>
         )}
 
-        {deferred && (
+        {(
           <Button size="sm" onClick={triggerInstall} className="w-full">
             Install now
           </Button>
