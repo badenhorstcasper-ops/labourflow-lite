@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
   const demoEmails = new Set((subs ?? []).filter((s) => s.is_demo).map((s) => ((s.email as string) || "").toLowerCase()));
   const isTestAccount = (email?: string | null) => {
     const e = (email ?? "").toLowerCase();
-    return OWNER_EMAILS.has(e) || demoEmails.has(e);
+    return OWNER_EMAILS.has(e) || demoEmails.has(e) || e.endsWith("@inrecotest.co.za");
   };
   const { data: usersData } = await admin.auth.admin.listUsers({ page: 1, perPage: 500 });
   const users = (usersData?.users ?? []).filter((u) => !isTestAccount(u.email));
