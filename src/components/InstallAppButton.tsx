@@ -28,19 +28,7 @@ const InstallAppButton = () => {
 
   if (installed) return null;
 
-  const handleClick = async () => {
-    window.location.assign("/install");
-    return;
-    const result = await triggerInstall();
-    if (result === "accepted") {
-      try {
-        localStorage.setItem("inreco.pwaInstalled", "1");
-      } catch (_) {}
-      setInstalled(true);
-      return;
-    }
-    if (result === "unavailable") setShowFallback(true);
-  };
+  const handleClick = () => window.location.assign("/install");
 
   const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
   const isIOS = /iPad|iPhone|iPod/.test(ua);
@@ -58,11 +46,6 @@ const InstallAppButton = () => {
 
   // iPhone/iPad browsers never offer a one-tap install, so show the short
   // steps straight away instead of a button that cannot do anything.
-  if (isIOS) {
-    return (
-      <p className="max-w-sm text-center text-xs text-muted-foreground">{fallbackMsg}</p>
-    );
-  }
 
   return (
     <div className="flex flex-col items-center gap-3">

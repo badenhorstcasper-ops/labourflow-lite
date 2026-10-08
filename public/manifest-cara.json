@@ -11,25 +11,25 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/__l5e/assets-v1/907968a0-8212-475e-acfc-356f2c4204b2/logo-192.png",
+      "src": "/__l5e/assets-v1/a4c91f17-adff-4ab3-bc18-cee49123befb/cara-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/__l5e/assets-v1/dbc76bf2-a88f-48f4-ace0-db40f9698f49/logo-512.png",
+      "src": "/__l5e/assets-v1/9540b86e-2f36-4188-afde-f96a089a4659/cara-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/__l5e/assets-v1/1f1b8537-1bb0-43cb-b12f-c7a0a9d13e8f/logo-maskable-192.png",
+      "src": "/__l5e/assets-v1/0651dd1c-1269-4477-89be-d9e79e113f51/cara-maskable-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/__l5e/assets-v1/e0e2781f-37ee-4073-a6f0-5dae17c3cdba/logo-maskable-512.png",
+      "src": "/__l5e/assets-v1/318d8e54-c010-450e-a5ee-cc9f23d3ac9c/cara-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
