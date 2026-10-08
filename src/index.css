@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -9,50 +10,57 @@ All colors MUST be HSL.
 @layer base {
   :root,
   #root {
-    --background: 222 47% 11%;
-    --foreground: 210 40% 96%;
+    /* iNRECO premium palette: navy (brand), teal (CARA / AI), green (success). */
+    --background: 210 40% 98%;
+    --foreground: 222 52% 14%;
 
-    --card: 217 33% 17%;
-    --card-foreground: 210 40% 96%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 52% 14%;
 
-    --popover: 217 33% 17%;
-    --popover-foreground: 210 40% 96%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 52% 14%;
 
-    --primary: 221 83% 53%;
+    --primary: 222 64% 20%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 218 28% 22%;
-    --secondary-foreground: 210 40% 96%;
+    --secondary: 213 45% 95%;
+    --secondary-foreground: 222 52% 18%;
 
-    --muted: 218 28% 22%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 214 32% 95%;
+    --muted-foreground: 217 18% 38%;
 
-    --accent: 218 28% 22%;
-    --accent-foreground: 210 40% 96%;
+    --accent: 182 48% 94%;
+    --accent-foreground: 184 80% 20%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
+    --teal: 184 76% 30%;
+    --teal-foreground: 0 0% 100%;
+    --teal-soft: 182 52% 94%;
 
-    --border: 215 25% 27%;
-    --input: 215 25% 27%;
-    --ring: 217 91% 60%;
+    --success: 152 62% 32%;
+    --success-foreground: 0 0% 100%;
+    --success-soft: 145 55% 94%;
 
-    --radius: 0.5rem;
+    --destructive: 0 72% 48%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214 28% 89%;
+    --input: 214 26% 84%;
+    --ring: 184 76% 34%;
+
+    --radius: 0.875rem;
+
+    --shadow-soft: 0 1px 2px hsl(222 52% 14% / 0.04), 0 8px 24px -12px hsl(222 52% 14% / 0.12);
+    --shadow-raised: 0 2px 4px hsl(222 52% 14% / 0.05), 0 18px 40px -18px hsl(222 64% 20% / 0.25);
+    --gradient-brand: linear-gradient(135deg, hsl(222 64% 18%), hsl(205 70% 26%) 55%, hsl(184 76% 30%));
+    --gradient-cara: linear-gradient(135deg, hsl(184 76% 30%), hsl(168 60% 36%));
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
@@ -103,6 +111,7 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-family: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   }
 
   /* App-like feel: no blue tap flash, no rubber-band page bounce,
@@ -116,11 +125,11 @@ All colors MUST be HSL.
   }
 
   #root h1 {
-    @apply text-2xl font-bold tracking-tight sm:text-3xl;
+    @apply text-[1.75rem] font-extrabold leading-tight tracking-tight text-primary sm:text-3xl;
   }
 
   #root h2 {
-    @apply text-xl font-semibold tracking-tight sm:text-2xl;
+    @apply text-xl font-bold tracking-tight text-primary sm:text-2xl;
   }
 
   #root button,
@@ -131,6 +140,11 @@ All colors MUST be HSL.
 }
 
 @layer utilities {
+  .shadow-soft { box-shadow: var(--shadow-soft); }
+  .shadow-raised { box-shadow: var(--shadow-raised); }
+  .bg-gradient-brand { background-image: var(--gradient-brand); }
+  .bg-gradient-cara { background-image: var(--gradient-cara); }
+
   /* Native-style page entrance: quick fade + slight rise. */
   .app-page-enter {
     animation: app-page-enter 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
