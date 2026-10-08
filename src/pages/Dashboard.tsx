@@ -91,7 +91,7 @@ export default function Dashboard() {
         </div>
 
         {(sub?.plan_name === "Professional" || sub?.plan_name === "Enterprise") && (
-          <Card className="border-green-600/40 bg-green-50 dark:bg-green-950/20">
+          <Card className="border-success/30 bg-success-soft">
             <CardContent className="p-4 flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="font-semibold">Priority WhatsApp support</p>
@@ -99,7 +99,7 @@ export default function Dashboard() {
                   As a {sub.plan_name} subscriber, tap the button to reach your iNRECO consultant on WhatsApp.
                 </p>
               </div>
-              <Button asChild className="bg-green-600 hover:bg-green-700 text-white">
+              <Button asChild className="bg-success text-success-foreground hover:bg-success/90">
                 <a
                   href="https://wa.me/27844027029?text=Hi%20iNRECO%2C%20I%27m%20a%20subscriber%20and%20need%20support."
                   target="_blank"
@@ -207,7 +207,7 @@ export default function Dashboard() {
                 <Link
                   key={t.key}
                   to={`/account-app/generate?template=${t.key}`}
-                  className="border rounded-md px-3 py-2 hover:border-primary/60 hover:bg-muted/30 transition"
+                  className="rounded-xl border bg-card px-4 py-3 transition hover:border-teal/50 hover:bg-accent"
                 >
                   <div className="font-medium text-sm">{t.name}</div>
                   <div className="text-xs text-muted-foreground">{t.description}</div>
@@ -230,7 +230,7 @@ function ActionCard({
     <Card className={primary ? "border-primary/40" : ""}>
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2">
-          <span className="text-primary">{icon}</span>{title}
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-soft text-teal">{icon}</span>{title}
         </CardTitle>
       </CardHeader>
       <CardContent>

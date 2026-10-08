@@ -75,13 +75,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <Link to="/app" className="truncate text-lg font-bold tracking-tight">
+          <Link to="/app" className="truncate text-lg font-extrabold tracking-tight text-primary">
             iNRECO
           </Link>
           {status === "trialing" && daysLeft !== null && (
             <Link
               to="/pricing"
-              className="ml-auto inline-flex items-center rounded-full bg-primary/15 px-3 py-1.5 text-xs font-semibold text-primary"
+              className="ml-auto inline-flex items-center rounded-full bg-teal-soft px-3 py-1.5 text-xs font-semibold text-teal"
               title="Trial in progress"
             >
               {daysLeft} {daysLeft === 1 ? "day" : "days"} left
