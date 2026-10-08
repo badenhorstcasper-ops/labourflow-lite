@@ -11,25 +11,25 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/__l5e/assets-v1/a4c91f17-adff-4ab3-bc18-cee49123befb/cara-192.png",
+      "src": "/cara-icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/__l5e/assets-v1/9540b86e-2f36-4188-afde-f96a089a4659/cara-512.png",
+      "src": "/cara-icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/__l5e/assets-v1/0651dd1c-1269-4477-89be-d9e79e113f51/cara-maskable-192.png",
+      "src": "/cara-icon-maskable-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/__l5e/assets-v1/318d8e54-c010-450e-a5ee-cc9f23d3ac9c/cara-maskable-512.png",
+      "src": "/cara-icon-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

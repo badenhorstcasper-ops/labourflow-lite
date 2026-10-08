@@ -54,7 +54,7 @@ const InstallAppButton = () => {
         onClick={handleClick}
         className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:opacity-90"
       >
-        <img src="/__l5e/assets-v1/907968a0-8212-475e-acfc-356f2c4204b2/logo-192.png" alt="" width={20} height={20} className="rounded" />
+        <img src="/icon-192.png" alt="" width={20} height={20} className="rounded" />
         Install iNRECO on your device
       </button>
       {isAndroid && !isChromeAndroid && (

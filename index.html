@@ -530,14 +530,14 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="iNRECO">
 <link rel="icon" type="image/png" href="/favicon.png">
-<link rel="apple-touch-icon" sizes="192x192" href="/__l5e/assets-v1/907968a0-8212-475e-acfc-356f2c4204b2/logo-192.png">
+<link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png">
 <script>
 (function () {
   var requested = location.pathname === '/install' ? new URLSearchParams(location.search).get('icon') : null;
   var icon = requested === 'cara' ? 'cara' : 'logo';
   try { if (!requested) icon = localStorage.getItem('inreco.shortcutIcon') === 'cara' ? 'cara' : 'logo'; localStorage.setItem('inreco.shortcutIcon', icon); } catch (_) {}
   document.querySelector('link[rel="manifest"]').href = icon === 'cara' ? '/manifest-cara.json' : '/manifest.json';
-  document.querySelector('link[rel="apple-touch-icon"]').href = icon === 'cara' ? '/__l5e/assets-v1/a4c91f17-adff-4ab3-bc18-cee49123befb/cara-192.png' : '/__l5e/assets-v1/907968a0-8212-475e-acfc-356f2c4204b2/logo-192.png';
+  document.querySelector('link[rel="apple-touch-icon"]').href = icon === 'cara' ? '/cara-icon-192.png' : '/icon-192.png';
 })();
 </script>
 <meta property="og:site_name" content="iNRECO">
@@ -545,16 +545,16 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
 <meta property="og:description" content="Instant South African labour compliance guidance from CARA, plus ready-made warnings, hearings and HR documents.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://app.inreco.co.za/">
-<meta property="og:image" content="https://app.inreco.co.za/__l5e/assets-v1/35d9a48a-a83d-4e37-949b-05f0dc6b160c/social.png">
+<meta property="og:image" content="https://app.inreco.co.za/social-preview.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="iNRECO Pocket Consultant">
 <meta name="twitter:description" content="Instant South African labour compliance guidance from CARA.">
-<meta name="twitter:image" content="https://app.inreco.co.za/__l5e/assets-v1/35d9a48a-a83d-4e37-949b-05f0dc6b160c/social.png">
+<meta name="twitter:image" content="https://app.inreco.co.za/social-preview.png">
 <link rel="preload" as="image" href="/inline-59913bf1a2.jpg" fetchpriority="high">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"Organization","name":"iNRECO","url":"https://app.inreco.co.za/","logo":"https://app.inreco.co.za/__l5e/assets-v1/dbc76bf2-a88f-48f4-ace0-db40f9698f49/logo-512.png","description":"South African labour compliance guidance, warnings, hearings and HR documents for employers.","areaServed":"ZA"}
+{"@context":"https://schema.org","@type":"Organization","name":"iNRECO","url":"https://app.inreco.co.za/","logo":"https://app.inreco.co.za/logo.png","description":"South African labour compliance guidance, warnings, hearings and HR documents for employers.","areaServed":"ZA"}
 </script>
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebSite","name":"iNRECO Pocket Consultant","url":"https://app.inreco.co.za/"}
@@ -595,7 +595,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
 
       </div>
     <div class="inreco-getrow" style="margin-top:26px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:center">
-      <button type="button" class="btn-primary" onclick="window.location.assign('/install')"><img src="/__l5e/assets-v1/907968a0-8212-475e-acfc-356f2c4204b2/logo-192.png" alt="" width="20" height="20" style="border-radius:5px"> Install iNRECO on your device</button>
+      <button type="button" class="btn-primary" onclick="window.location.assign('/install')"><img src="/icon-192.png" alt="" width="20" height="20" style="border-radius:5px"> Install iNRECO on your device</button>
       <button type="button" class="btn-ghost" onclick="shareApp()">Share iNRECO with a friend</button>
     </div>
     <div style="margin-top:24px;display:flex;flex-wrap:wrap;gap:10px;align-items:center">
@@ -779,7 +779,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
     </div>
     <div id="caraDemo" style="max-width:620px;margin:0 auto;background:rgba(15,23,42,.75);border:1px solid rgba(148,163,184,.22);border-radius:18px;padding:18px;box-shadow:0 18px 46px rgba(0,0,0,.45)">
       <div style="display:flex;align-items:center;gap:10px;padding-bottom:12px;border-bottom:1px solid rgba(148,163,184,.18)">
-        <img src="/__l5e/assets-v1/907968a0-8212-475e-acfc-356f2c4204b2/logo-192.png" alt="" width="32" height="32" style="border-radius:8px">
+        <img src="/icon-192.png" alt="" width="32" height="32" style="border-radius:8px">
         <div><div style="font-weight:700;font-size:.9rem">CARA</div><div style="font-size:.72rem;color:var(--muted)">Compliance and Relations Adviser</div></div>
       </div>
       <div id="caraDemoBody" style="display:flex;flex-direction:column;gap:12px;padding-top:14px;min-height:330px"></div>
@@ -982,7 +982,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
     <p class="section-desc" style="text-align:center;margin:0 auto 8px">Every paid plan starts with a 7-day free trial — no charge during the trial, cancel anytime.</p>
     <p style="text-align:center;font-size:.8rem;color:var(--muted)">Enterprise: pay 10 months, get 12 — save 17% annually.</p>
     <div class="inreco-getrow" style="margin-top:26px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:center">
-      <button type="button" class="btn-primary" onclick="window.location.assign('/install')"><img src="/__l5e/assets-v1/907968a0-8212-475e-acfc-356f2c4204b2/logo-192.png" alt="" width="20" height="20" style="border-radius:5px"> Install iNRECO on your device</button>
+      <button type="button" class="btn-primary" onclick="window.location.assign('/install')"><img src="/icon-192.png" alt="" width="20" height="20" style="border-radius:5px"> Install iNRECO on your device</button>
       <button type="button" class="btn-ghost" onclick="shareApp()">Share iNRECO with a friend</button>
     </div>
     <div class="pricing-grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-top:48px">
@@ -1273,7 +1273,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
 
 <div style="padding:8px 20px 24px">
     <div class="inreco-getrow" style="margin-top:26px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:center">
-      <button type="button" class="btn-primary" onclick="window.location.assign('/install')"><img src="/__l5e/assets-v1/907968a0-8212-475e-acfc-356f2c4204b2/logo-192.png" alt="" width="20" height="20" style="border-radius:5px"> Install iNRECO on your device</button>
+      <button type="button" class="btn-primary" onclick="window.location.assign('/install')"><img src="/icon-192.png" alt="" width="20" height="20" style="border-radius:5px"> Install iNRECO on your device</button>
       <button type="button" class="btn-ghost" onclick="shareApp()">Share iNRECO with a friend</button>
     </div></div>
 <div style="text-align:center;padding:18px 20px 48px"><img src="/__l5e/assets-v1/77b3aa06-ea70-4a88-8af7-2b8611828f24/inreco-logo.png" alt="iNRECO Pocket Labour Consultant logo" width="1254" height="1254" style="width:62px;height:auto;display:inline-block" loading="lazy" /><div style="margin-top:8px;font-size:11px;letter-spacing:1px;color:var(--muted)">iNRECO POCKET CONSULTANT</div></div>

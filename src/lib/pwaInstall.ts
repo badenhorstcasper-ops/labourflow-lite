@@ -85,7 +85,7 @@ export function initPwaInstall() {
     localStorage.setItem("inreco.shortcutIcon", icon);
   } catch { /* Browser storage may be disabled. */ }
   document.querySelector<HTMLLinkElement>('link[rel="manifest"]')?.setAttribute("href", icon === "cara" ? "/manifest-cara.json" : "/manifest.json");
-  document.querySelector<HTMLLinkElement>('link[rel="apple-touch-icon"]')?.setAttribute("href", icon === "cara" ? "/__l5e/assets-v1/a4c91f17-adff-4ab3-bc18-cee49123befb/cara-192.png" : "/__l5e/assets-v1/907968a0-8212-475e-acfc-356f2c4204b2/logo-192.png");
+  document.querySelector<HTMLLinkElement>('link[rel="apple-touch-icon"]')?.setAttribute("href", icon === "cara" ? "/cara-icon-192.png" : "/icon-192.png");
   const store = getStore();
   if ((store as Store & { started?: boolean }).started) return;
   (store as Store & { started?: boolean }).started = true;

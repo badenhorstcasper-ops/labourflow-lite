@@ -27,7 +27,7 @@ export default function Install() {
         <BackHomeBar homeTo="/app" />
         <header><h1>Choose your shortcut picture</h1><p className="mt-2 text-muted-foreground">The same iNRECO app, with the picture you prefer on this device.</p></header>
         <div role="group" aria-label="Shortcut picture" className="grid grid-cols-2 gap-4">
-          {([{ id: "logo", name: "iNRECO logo", url: logo.url }, { id: "cara", name: "CARA avatar", url: cara.url }]).map((option) => (
+          {([{ id: "logo", name: "iNRECO logo", url: "/icon-192.png" }, { id: "cara", name: "CARA avatar", url: "/cara-icon-192.png" }]).map((option) => (
             <Button key={option.id} variant={selected === option.id ? "default" : "outline"} aria-pressed={selected === option.id} onClick={() => choose(option.id)} className="h-auto min-h-44 flex-col gap-3 whitespace-normal py-4">
               <img src={option.url} alt="" className="h-24 w-24 rounded-2xl object-contain" />
               {option.name}{selected === option.id && <span className="text-sm">Selected</span>}

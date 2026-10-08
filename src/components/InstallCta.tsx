@@ -76,7 +76,7 @@ export default function InstallCta({
     return (
       <div className={`mb-4 rounded-2xl border border-primary/25 bg-primary/5 p-4 ${className}`}>
         <div className="flex items-start gap-3">
-          <img src="/__l5e/assets-v1/907968a0-8212-475e-acfc-356f2c4204b2/logo-192.png" alt="" width={40} height={40} className="rounded-xl" />
+          <img src="/icon-192.png" alt="" width={40} height={40} className="rounded-xl" />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold">Add iNRECO to your phone</p>
             <p className="mt-0.5 text-xs text-muted-foreground">
@@ -99,7 +99,7 @@ export default function InstallCta({
 
   return (
     <div className={`rounded-2xl border bg-card p-5 text-center ${className}`}>
-      <img src="/__l5e/assets-v1/907968a0-8212-475e-acfc-356f2c4204b2/logo-192.png" alt="" width={56} height={56} className="mx-auto rounded-2xl" />
+      <img src="/icon-192.png" alt="" width={56} height={56} className="mx-auto rounded-2xl" />
       <p className="mt-3 text-base font-semibold">Install iNRECO on your device</p>
       <p className="mt-1 text-xs text-muted-foreground">
         Free to install. No account, no plan and no card needed to add the shortcut.
