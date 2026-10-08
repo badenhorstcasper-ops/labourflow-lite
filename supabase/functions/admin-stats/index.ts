@@ -39,10 +39,6 @@ Deno.serve(async (req) => {
     const month = new Date(now.getTime() - 30 * 24 * 3600 * 1000).toISOString();
 
     const count = (q: any) => q.then((r: any) => r.count ?? 0);
-    const { data: usersList } = await admin.auth.admin.listUsers({ page: 1, perPage: 1 });
-    // listUsers returns total in `total` (v2)
-    const totalSignups = (usersList as any)?.total ?? 0;
-
     const [
       docs, paymentsSuccess, paymentsRejected, bookings, contacts, subs,
       pv1, pv7, pv30,
@@ -64,9 +60,13 @@ Deno.serve(async (req) => {
 
     // Recent signups via admin.auth + week/month counts (real users only — no owner/test)
     const OWNER_EMAILS_SET = new Set(["casperbadenhorst77@outlook.com", "badenhorst.casper@gmail.com"]);
+    const isTestAccount = (email?: string | null) => {
+      const normalized = (email ?? "").toLowerCase();
+      return OWNER_EMAILS_SET.has(normalized) || normalized.endsWith("@inrecotest.co.za");
+    };
     const { data: recentUsersData } = await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
     const allUsers = (recentUsersData?.users ?? [])
-      .filter((u: any) => !OWNER_EMAILS_SET.has((u.email ?? "").toLowerCase()));
+      .filter((u: any) => !isTestAccount(u.email));
     const recentSignups = allUsers.slice(0, 10).map((u: any) => ({
       id: u.id, email: u.email, created_at: u.created_at,
     }));
@@ -111,14 +111,12 @@ Deno.serve(async (req) => {
       count: stepSessions[key]?.size ?? 0,
     }));
 
-    const OWNER_EMAILS = new Set(["casperbadenhorst77@outlook.com", "badenhorst.casper@gmail.com"]);
-    const demoSignups = allUsers.filter((u: any) => OWNER_EMAILS.has((u.email ?? "").toLowerCase())).length;
-    const realSignups = Math.max(0, totalSignups - demoSignups);
+    const realSignups = allUsers.length;
 
     return json({
       totals: {
-        signups: totalSignups,
-        signupsDemo: demoSignups,
+        signups: realSignups,
+        signupsDemo: 0,
         signupsReal: realSignups,
         documents: docs,
         payments: paymentsSuccess,
