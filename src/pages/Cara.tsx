@@ -18,7 +18,7 @@ import { TOPICS, getTopicByKey } from "@/lib/cara/knowledge";
 import { routeMessage } from "@/lib/cara/router";
 import { TEMPLATE_REGISTRY } from "@/lib/documents/templates";
 import MicButton from "@/components/cara/MicButton";
-const logoUrl = "/logo.png";
+import caraAvatar from "@/assets/cara-avatar.png.asset.json";
 import { toast } from "sonner";
 import { takeGuestDraft } from "@/lib/appLaunch";
 import { signInPath } from "@/lib/authRedirect";
@@ -246,7 +246,7 @@ export default function CaraPage() {
         <section aria-labelledby="cara-heading" className="overflow-hidden rounded-2xl border bg-card shadow-raised">
           <div className="bg-gradient-brand px-4 py-5 text-primary-foreground">
             <div className="flex items-center gap-3">
-              <img src={logoUrl} alt="" className="h-12 w-12 rounded-xl bg-card p-0.5 shadow-soft" />
+              <img src={caraAvatar.url} alt="CARA" className="h-14 w-14 shrink-0 rounded-full bg-card object-cover shadow-soft" />
               <div className="min-w-0">
                 <h1 id="cara-heading" className="!text-xl !font-extrabold !text-primary-foreground">Ask CARA</h1>
                 <p className="flex items-center gap-1.5 text-sm text-primary-foreground/80"><span className="h-2 w-2 rounded-full bg-success-soft" aria-hidden="true" />Your pocket labour consultant · online</p>
