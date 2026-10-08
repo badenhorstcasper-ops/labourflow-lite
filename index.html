@@ -445,7 +445,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
 #screen-welcome{
   --navy:#102a56;--navy2:#173b6d;--bg:#f5f9fc;
   --primary:#102a56;--primary2:#0c2146;--soft:#087f83;
-  --accent:#087f83;--text:#122440;--muted:#52637a;
+  --accent:hsl(182 85% 23%);--text:#122440;--muted:#52637a;
   --surface:#ffffff;--border:#d8e3eb;
   --chat-question:var(--navy);--chat-question-text:var(--surface);
   --chat-answer:hsl(182 48% 94%);--chat-answer-text:var(--text);
@@ -459,6 +459,8 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
 #screen-welcome .hero-content>div:nth-child(2)>div{color:var(--muted)!important}
 #screen-welcome .screen h1,#screen-welcome h1{color:var(--navy)!important;letter-spacing:0}
 #screen-welcome .blue-text{background:none;-webkit-text-fill-color:currentColor;color:#087f83}
+#screen-welcome .section-label{color:var(--accent)}
+#screen-welcome .cta-section .blue-text{color:var(--surface)}
 #screen-welcome .hero-sub{color:var(--text)!important}
 #screen-welcome .hero-sub2{color:var(--muted)}
 #screen-welcome .btn-primary{min-height:56px;justify-content:center;background:var(--navy);box-shadow:0 8px 22px rgba(16,42,86,.18)}
@@ -966,7 +968,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
     <p class="section-label" style="text-align:center">Pricing</p>
     <h2 style="text-align:center">Start Free</h2>
     <p class="section-desc" style="text-align:center;margin:0 auto 8px">Every paid plan starts with a 7-day free trial — no charge during the trial, cancel anytime.</p>
-    <p style="text-align:center;font-size:.8rem;color:rgba(148,163,184,.5)">Enterprise: pay 10 months, get 12 — save 17% annually.</p>
+    <p style="text-align:center;font-size:.8rem;color:var(--muted)">Enterprise: pay 10 months, get 12 — save 17% annually.</p>
     <div class="inreco-getrow" style="margin-top:26px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:center">
       <button type="button" class="btn-primary" onclick="installAppNow()"><img src="/icon-192.png" alt="" width="20" height="20" style="border-radius:5px"> Install iNRECO on your device</button>
       <button type="button" class="btn-ghost" onclick="shareApp()">Share iNRECO with a friend</button>
@@ -976,7 +978,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
       <div class="price-card">
         <p class="price-tier">For business owners &amp; managers</p><h3>Solo</h3>
         <div class="price-amount">R259</div><p class="price-note">per month &middot; 1 user</p>
-        <p style="font-size:.75rem;color:#3b82f6;margin:6px 0 0">7-day free trial · cancel anytime</p>
+        <p style="font-size:.75rem;color:var(--accent);margin:6px 0 0">7-day free trial · cancel anytime</p>
         <ul class="price-features">
           <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>50 AI questions/month</li>
           <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>All documents</li>

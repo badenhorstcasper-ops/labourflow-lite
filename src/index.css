@@ -1,4 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -39,6 +38,9 @@ All colors MUST be HSL.
     --success: 152 62% 32%;
     --success-foreground: 0 0% 100%;
     --success-soft: 145 55% 94%;
+
+    --warning: 38 92% 90%;
+    --warning-foreground: 28 85% 23%;
 
     --destructive: 0 72% 48%;
     --destructive-foreground: 0 0% 100%;
@@ -130,6 +132,12 @@ All colors MUST be HSL.
 
   #root h2 {
     @apply text-xl font-bold tracking-tight sm:text-2xl;
+  }
+
+  #root input::placeholder,
+  #root textarea::placeholder {
+    color: hsl(var(--muted-foreground));
+    opacity: 1;
   }
 
   #root button,

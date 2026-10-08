@@ -42,8 +42,8 @@ const sevLabel: Record<Severity, string> = {
 
 const sevClass: Record<Severity, string> = {
   critical: "bg-destructive text-destructive-foreground",
-  high: "bg-orange-500 text-white dark:bg-orange-600",
-  medium: "bg-yellow-500 text-black dark:bg-yellow-600 dark:text-white",
+  high: "bg-warning text-warning-foreground",
+  medium: "bg-warning text-warning-foreground",
   low: "bg-muted text-muted-foreground",
 };
 
