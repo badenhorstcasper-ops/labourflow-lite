@@ -107,7 +107,7 @@ const GetApp = () => {
         <div className="mx-auto w-full max-w-xl px-4 pt-6">
           <div className="flex items-center gap-3">
             <img
-              src="/icon-192.png"
+              src="/__l5e/assets-v1/907968a0-8212-475e-acfc-356f2c4204b2/logo-192.png"
               alt="iNRECO Pocket Consultant app icon"
               width={48}
               height={48}
