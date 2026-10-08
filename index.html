@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <title>Have a labour problem? Ask CARA — iNRECO</title>
 <meta name="description" content="Tell CARA what happened and get the right next step, the risks and the letter you need — South African labour help in your pocket. 7-day free trial.">
 <script>
@@ -275,7 +278,7 @@
     gap: 6px;
     text-align: center;
     font-size: 10px;
-    color: var(--muted);
+    color: var(--text);
     padding: 4px 10px;
     border-top: 1px solid var(--border);
     background: rgba(10,31,68,0.94);
@@ -445,8 +448,10 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
 #screen-welcome{
   --navy:#102a56;--navy2:#173b6d;--bg:#f5f9fc;
   --primary:#102a56;--primary2:#0c2146;--soft:#087f83;
-  --accent:#087f83;--text:#122440;--muted:#52637a;
+  --accent:hsl(182 85% 23%);--text:#122440;--muted:#52637a;
   --surface:#ffffff;--border:#d8e3eb;
+  --chat-question:var(--navy);--chat-question-text:var(--surface);
+  --chat-answer:hsl(182 48% 94%);--chat-answer-text:var(--text);
   background:var(--bg);color:var(--text);
 }
 #screen-welcome .hero{min-height:auto;background:#edf7f8;padding-top:112px}
@@ -457,6 +462,8 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
 #screen-welcome .hero-content>div:nth-child(2)>div{color:var(--muted)!important}
 #screen-welcome .screen h1,#screen-welcome h1{color:var(--navy)!important;letter-spacing:0}
 #screen-welcome .blue-text{background:none;-webkit-text-fill-color:currentColor;color:#087f83}
+#screen-welcome .section-label{color:var(--accent)}
+#screen-welcome .cta-section .blue-text{color:var(--surface)}
 #screen-welcome .hero-sub{color:var(--text)!important}
 #screen-welcome .hero-sub2{color:var(--muted)}
 #screen-welcome .btn-primary{min-height:56px;justify-content:center;background:var(--navy);box-shadow:0 8px 22px rgba(16,42,86,.18)}
@@ -490,6 +497,10 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
 #screen-welcome .cta-section h2,#screen-welcome .cta-section p{color:#fff!important}
 #screen-welcome #caraDemo{background:#fff!important;border-color:var(--border)!important;box-shadow:0 18px 46px rgba(16,42,86,.12)!important}
 #screen-welcome #caraDemo>div:first-child{border-color:var(--border)!important}
+#screen-welcome .demo-bubble{max-width:88%;padding:10px 14px;font-size:.88rem;line-height:1.6}
+#screen-welcome .demo-bubble-user{align-self:flex-end;max-width:82%;background:var(--chat-question);color:var(--chat-question-text);border-radius:16px 16px 4px 16px}
+#screen-welcome .demo-bubble-cara{align-self:flex-start;background:var(--chat-answer);color:var(--chat-answer-text);border:1px solid var(--border);border-radius:16px 16px 16px 4px}
+#screen-welcome .demo-typing{color:var(--muted)}
 #screen-welcome footer:not(.app-footer){background:#fff}
 
 @media(max-width:900px){
@@ -786,9 +797,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
 
   function bubble(who, html) {
     var d = document.createElement('div');
-    d.style.cssText = who === 'me'
-      ? 'align-self:flex-end;max-width:82%;background:#2563eb;color:#fff;padding:10px 14px;border-radius:16px 16px 4px 16px;font-size:.88rem;line-height:1.55'
-      : 'align-self:flex-start;max-width:88%;background:rgba(30,41,59,.9);border:1px solid rgba(148,163,184,.2);padding:10px 14px;border-radius:16px 16px 16px 4px;font-size:.88rem;line-height:1.6';
+    d.className = 'demo-bubble ' + (who === 'me' ? 'demo-bubble-user' : 'demo-bubble-cara');
     d.innerHTML = html.replace(/\n/g, '<br>');
     body.appendChild(d);
     return d;
@@ -805,7 +814,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
       setTimeout(function () { run(i + 1); }, 900);
       return;
     }
-    var typing = bubble('cara', '<span style="opacity:.6">CARA is typing…</span>');
+    var typing = bubble('cara', '<span class="demo-typing">CARA is typing…</span>');
     setTimeout(function () {
       typing.innerHTML = step[1].replace(/\n/g, '<br>');
       setTimeout(function () { run(i + 1); }, 2600);
@@ -962,7 +971,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
     <p class="section-label" style="text-align:center">Pricing</p>
     <h2 style="text-align:center">Start Free</h2>
     <p class="section-desc" style="text-align:center;margin:0 auto 8px">Every paid plan starts with a 7-day free trial — no charge during the trial, cancel anytime.</p>
-    <p style="text-align:center;font-size:.8rem;color:rgba(148,163,184,.5)">Enterprise: pay 10 months, get 12 — save 17% annually.</p>
+    <p style="text-align:center;font-size:.8rem;color:var(--muted)">Enterprise: pay 10 months, get 12 — save 17% annually.</p>
     <div class="inreco-getrow" style="margin-top:26px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:center">
       <button type="button" class="btn-primary" onclick="installAppNow()"><img src="/icon-192.png" alt="" width="20" height="20" style="border-radius:5px"> Install iNRECO on your device</button>
       <button type="button" class="btn-ghost" onclick="shareApp()">Share iNRECO with a friend</button>
@@ -972,7 +981,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
       <div class="price-card">
         <p class="price-tier">For business owners &amp; managers</p><h3>Solo</h3>
         <div class="price-amount">R259</div><p class="price-note">per month &middot; 1 user</p>
-        <p style="font-size:.75rem;color:#3b82f6;margin:6px 0 0">7-day free trial · cancel anytime</p>
+        <p style="font-size:.75rem;color:var(--accent);margin:6px 0 0">7-day free trial · cancel anytime</p>
         <ul class="price-features">
           <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>50 AI questions/month</li>
           <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>All documents</li>

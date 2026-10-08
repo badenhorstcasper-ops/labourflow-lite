@@ -53,6 +53,10 @@ export default {
           foreground: "hsl(var(--success-foreground))",
           soft: "hsl(var(--success-soft))",
         },
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          foreground: "hsl(var(--warning-foreground))",
+        },
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",

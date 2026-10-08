@@ -249,7 +249,7 @@ export default function CaraPage() {
               <img src={caraAvatar.url} alt="CARA" className="h-14 w-14 shrink-0 rounded-full bg-card object-cover shadow-soft" />
               <div className="min-w-0">
                 <h1 id="cara-heading" className="!text-xl !font-extrabold !text-primary-foreground">Ask CARA</h1>
-                <p className="flex items-center gap-1.5 text-sm text-primary-foreground/80"><span className="h-2 w-2 rounded-full bg-success-soft" aria-hidden="true" />Your pocket labour consultant · online</p>
+                <p className="flex items-center gap-1.5 text-sm text-primary-foreground"><span className="h-2 w-2 rounded-full bg-success-soft" aria-hidden="true" />Your pocket labour consultant · online</p>
               </div>
             </div>
           </div>
