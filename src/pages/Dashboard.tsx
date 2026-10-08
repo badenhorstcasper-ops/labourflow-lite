@@ -55,6 +55,9 @@ export default function Dashboard() {
       setSub((subRes.data as Sub) || null);
       setRecent((docsRes.data as DocRow[]) || []);
       setLoading(false);
+      if (window.location.hash === "#quick-start") {
+        setTimeout(() => document.getElementById("quick-start")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+      }
     })();
   }, [navigate]);
 
@@ -194,7 +197,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card id="quick-start" className="scroll-mt-24">
           <CardHeader>
             <CardTitle className="text-lg">Quick start: pick a template</CardTitle>
           </CardHeader>
