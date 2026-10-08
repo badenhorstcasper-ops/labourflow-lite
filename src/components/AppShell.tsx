@@ -96,10 +96,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         {children}
       </main>
 
-      <div className="fixed bottom-20 right-3 z-40 sm:bottom-24 sm:right-4">
-        <ReportProblemButton className="h-11 w-11 rounded-full border bg-background p-0 shadow-md sm:h-11 sm:w-auto sm:rounded-lg sm:px-4" />
-      </div>
-
       <BottomNav onMore={() => setMoreOpen(true)} />
 
       <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
@@ -116,6 +112,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 {l.label}
               </Link>
             ))}
+            <ReportProblemButton variant="ghost" className={`${sheetItem} w-full justify-start`} />
             {isAdmin && (
               <>
                 <div className="mt-4 px-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
