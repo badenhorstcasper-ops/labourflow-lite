@@ -595,7 +595,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
 
       </div>
     <div class="inreco-getrow" style="margin-top:26px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:center">
-      <button type="button" class="btn-primary" onclick="installAppNow()"><img src="/__l5e/assets-v1/907968a0-8212-475e-acfc-356f2c4204b2/logo-192.png" alt="" width="20" height="20" style="border-radius:5px"> Install iNRECO on your device</button>
+      <button type="button" class="btn-primary" onclick="window.location.assign('/install')"><img src="/__l5e/assets-v1/907968a0-8212-475e-acfc-356f2c4204b2/logo-192.png" alt="" width="20" height="20" style="border-radius:5px"> Install iNRECO on your device</button>
       <button type="button" class="btn-ghost" onclick="shareApp()">Share iNRECO with a friend</button>
     </div>
     <div style="margin-top:24px;display:flex;flex-wrap:wrap;gap:10px;align-items:center">
@@ -982,7 +982,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
     <p class="section-desc" style="text-align:center;margin:0 auto 8px">Every paid plan starts with a 7-day free trial — no charge during the trial, cancel anytime.</p>
     <p style="text-align:center;font-size:.8rem;color:var(--muted)">Enterprise: pay 10 months, get 12 — save 17% annually.</p>
     <div class="inreco-getrow" style="margin-top:26px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:center">
-      <button type="button" class="btn-primary" onclick="installAppNow()"><img src="/__l5e/assets-v1/907968a0-8212-475e-acfc-356f2c4204b2/logo-192.png" alt="" width="20" height="20" style="border-radius:5px"> Install iNRECO on your device</button>
+      <button type="button" class="btn-primary" onclick="window.location.assign('/install')"><img src="/__l5e/assets-v1/907968a0-8212-475e-acfc-356f2c4204b2/logo-192.png" alt="" width="20" height="20" style="border-radius:5px"> Install iNRECO on your device</button>
       <button type="button" class="btn-ghost" onclick="shareApp()">Share iNRECO with a friend</button>
     </div>
     <div class="pricing-grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-top:48px">
@@ -1273,7 +1273,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
 
 <div style="padding:8px 20px 24px">
     <div class="inreco-getrow" style="margin-top:26px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:center">
-      <button type="button" class="btn-primary" onclick="installAppNow()"><img src="/__l5e/assets-v1/907968a0-8212-475e-acfc-356f2c4204b2/logo-192.png" alt="" width="20" height="20" style="border-radius:5px"> Install iNRECO on your device</button>
+      <button type="button" class="btn-primary" onclick="window.location.assign('/install')"><img src="/__l5e/assets-v1/907968a0-8212-475e-acfc-356f2c4204b2/logo-192.png" alt="" width="20" height="20" style="border-radius:5px"> Install iNRECO on your device</button>
       <button type="button" class="btn-ghost" onclick="shareApp()">Share iNRECO with a friend</button>
     </div></div>
 <div style="text-align:center;padding:18px 20px 48px"><img src="/__l5e/assets-v1/77b3aa06-ea70-4a88-8af7-2b8611828f24/inreco-logo.png" alt="iNRECO Pocket Labour Consultant logo" width="1254" height="1254" style="width:62px;height:auto;display:inline-block" loading="lazy" /><div style="margin-top:8px;font-size:11px;letter-spacing:1px;color:var(--muted)">iNRECO POCKET CONSULTANT</div></div>
@@ -3011,7 +3011,7 @@ supabase.auth.onAuthStateChange((_event, session) => {
 </script>
 
 <!-- Always-there "install the app" pill, so the invitation is never more than one tap away. -->
-<button id="installPill" type="button" onclick="showInstallModal()"
+<button id="installPill" type="button" onclick="window.location.assign('/install')"
         style="display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom));z-index:9998;background:#2563eb;color:#fff;border:0;border-radius:999px;padding:12px 20px;font-weight:700;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,0.45);cursor:pointer;display:none;align-items:center;gap:8px;">
   <img src="/favicon.png" alt="" width="20" height="20" style="border-radius:6px;" />
   Install the app — free
