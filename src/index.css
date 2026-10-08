@@ -125,11 +125,11 @@ All colors MUST be HSL.
   }
 
   #root h1 {
-    @apply text-[1.75rem] font-extrabold leading-tight tracking-tight text-primary sm:text-3xl;
+    @apply text-[1.75rem] font-extrabold leading-tight tracking-tight sm:text-3xl;
   }
 
   #root h2 {
-    @apply text-xl font-bold tracking-tight text-primary sm:text-2xl;
+    @apply text-xl font-bold tracking-tight sm:text-2xl;
   }
 
   #root button,
