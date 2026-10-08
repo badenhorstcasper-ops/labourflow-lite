@@ -11,6 +11,7 @@ const Pricing = lazyWithRetry(() => import("@/pages/Pricing"));
 const Auth = lazyWithRetry(() => import("@/pages/Auth"));
 const ResetPassword = lazyWithRetry(() => import("@/pages/ResetPassword"));
 const Dashboard = lazyWithRetry(() => import("@/pages/Dashboard"));
+const Onboarding = lazyWithRetry(() => import("@/pages/Onboarding"));
 const Settings = lazyWithRetry(() => import("@/pages/Settings"));
 const PaymentSuccess = lazyWithRetry(() => import("@/pages/PaymentSuccess"));
 const PaymentCancelled = lazyWithRetry(() => import("@/pages/PaymentCancelled"));
@@ -144,6 +145,7 @@ function AppRoutes() {
       {/* Subscription-gated routes */}
       <Route path="/app" element={gatedWithPreview(<CaraPage />)} />
       <Route path="/dashboard" element={gated(<Dashboard />)} />
+      <Route path="/welcome" element={<Onboarding />} />
       <Route path="/settings" element={gated(<Settings />)} />
       {/* Older links/bookmarks pointed at this address for billing. */}
       <Route path="/account-app/billing" element={<Navigate to="/settings" replace />} />

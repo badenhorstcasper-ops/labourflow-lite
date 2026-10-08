@@ -21,6 +21,7 @@ const logoUrl = "/logo.png";
 import { toast } from "sonner";
 import { takeGuestDraft } from "@/lib/appLaunch";
 import { signInPath } from "@/lib/authRedirect";
+import { isOnboarded, markOnboarded } from "@/lib/onboarding";
 
 const AUTO_SEND_KEY = "cara.voice.autoSend";
 
@@ -71,6 +72,11 @@ export default function CaraPage() {
         .eq("owner_user_id", owner)
         .maybeSingle();
       const name = (data as { company_name?: string } | null)?.company_name?.trim() || "";
+      if (name) markOnboarded(u.user.id);
+      else if (owner === u.user.id && !isOnboarded(u.user.id)) {
+        navigate("/welcome?redirect=" + encodeURIComponent(window.location.pathname + window.location.search), { replace: true });
+        return;
+      }
       setCompanyName(name);
       setProfileMissing(!name);
       setReady(true);

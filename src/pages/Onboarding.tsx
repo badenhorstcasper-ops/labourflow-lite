@@ -8,7 +8,8 @@ import { toast } from "sonner";
 import { Building2 } from "lucide-react";
 import { readRedirectTarget, signInPath } from "@/lib/authRedirect";
 import { markOnboarded } from "@/lib/onboarding";
-import logo from "@/assets/inreco-logo.png";
+import logoAsset from "@/assets/inreco-logo.png.asset.json";
+const logo = logoAsset.url;
 
 export default function Onboarding() {
   const navigate = useNavigate();
