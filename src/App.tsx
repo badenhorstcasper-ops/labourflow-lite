@@ -26,6 +26,7 @@ const HealthPage = lazyWithRetry(() => import("@/pages/Health"));
 const VerifyCertificatePage = lazyWithRetry(() => import("@/pages/VerifyCertificate"));
 const Terms = lazyWithRetry(() => import("@/pages/Terms"));
 const Privacy = lazyWithRetry(() => import("@/pages/Privacy"));
+const Unsubscribe = lazyWithRetry(() => import("@/pages/Unsubscribe"));
 const Disclaimer = lazyWithRetry(() => import("@/pages/Disclaimer"));
 import ContrastAudit from "@/components/dev/ContrastAudit";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -117,6 +118,7 @@ function AppRoutes() {
       <Route path="/contact" element={<ContactPage />} />
       <Route path="/terms" element={<Terms />} />
       <Route path="/privacy" element={<Privacy />} />
+      <Route path="/unsubscribe" element={<Unsubscribe />} />
       <Route path="/disclaimer" element={<Disclaimer />} />
 
       {/* Admin (role-gated inside the page) */}
