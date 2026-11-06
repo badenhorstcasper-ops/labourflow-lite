@@ -23,6 +23,8 @@ import { toast } from "sonner";
 import { takeGuestDraft } from "@/lib/appLaunch";
 import { signInPath } from "@/lib/authRedirect";
 import { isOnboarded, markOnboarded } from "@/lib/onboarding";
+import { readFunctionError, withDisclaimer, type AiErrorKind } from "@/lib/cara/aiErrors";
+import { trackStep } from "@/lib/funnel";
 
 const AUTO_SEND_KEY = "cara.voice.autoSend";
 
@@ -35,7 +37,17 @@ type ChatMsg = {
   followUps?: string[];
   groundingTopicKey?: string; // set on user msgs that hit knowledge; reused for "ask for more detail"
   canExpand?: boolean;        // assistant msg has an "ask CARA for more detail" button
+  fromAi?: boolean;           // answer came from the AI adviser (shows the AI label)
+  offlineHelp?: boolean;      // AI was unavailable: show topic / template shortcuts
 };
+
+class AiCallError extends Error {
+  kind: AiErrorKind;
+  constructor(kind: AiErrorKind, message: string) {
+    super(message);
+    this.kind = kind;
+  }
+}
 
 export default function CaraPage() {
   const navigate = useNavigate();
@@ -45,6 +57,10 @@ export default function CaraPage() {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
+  // "ok" once an AI answer arrives; any other value switches the header and a
+  // banner to honest "built-in guidance mode" (e.g. Lovable AI credits empty).
+  const [aiState, setAiState] = useState<"unknown" | "ok" | AiErrorKind>("unknown");
+  const [aiLeft, setAiLeft] = useState<number | null>(null);
   const [autoSend, setAutoSend] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     return window.localStorage.getItem(AUTO_SEND_KEY) === "1";
@@ -121,10 +137,22 @@ export default function CaraPage() {
       grounding,
     };
     const { data, error } = await supabase.functions.invoke("cara-chat", { body: payload });
-    if (error) throw error;
-    const d = data as { text?: string; suggestedTemplate?: string } | null;
+    if (error) {
+      const info = await readFunctionError(error);
+      setAiState(info.kind);
+      void trackStep("/app", `ai_error_${info.kind}`);
+      throw new AiCallError(info.kind, info.message);
+    }
+    const d = data as { text?: string; suggestedTemplate?: string; remainingThisMonth?: number | null } | null;
+    if (typeof d?.remainingThisMonth === "number") setAiLeft(d.remainingThisMonth);
+    if (!d?.text) {
+      setAiState("unavailable");
+      throw new AiCallError("unavailable", "CARA's AI adviser returned an empty answer. The built-in topic guides below still work.");
+    }
+    setAiState("ok");
+    void trackStep("/app", "ai_answer");
     return {
-      text: d?.text || "Sorry — I couldn't generate an answer just now. Please try again.",
+      text: withDisclaimer(d.text),
       suggestedTemplate: d?.suggestedTemplate || undefined,
     };
   }
@@ -139,11 +167,21 @@ export default function CaraPage() {
         : getTopicByKey(groundingTopicKey)?.relatedTemplates ?? [];
       setMessages((m) => [
         ...m,
-        { id: crypto.randomUUID(), role: "assistant", text, templateKeys },
+        { id: crypto.randomUUID(), role: "assistant", text, templateKeys, fromAi: true },
       ]);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      toast.error("CARA had a problem: " + msg);
+      const topic = getTopicByKey(groundingTopicKey);
+      setMessages((m) => [
+        ...m,
+        {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          text: msg,
+          templateKeys: topic?.relatedTemplates ?? [],
+          offlineHelp: true,
+        },
+      ]);
     } finally {
       setBusy(false);
     }
@@ -201,17 +239,21 @@ export default function CaraPage() {
           role: "assistant",
           text: aiText,
           templateKeys: suggestedTemplate ? [suggestedTemplate] : undefined,
+          fromAi: true,
         },
       ]);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      toast.error("CARA had a problem: " + msg);
+      const msg = e instanceof AiCallError
+        ? e.message
+        : "I couldn't reach CARA's AI adviser just now. The built-in topic guides below still work.";
+      if (!(e instanceof AiCallError)) toast.error("CARA's AI adviser could not be reached.");
       setMessages((m) => [
         ...m,
         {
           id: crypto.randomUUID(),
           role: "assistant",
-          text: "I couldn't reach the AI just now. You can still tap a topic above for built-in guidance.",
+          text: msg,
+          offlineHelp: true,
         },
       ]);
     } finally {
@@ -249,10 +291,32 @@ export default function CaraPage() {
               <img src={caraAvatar.url} alt="CARA" className="h-14 w-14 shrink-0 rounded-full bg-card object-cover shadow-soft" />
               <div className="min-w-0">
                 <h1 id="cara-heading" className="!text-xl !font-extrabold !text-primary-foreground">Ask CARA</h1>
-                <p className="flex items-center gap-1.5 text-sm text-primary-foreground"><span className="h-2 w-2 rounded-full bg-success-soft" aria-hidden="true" />Your pocket labour consultant · online</p>
+                <p className="flex items-center gap-1.5 text-sm text-primary-foreground">
+                  <span className={`h-2 w-2 rounded-full ${aiState === "unknown" || aiState === "ok" ? "bg-success-soft" : "bg-amber-300"}`} aria-hidden="true" />
+                  {aiState === "unknown" || aiState === "ok"
+                    ? "Your pocket labour consultant"
+                    : "Built-in guidance mode · AI adviser paused"}
+                </p>
               </div>
             </div>
           </div>
+
+          {aiState !== "unknown" && aiState !== "ok" && (
+            <div role="status" className="border-b border-amber-300/60 bg-amber-50 px-4 py-2 text-xs text-amber-900">
+              {aiState === "locked"
+                ? <>Your free week has ended. Built-in topic guides and templates still work. <Link to="/pricing?reason=trial_ended" className="underline font-semibold">Choose a plan</Link> to switch the AI adviser back on.</>
+                : aiState === "limit"
+                  ? <>You've used your AI questions for now. Built-in topic guides still work. <Link to="/pricing" className="underline font-semibold">See plans</Link></>
+                  : <>CARA's AI adviser is temporarily unavailable. Built-in topic guides, checklists and all document templates still work.</>}
+            </div>
+          )}
+
+          {aiState === "ok" && aiLeft !== null && aiLeft <= 10 && (
+            <div className="border-b border-border bg-muted/50 px-4 py-1.5 text-xs text-muted-foreground">
+              {aiLeft} AI question{aiLeft === 1 ? "" : "s"} left this month on your plan. Built-in topic guides don't count.{" "}
+              <Link to="/pricing" className="underline">Upgrade</Link>
+            </div>
+          )}
 
           <div ref={scrollRef} className="min-h-[240px] max-h-[48vh] overflow-y-auto px-4 py-4">
             {messages.length === 0 ? (
@@ -469,7 +533,21 @@ function MessageBubble({
             : "rounded-bl-md border border-teal/15 bg-teal-soft text-foreground"
         }`}
       >
+        {!isUser && msg.fromAi && (
+          <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">AI answer · check before acting</p>
+        )}
         {renderMarkdownLite(msg.text)}
+
+        {!isUser && msg.offlineHelp && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button size="sm" variant="outline" onClick={() => navigate("/dashboard#quick-start")}>
+              Pick a document template
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => document.getElementById("topics-heading")?.scrollIntoView({ behavior: "smooth", block: "center" })}>
+              Browse built-in topic guides
+            </Button>
+          </div>
+        )}
 
         {!isUser && templates.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-2">

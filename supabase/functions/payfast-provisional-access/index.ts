@@ -9,6 +9,7 @@
 
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { decideProvisional, PROVISIONAL_HOURS } from "../_shared/entitlement.ts";
 
 function json(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -19,7 +20,13 @@ function json(body: Record<string, unknown>, status = 200) {
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MAX_AGE_MS = 3 * 60 * 60 * 1000; // checkout must have started in the last 3 hours
-const PROVISIONAL_HOURS = 48;
+// Loophole closed (Nov 2026): previously anyone could start a trial-mode
+// checkout, abandon PayFast, call this function and receive 7 "trialing" days,
+// repeatably and bypassing start-trial's one-trial-per-email rule. Now:
+//  - trial-mode checkouts never create a new trial here if the person ever had one,
+//  - every grant is capped at PROVISIONAL_HOURS (48 h), never a full trial,
+//  - one unconfirmed grant per user/email per 30 days,
+//  - the app's entitlement check respects provisional_until (see _shared/entitlement.ts).
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -59,7 +66,7 @@ Deno.serve(async (req) => {
 
   const { data: tx } = await admin
     .from("payfast_transactions")
-    .select("id, user_id, email, plan_name, amount, status, billing_date, created_at")
+    .select("id, user_id, email, plan_name, amount, status, billing_date, created_at, pay_mode")
     .eq("m_payment_id", mPaymentId)
     .maybeSingle();
 
@@ -82,23 +89,72 @@ Deno.serve(async (req) => {
   const now = new Date();
   const nowIso = now.toISOString();
   const confirmed = tx.status === "complete";
+  const txEmail = ((tx.email as string) || email).trim().toLowerCase();
 
-  // Free trial => billing date is in the future. Pay-now => billing date is today.
+  // Has this person (by account or email) ever had a subscription row?
+  const { data: priorSubs } = await admin
+    .from("subscriptions")
+    .select("id")
+    .or(`user_id.eq.${userId}${txEmail ? `,email.ilike.${txEmail}` : ""}`)
+    .limit(1);
+  const hadSubscriptionBefore = (priorSubs?.length ?? 0) > 0;
+
+  // Most recent provisional grant that never turned into a completed payment.
+  const { data: lastGrant } = await admin
+    .from("payfast_transactions")
+    .select("provisional_granted_at")
+    .or(`user_id.eq.${userId}${txEmail ? `,email.ilike.${txEmail}` : ""}`)
+    .not("provisional_granted_at", "is", null)
+    .neq("status", "complete")
+    .order("provisional_granted_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const decision = decideProvisional({
+    payMode: tx.pay_mode as string | null,
+    txStatus: tx.status as string | null,
+    hadSubscriptionBefore,
+    lastUnconfirmedGrantAt: (lastGrant?.provisional_granted_at as string | null) ?? null,
+    now: now.getTime(),
+  });
+  if (!decision.grant) {
+    // Not an error for the buyer: PayFast's confirmation will still activate
+    // the plan the moment it arrives.
+    return json({ granted: false, reason: decision.reason, waitingForPayfast: true });
+  }
+
+  const provisionalUntil = new Date(now.getTime() + PROVISIONAL_HOURS * 3600 * 1000).toISOString();
+  const payNow = (tx.pay_mode as string | null) === "now";
+
+  // Confirmed by PayFast: same behaviour as before (a card-on-file trial keeps
+  // its billing-date trial; a paid checkout is active).
   const billingDate = typeof tx.billing_date === "string" ? tx.billing_date : null;
-  const trialEndsAt = billingDate ? new Date(`${billingDate}T00:00:00.000Z`) : null;
-  const isTrial = !!trialEndsAt && trialEndsAt.getTime() > now.getTime();
+  const billingAt = billingDate ? new Date(`${billingDate}T00:00:00.000Z`) : null;
+  const confirmedTrial = confirmed && !!billingAt && billingAt.getTime() > now.getTime();
+
+  let status: string;
+  let trialEndsAt: string | null;
+  if (confirmed) {
+    status = confirmedTrial ? "trialing" : "active";
+    trialEndsAt = confirmedTrial ? billingAt!.toISOString() : null;
+  } else if (payNow) {
+    status = "active";
+    trialEndsAt = null;
+  } else {
+    // Unconfirmed trial-mode checkout: a short window only, never a full week.
+    status = "trialing";
+    trialEndsAt = provisionalUntil;
+  }
 
   const row: Record<string, unknown> = {
     user_id: userId,
     email: (tx.email as string) || email,
     plan_name: tx.plan_name,
-    status: isTrial ? "trialing" : "active",
-    trial_ends_at: isTrial ? trialEndsAt!.toISOString() : null,
+    status,
+    trial_ends_at: trialEndsAt,
     is_demo: false,
     updated_at: nowIso,
-    provisional_until: confirmed
-      ? null
-      : new Date(now.getTime() + PROVISIONAL_HOURS * 3600 * 1000).toISOString(),
+    provisional_until: confirmed ? null : provisionalUntil,
   };
 
   // Attach the payment to this account if it was started while signed out.
@@ -111,13 +167,25 @@ Deno.serve(async (req) => {
 
   const { data: mine } = await admin
     .from("subscriptions")
-    .select("id, status, provisional_until")
+    .select("id, status, provisional_until, trial_ends_at, paid_until")
     .eq("user_id", userId)
     .order("updated_at", { ascending: false })
     .limit(1)
     .maybeSingle();
 
   let subId = mine?.id as string | undefined;
+
+  // Already inside a longer running trial or paid month? Don't shorten it with
+  // a 48-hour provisional window — PayFast's confirmation will upgrade it.
+  if (!confirmed && mine) {
+    const keepUntil = Math.max(
+      mine.status === "trialing" && mine.trial_ends_at ? new Date(mine.trial_ends_at as string).getTime() : 0,
+      mine.paid_until ? new Date(mine.paid_until as string).getTime() : 0,
+    );
+    if (keepUntil > new Date(provisionalUntil).getTime()) {
+      return json({ granted: true, confirmed: false, plan: tx.plan_name, provisional: false, kept: true });
+    }
+  }
 
   if (!subId && email) {
     const { data: byEmail } = await admin
@@ -129,6 +197,13 @@ Deno.serve(async (req) => {
       .limit(1)
       .maybeSingle();
     subId = byEmail?.id as string | undefined;
+  }
+
+  if (!confirmed) {
+    await admin
+      .from("payfast_transactions")
+      .update({ provisional_granted_at: nowIso, updated_at: nowIso })
+      .eq("id", tx.id);
   }
 
   if (subId) {

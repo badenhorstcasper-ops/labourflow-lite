@@ -57,12 +57,16 @@ const Auth = () => {
   }
 
   /** Turns on the card-free trial when someone came in from a "Start free" button. */
-  async function startTrialIfRequested() {
+  async function startTrialIfRequested(opts: { always?: boolean } = {}) {
     const params = new URLSearchParams(window.location.search);
     const plan = params.get("plan") || readTrialPlan();
-    if (!plan) return false;
-    const result = await startFreeTrial(plan);
-    return !!result;
+    // A brand-new account always gets the advertised free week (default Solo),
+    // unless they are in the middle of a PayFast payment. The server still
+    // allows only one trial per person/email.
+    if (!plan && !(opts.always && !localStorage.getItem("inreco.pendingPayment"))) return false;
+    const result = await startFreeTrial(plan || "Solo");
+    if (result?.started) void trackStep("/auth", "trial_started");
+    return !!result?.started;
   }
 
   function nextPathAfterAuth(linked: boolean) {
@@ -118,8 +122,9 @@ const Auth = () => {
         if (signInErr) throw signInErr;
         void trackStep("/auth", "signed_up");
         const linked = await linkPendingSubscription();
-        const trialStarted = await startTrialIfRequested();
-        navigate(trialStarted ? "/app" : nextPathAfterAuth(linked), { replace: true });
+        await startTrialIfRequested({ always: !linked });
+        // Go back to where they were (e.g. /get with their question) or /app.
+        navigate(nextPathAfterAuth(linked), { replace: true });
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;

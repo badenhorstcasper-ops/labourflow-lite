@@ -1,74 +1,51 @@
 // CARA speech-to-text. Accepts an audio blob (multipart/form-data, field "file")
 // and returns { text } using Lovable AI Gateway's transcription endpoint.
+// Nov 2026: signed-in + entitled users only, rate-limited, no upstream detail echoed.
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+import { guardAiCall, jsonResponse, corsFor, recordAiUsage, upstreamFailure, MESSAGES } from "../_shared/aiGuard.ts";
 
 const MAX_BYTES = 5 * 1024 * 1024; // 5 MB — comfortably covers 60 s of webm/mp4 audio
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsFor(req) });
   if (req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "method_not_allowed" }), {
-      status: 405,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse(req, { error: "method_not_allowed" }, 405);
   }
+
+  const guard = await guardAiCall(req, "transcribe");
+  if (!guard.ok) return guard.response;
 
   const key = Deno.env.get("LOVABLE_API_KEY");
   if (!key) {
-    return new Response(JSON.stringify({ error: "missing_api_key" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    console.error("cara-transcribe: LOVABLE_API_KEY missing");
+    return jsonResponse(req, { error: "ai_unavailable", message: MESSAGES.ai_unavailable }, 503);
   }
 
   const ct = req.headers.get("content-type") ?? "";
   if (!ct.toLowerCase().includes("multipart/form-data")) {
-    return new Response(JSON.stringify({ error: "expected_multipart" }), {
-      status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse(req, { error: "expected_multipart" }, 400);
   }
 
   let form: FormData;
   try {
     form = await req.formData();
   } catch {
-    return new Response(JSON.stringify({ error: "invalid_form" }), {
-      status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse(req, { error: "invalid_form" }, 400);
   }
 
   const file = form.get("file");
   if (!(file instanceof File)) {
-    return new Response(JSON.stringify({ error: "missing_file" }), {
-      status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse(req, { error: "missing_file" }, 400);
   }
   if (file.size === 0) {
-    return new Response(JSON.stringify({ error: "empty_file" }), {
-      status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse(req, { error: "empty_file" }, 400);
   }
   if (file.size > MAX_BYTES) {
-    return new Response(JSON.stringify({ error: "file_too_large" }), {
-      status: 413,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse(req, { error: "file_too_large" }, 413);
   }
   const ftype = (file.type || "").toLowerCase();
   if (!ftype.startsWith("audio/")) {
-    return new Response(JSON.stringify({ error: "unsupported_type", type: ftype }), {
-      status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse(req, { error: "unsupported_type", type: ftype }, 400);
   }
 
   // Pick an extension OpenAI's transcribe model can infer the format from.
@@ -98,33 +75,19 @@ Deno.serve(async (req) => {
       body: upstream,
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: "transcription_unreachable", detail: String(e) }), {
-      status: 502,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    console.error("cara-transcribe: gateway unreachable", e);
+    return jsonResponse(req, { error: "ai_unavailable", message: MESSAGES.ai_unavailable }, 503);
   }
 
-  if (!resp.ok) {
-    const detail = await resp.text().catch(() => "");
-    const status = resp.status === 429 || resp.status === 402 ? resp.status : 502;
-    return new Response(JSON.stringify({ error: "transcription_failed", status: resp.status, detail }), {
-      status,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
+  if (!resp.ok) return upstreamFailure(req, resp, "cara-transcribe");
 
   const data = await resp.json().catch(() => null) as { text?: string } | null;
   const text = (data?.text ?? "").trim();
 
   if (!text) {
-    return new Response(JSON.stringify({ error: "empty_transcription" }), {
-      status: 502,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse(req, { error: "empty_transcription" }, 502);
   }
 
-  return new Response(JSON.stringify({ text }), {
-    status: 200,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
+  await recordAiUsage(guard, "transcribe");
+  return jsonResponse(req, { text });
 });

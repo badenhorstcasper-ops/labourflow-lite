@@ -25,6 +25,7 @@ const PayLink = lazyWithRetry(() => import("@/pages/PayLink"));
 const ContactPage = lazyWithRetry(() => import("@/pages/Contact"));
 const HealthPage = lazyWithRetry(() => import("@/pages/Health"));
 const VerifyCertificatePage = lazyWithRetry(() => import("@/pages/VerifyCertificate"));
+const CcmaDeadlinesPage = lazyWithRetry(() => import("@/pages/CcmaDeadlines"));
 const Terms = lazyWithRetry(() => import("@/pages/Terms"));
 const Privacy = lazyWithRetry(() => import("@/pages/Privacy"));
 const Unsubscribe = lazyWithRetry(() => import("@/pages/Unsubscribe"));
@@ -154,12 +155,17 @@ function AppRoutes() {
       <Route path="/account-app/settings" element={<Navigate to="/settings" replace />} />
       <Route path="/account-app/dashboard" element={<Navigate to="/dashboard" replace />} />
       <Route path="/account-app/app" element={<Navigate to="/app" replace />} />
+      {/* Old ad / campaign links that were landing on a 404 (see review §17). */}
+      <Route path="/trades" element={<Navigate to="/get" replace />} />
+      <Route path="/hardware" element={<Navigate to="/get" replace />} />
       <Route path="/account-app" element={gated(<CompanyProfilePage />)} />
       <Route path="/account-app/profile" element={gated(<CompanyProfilePage />)} />
       <Route path="/account-app/documents" element={gated(<DocumentsPage />)} />
       <Route path="/account-app/generate" element={gated(<GeneratePage />)} />
       <Route path="/account-app/health" element={gated(<HealthPage />)} />
       <Route path="/account-app/verify-certificate" element={gated(<VerifyCertificatePage />)} />
+      <Route path="/account-app/deadlines" element={gated(<CcmaDeadlinesPage />)} />
+      <Route path="/deadlines" element={<Navigate to="/account-app/deadlines" replace />} />
 
 
 

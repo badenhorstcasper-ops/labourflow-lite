@@ -85,6 +85,9 @@ export default function AdminHealth() {
 
   const down = rows.filter((r) => r.status !== "up");
   const lastRun = rows[0]?.checked_at;
+  // The nightly check should run every ~24 h. If the newest result is older than
+  // 36 h, the schedule itself is broken — say so instead of showing stale green.
+  const stale = lastRun ? Date.now() - new Date(lastRun).getTime() > 36 * 3600 * 1000 : false;
 
   return (
     <div className="min-h-screen bg-background">
@@ -94,7 +97,9 @@ export default function AdminHealth() {
           <h1 className="text-2xl font-bold text-foreground md:text-3xl">Live app health</h1>
           <p className="text-sm text-muted-foreground">
             This checks the real live site your customers use — not the preview. Press the button
-            after every publish. Green means that part of the app is answering.
+            after every publish. Green means that part of the app is deployed and answering the way
+            it should — it does not prove every feature works end to end (e.g. a real PayFast
+            payment). Turn on the optional AI test (HEALTH_AI_CANARY=1) to check that CARA's AI really answers.
           </p>
         </header>
 
@@ -107,6 +112,14 @@ export default function AdminHealth() {
             <span className="text-sm text-muted-foreground">Last checked {whenText(lastRun)}</span>
           )}
         </div>
+
+        {stale && (
+          <div className="rounded-md border border-amber-400/60 bg-amber-50 p-3 text-sm text-amber-900">
+            The automatic nightly check has not saved a result for more than a day and a half, so
+            these results are old. Press "Check live app now", and ask your developer to look at the
+            nightly schedule.
+          </div>
+        )}
 
         {error && (
           <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">

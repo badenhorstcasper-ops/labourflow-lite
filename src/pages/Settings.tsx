@@ -39,6 +39,7 @@ const CHANGE_PLANS = [
   { name: "Solo", priceLabel: "R259", suffix: "1 user, 2 devices" },
   { name: "Business", priceLabel: "R599", suffix: "Up to 5 team members" },
   { name: "Professional", priceLabel: "R1499", suffix: "Up to 10 team members" },
+  { name: "Enterprise", priceLabel: "R3999", suffix: "Up to 15 team members" },
 ];
 
 const Settings = () => {
@@ -147,7 +148,7 @@ const Settings = () => {
                 replaces the old monthly amount.
               </CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-6 md:grid-cols-3">
+            <CardContent className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
               {CHANGE_PLANS.map((p) => (
                 <div key={p.name} className="space-y-2 rounded-lg border p-4">
                   <p className="font-semibold">{p.name}</p>

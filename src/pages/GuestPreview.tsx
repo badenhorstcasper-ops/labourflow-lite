@@ -9,6 +9,7 @@ import { routeMessage } from "@/lib/cara/router";
 import { renderMarkdownLite } from "@/lib/cara/renderMarkdownLite";
 import { TOPICS } from "@/lib/cara/knowledge";
 import { saveGuestDraft } from "@/lib/appLaunch";
+import { trackStep } from "@/lib/funnel";
 import caraAvatar from "@/assets/cara-avatar.png.asset.json";
 
 const EXAMPLES = [
@@ -44,11 +45,15 @@ export default function GuestPreview() {
       );
     }
     setUsed(true);
+    void trackStep("/app", "asked_question");
   }
 
   function goSignUp() {
     if (input.trim()) saveGuestDraft(input.trim());
-    navigate("/auth?mode=signup");
+    void trackStep("/app", "tapped_signup");
+    // plan=Solo switches on the advertised free week straight after sign-up;
+    // redirect brings them back here with their question waiting.
+    navigate("/auth?mode=signup&plan=Solo&redirect=%2Fapp");
   }
 
   return (
@@ -127,12 +132,17 @@ export default function GuestPreview() {
               Create your account to keep asking, generate warnings and hearing packs, and
               save your documents. Seven days free, no card needed.
             </p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              After the free week: Solo R259/month (1 user). Nothing is charged unless you choose a
+              plan — your account simply pauses.{" "}
+              <Link to="/pricing" className="underline">All plans</Link>
+            </p>
             <Button className="mt-3 w-full" onClick={goSignUp}>
               Create my free account
             </Button>
             <p className="mt-2 text-xs text-muted-foreground">
               Already have one?{" "}
-              <Link to="/auth?mode=login" className="underline">
+              <Link to="/auth?mode=login&redirect=%2Fapp" className="underline">
                 Sign in
               </Link>
             </p>

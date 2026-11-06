@@ -45,3 +45,6 @@ verify_jwt = false
 
 [functions.trial-reminders]
 verify_jwt = false
+
+[functions.ccma-deadline-reminders]
+verify_jwt = false

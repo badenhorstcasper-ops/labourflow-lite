@@ -42,6 +42,15 @@ export default function Disclaimer() {
           hearing notice or CCMA reply to a third party without first reading it,
           editing it and confirming that it fits your specific facts.
         </p>
+        <p>
+          The CCMA deadline tracker works out dates from the start date you enter,
+          using the usual statutory or CCMA-rule time limit for the dispute type
+          you choose. The right start date, whether a bargaining council has
+          jurisdiction, extensions, condonation and once-off public holidays can
+          all change the real deadline. Reminders depend on email delivery and
+          on the app being available, and may not arrive. Treat the tracker as a
+          planning aid and confirm critical dates with a labour-law practitioner.
+        </p>
   
         <h2>4. Get a qualified person involved when it matters</h2>
         <p>

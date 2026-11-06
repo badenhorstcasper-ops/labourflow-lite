@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
 
   const planName = typeof body.planName === "string" ? body.planName : "";
   if (!PLAN_NAMES.has(planName as PlanName)) {
-    return json({ error: "Please choose Solo, Business or Professional." }, 400);
+    return json({ error: "Please choose Solo, Business, Professional or Enterprise." }, 400);
   }
 
   const authedUser = await userFromRequest(req);

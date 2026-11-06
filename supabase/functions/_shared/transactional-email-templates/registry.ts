@@ -1,5 +1,6 @@
 import type * as React from 'npm:react@18.3.1'
 import { template as trialEnding } from './trial-ending.tsx'
+import { template as ccmaDeadlineReminder } from './ccma-deadline-reminder.tsx'
 
 export interface TemplateEntry {
   component: React.ComponentType<any>
@@ -11,4 +12,5 @@ export interface TemplateEntry {
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'trial-ending': trialEnding,
+  'ccma-deadline-reminder': ccmaDeadlineReminder,
 }

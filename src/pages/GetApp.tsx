@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import InstallCta from "@/components/InstallCta";
 import Seo from "@/components/Seo";
+import { TEMPLATE_REGISTRY } from "@/lib/documents/templates";
 import { routeMessage } from "@/lib/cara/router";
 import { renderMarkdownLite } from "@/lib/cara/renderMarkdownLite";
 import { saveGuestDraft } from "@/lib/appLaunch";
@@ -69,7 +70,10 @@ const GetApp = () => {
 
   const ref = searchParams.get("ref");
   const refQs = ref ? `&ref=${encodeURIComponent(ref)}` : "";
-  const signupHref = `/auth?mode=signup&plan=solo${refQs}`;
+  const signupHref = `/auth?mode=signup&plan=Solo&redirect=%2Fapp${refQs}`;
+
+  // Documents that go with the answer — the concrete thing a free account unlocks.
+  const [nextDocs, setNextDocs] = useState<string[]>([]);
 
   function ask(text: string) {
     const clean = text.trim();
@@ -80,7 +84,15 @@ const GetApp = () => {
     void trackStep("/get", "asked_question");
     const decision = routeMessage(clean);
     if (decision.source === "knowledge" || decision.source === "template") {
-      setAnswer(decision.text);
+      // The "Ask CARA for more detail" button only exists inside the app, so
+      // don't point guests at a button that isn't on this page.
+      setAnswer(decision.text.replace(/\n\n_Need more detail[^_]*_$/, ""));
+      const keys = decision.source === "template" ? [decision.templateKey] : decision.templateKeys;
+      const names = keys
+        .map((k) => TEMPLATE_REGISTRY.find((t) => t.key === k)?.name)
+        .filter((n): n is string => !!n)
+        .slice(0, 2);
+      setNextDocs(names);
       void trackStep("/get", "saw_answer");
     } else {
       setAnswer(
@@ -174,6 +186,21 @@ const GetApp = () => {
                   <div className="max-w-[95%] rounded-2xl bg-muted px-4 py-3 text-sm leading-relaxed">
                     {answer ? renderMarkdownLite(answer) : null}
                   </div>
+                  {/* Soft paywall: shown only after they've had a useful answer. */}
+                  <div className="rounded-2xl border-2 border-primary/40 bg-primary/5 p-4">
+                    <p className="text-sm font-semibold">Your next step</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {nextDocs.length
+                        ? <>Get the <strong>{nextDocs.join(" and the ")}</strong> filled in with your company name and your facts, ready to print or send — plus follow-up questions about your exact situation.</>
+                        : <>Ask follow-up questions about your exact situation and get the letters that go with the answer, in your company name.</>}
+                    </p>
+                    <Button className="mt-3 w-full" onClick={goSignUp}>
+                      Continue free for 7 days — no card
+                    </Button>
+                    <p className="mt-2 text-center text-xs text-muted-foreground">
+                      Your question is saved. Nothing is charged when the free week ends.
+                    </p>
+                  </div>
                 </div>
               )}
 
@@ -223,8 +250,9 @@ const GetApp = () => {
             <div className="flex items-start gap-3">
               <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
               <p className="text-xs text-muted-foreground">
-                Built on the BCEA, the LRA and the CCMA's own rules and time limits — not
-                guesswork.
+                Based on the BCEA, the LRA and the CCMA's published rules and time limits.
+                General guidance to help you act correctly — not legal advice. For a dismissal or
+                CCMA case, confirm with a labour-law practitioner.
               </p>
             </div>
             <div className="flex items-start gap-3">

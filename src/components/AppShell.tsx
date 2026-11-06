@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 /** Links that live in the "More" sheet instead of crowding the app. */
 const moreLinks = [
+  { to: "/account-app/deadlines", label: "CCMA deadlines" },
   { to: "/account-app/verify-certificate", label: "Verify sick note" },
   { to: "/account-app/profile", label: "Company profile" },
   { to: "/account-app/refer", label: "Refer & earn" },

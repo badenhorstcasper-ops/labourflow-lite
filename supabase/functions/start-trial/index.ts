@@ -4,7 +4,15 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 /** How long a card-free trial lasts. Invited friends get double. */
 const TRIAL_DAYS = 7;
 const REFERRED_TRIAL_DAYS = 14;
-const PLANS = new Set(["Solo", "Business", "Professional", "Enterprise"]);
+// Every plan here must also be in PLAN_PRICES (_shared/payfast.ts) so the
+// trial can turn into a PayFast subscription when it ends.
+// Case-insensitive so links like ?plan=solo still pick the right plan.
+const PLANS = new Map([
+  ["solo", "Solo"],
+  ["business", "Business"],
+  ["professional", "Professional"],
+  ["enterprise", "Enterprise"],
+]);
 
 function json(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -43,8 +51,8 @@ Deno.serve(async (req) => {
   } catch (_) {
     body = {};
   }
-  const requested = typeof body.planName === "string" ? body.planName : "Solo";
-  const planName = PLANS.has(requested) ? requested : "Solo";
+  const requested = typeof body.planName === "string" ? body.planName.trim().toLowerCase() : "solo";
+  const planName = PLANS.get(requested) ?? "Solo";
 
   const admin = createClient(supabaseUrl, serviceKey);
 

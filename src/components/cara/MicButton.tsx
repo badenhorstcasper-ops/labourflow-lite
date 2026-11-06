@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { isRecordingSupported, useVoiceRecorder } from "@/hooks/useVoiceRecorder";
+import { readFunctionError } from "@/lib/cara/aiErrors";
 
 type Props = {
   onTranscript: (text: string) => void;
@@ -22,7 +23,10 @@ export default function MicButton({ onTranscript, disabled }: Props) {
     const ext = blob.type.includes("mp4") ? "mp4" : blob.type.includes("mpeg") ? "mp3" : "webm";
     form.append("file", blob, `recording.${ext}`);
     const { data, error } = await supabase.functions.invoke("cara-transcribe", { body: form });
-    if (error) throw new Error(error.message || "Could not transcribe audio.");
+    if (error) {
+      const info = await readFunctionError(error);
+      throw new Error(info.kind === "unknown" ? "Could not transcribe audio. Please type your question instead." : `${info.message} You can type your question instead.`);
+    }
     const text = (data as { text?: string } | null)?.text?.trim();
     if (!text) {
       toast.error("CARA couldn't hear that. Try again in a quieter spot.");

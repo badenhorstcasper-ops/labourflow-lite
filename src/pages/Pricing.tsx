@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { trackStep } from "@/lib/funnel";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,9 +47,10 @@ const PLANS: Plan[] = [
     tagline: "per month · 1 user",
     description: "For individuals getting started.",
     features: [
-      "CARA AI adviser",
+      "CARA AI adviser — 50 AI questions a month",
+      "Built-in topic guides & checklists (unlimited)",
       "All documents",
-      "CCMA deadline tracker",
+      "CCMA deadline tracker with reminders",
       "1 user",
     ],
     cta: "Start 7-day free trial",
@@ -63,11 +65,12 @@ const PLANS: Plan[] = [
     tagline: "per month · up to 5 users",
     description: "For small teams.",
     features: [
-      "Unlimited questions",
+      "Unlimited AI questions (fair use)",
       "Up to 5 registered users",
       "All documents",
       "CARA AI adviser",
-      "CCMA tracker",
+      "Built-in topic guides & checklists",
+      "CCMA deadline tracker with reminders",
     ],
     cta: "Start 7-day free trial",
     kind: "paid",
@@ -102,11 +105,12 @@ const PLANS: Plan[] = [
       "Everything in Professional",
       "Up to 15 registered users",
       "CARA as always-on IR adviser",
-      "Annual option — pay 10 get 12",
+      "Annual option (pay 10 months, get 12) — arranged with our team",
       "WhatsApp support",
     ],
-    cta: "Contact Us",
-    kind: "contact",
+    cta: "Start 7-day free trial",
+    kind: "paid",
+    trial: true,
   },
 ];
 
@@ -160,7 +164,7 @@ const REASON_MESSAGES: Record<string, string> = {
   trial_ended: "Your 7-day free trial has ended. Pick a plan to keep using iNRECO.",
   subscription_cancelled: "Your subscription is cancelled. Re-subscribe to keep using iNRECO.",
   no_subscription: "You need an active plan to use iNRECO. Start your 7-day free trial below.",
-  payment_processing: "PayFast is still confirming your trial. Please wait a minute, then sign in again or refresh this page.",
+  payment_processing: "We're still waiting for PayFast to confirm your payment. This usually takes a few minutes — refresh this page shortly. If it has been more than a day, WhatsApp us on 084 402 7029 with your payment reference.",
 };
 
 const Pricing = () => {
@@ -174,6 +178,11 @@ const Pricing = () => {
   const reason = searchParams.get("reason");
   const reasonMessage = reason ? REASON_MESSAGES[reason] : null;
   const [referralCode, setReferralCode] = useState<string | null>(null);
+
+  // Funnel: which lock screen people hit, and how often.
+  useEffect(() => {
+    void trackStep("/pricing", reason ? `paywall_${reason}` : "viewed");
+  }, [reason]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -206,6 +215,7 @@ const Pricing = () => {
 
     setBusyPlan(`${plan.name}:${mode}`);
     setCheckoutError(null);
+    void trackStep("/pricing", `checkout_started_${plan.name.toLowerCase()}_${mode}`);
     try {
       const { data, error } = await supabase.functions.invoke<CheckoutResponse>("payfast-checkout", {
         body: {
@@ -252,6 +262,7 @@ const Pricing = () => {
       setCheckoutError("We could not start your free trial. Please try again in a moment.");
       return;
     }
+    void trackStep("/pricing", "trial_started");
     navigate("/app");
   }
 
@@ -302,6 +313,21 @@ const Pricing = () => {
   
           </header>
   
+          <section aria-label="What is free and what is paid" className="mx-auto mb-8 grid max-w-3xl gap-3 text-sm sm:grid-cols-3">
+            <div className="rounded-lg border bg-card p-4">
+              <p className="font-semibold">Free, no account</p>
+              <p className="mt-1 text-muted-foreground">Ask one question at <Link to="/get" className="underline">/get</Link> and see CARA's built-in answer.</p>
+            </div>
+            <div className="rounded-lg border bg-card p-4">
+              <p className="font-semibold">Free for 7 days</p>
+              <p className="mt-1 text-muted-foreground">Everything in your plan: the AI adviser, all documents and topic guides. No card. Nothing is charged when it ends — your account just pauses.</p>
+            </div>
+            <div className="rounded-lg border bg-card p-4">
+              <p className="font-semibold">Paid monthly</p>
+              <p className="mt-1 text-muted-foreground">From R259/month via PayFast. Cancel any time from your account.</p>
+            </div>
+          </section>
+
           {!userId && (
             <div className="mx-auto mb-8 max-w-md rounded-lg border bg-card p-4">
               <Label htmlFor="guest-email" className="text-sm">

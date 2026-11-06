@@ -522,7 +522,6 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
 }
 
 </style>
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <!-- already added -->
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#0a1f44">
@@ -591,13 +590,12 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
       <div class="btn-row">
         <a href="/get" class="btn-primary">Ask CARA a question free <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
         <button type="button" id="heroOpenApp" class="btn-primary" style="display:none" onclick="window.location.href='/app'">Open the app</button>
-        <button type="button" class="btn-ghost" onclick="window.location.href='/pricing'">Start your 7-day free trial</button>
-
+        <a href="/auth?mode=signup&amp;plan=Solo&amp;redirect=%2Fapp" class="btn-ghost">Start 7 days free — no card</a>
       </div>
-    <div class="inreco-getrow" style="margin-top:26px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:center">
-      <button type="button" class="btn-primary" onclick="window.location.assign('/install')"><img src="/icon-192.png" alt="" width="20" height="20" style="border-radius:5px"> Install iNRECO on your device</button>
-      <button type="button" class="btn-ghost" onclick="shareApp()">Share iNRECO with a friend</button>
-    </div>
+      <p class="hero-price-line" style="margin-top:14px;font-size:.9rem;color:#e2e8f0;font-weight:600">
+        Free: ask one question now, no account. Then 7 days free on any plan — no card, nothing charged when it ends.
+        After that from <strong style="color:#fff">R259/month</strong>. <a href="/pricing" style="color:#93c5fd;text-decoration:underline">See plans</a>
+      </p>
     <div style="margin-top:24px;display:flex;flex-wrap:wrap;gap:10px;align-items:center">
       <span style="font-size:.8rem;color:var(--muted)">Share iNRECO:</span>
       <a href="https://wa.me/?text=Get%20instant%20Pocket%20Labour%20guidance%20from%20CARA%20%E2%80%94%20your%20personal%20Pocket%20Labour%20consultant%3A%20https%3A%2F%2Fapp.inreco.co.za%2Fget" target="_blank" class="contact-chip" style="padding:7px 14px;font-size:.8rem;background:#166534;border-color:#166534;color:#ffffff">
@@ -608,7 +606,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
         Email
       </a>
-      <button onclick="navigator.clipboard.writeText('https://inrecoapp.inreco.co.za');this.textContent='✓ Copied'" class="contact-chip" style="padding:7px 14px;font-size:.8rem;cursor:pointer;border:1px solid var(--border);background:rgba(30,41,59,.5);color:var(--text)">
+      <button onclick="navigator.clipboard.writeText('https://app.inreco.co.za/get');this.textContent='✓ Copied'" class="contact-chip" style="padding:7px 14px;font-size:.8rem;cursor:pointer;border:1px solid var(--border);background:rgba(30,41,59,.5);color:var(--text)">
         🔗 Copy Link
       </button>
     </div>
@@ -877,7 +875,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
     <div class="features-grid">
       <div class="feature-card"><div class="feat-icon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><h3>Ask CARA what to do next</h3><p>Explain the situation in your own words and get a clear, practical answer in seconds.</p></div>
       <div class="feature-card"><div class="feat-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><h3>Get the document you need</h3><p>Warnings, suspension letters, CCMA responses, contracts — written from your facts, in your company name.</p></div>
-      <div class="feature-card"><div class="feat-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><h3>Never miss a CCMA date</h3><p>The 30-day referral window is tracked for you, with reminders before it closes.</p></div>
+      <div class="feature-card"><div class="feat-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><h3>CCMA deadline tracker with reminders</h3><p>Enter the dismissal or dispute date and the app works out the usual time limit — like the 30-day window to refer a dismissal — counts down, and reminds you in the app and by email. Guidance, not legal advice.</p></div>
       <div class="feature-card"><div class="feat-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><h3>We'll guide you through it</h3><p>Step by step for every matter — AWOL, hearings, retrenchments, grievances and more.</p></div>
       <div class="feature-card"><div class="feat-icon"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><h3>Before you make a costly mistake</h3><p>CARA tells you plainly when a step you're about to take could go against you at the CCMA.</p></div>
       <div class="feature-card"><div class="feat-icon"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></div><h3>With you wherever you are</h3><p>Labour trouble doesn't wait for your desk. On the floor, in the workshop or at home — CARA is in your pocket.</p></div>
@@ -892,7 +890,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
         <img id="howItWorksImg" src="/__l5e/assets-v1/cdb47a15-50cd-4928-81b3-48437ba1ad01/inreco-how-it-works.jpg" alt="Professional using iNRECO" class="split-img" loading="lazy" width="1200" height="900">
         <div class="split-badge">
           <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-          <div><div class="split-badge-label">SA Labour Law</div><div class="split-badge-val">Always current</div></div>
+          <div><div class="split-badge-label">SA Labour Law</div><div class="split-badge-val">Based on the LRA &amp; BCEA</div></div>
         </div>
       </div>
       <div>
@@ -917,7 +915,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
         <p class="section-label">Why iNRECO</p>
         <h2>Built for <span class="blue-text">South African employers</span>.</h2>
         <div class="why-points">
-          <div class="why-point"><div class="why-icon"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div><h3>LRA & BCEA Compliant</h3><p>Every response aligns with the Labour Relations Act, BCEA, and 2025 Code of Good Practice.</p></div></div>
+          <div class="why-point"><div class="why-icon"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div><h3>Grounded in the LRA &amp; BCEA</h3><p>Guidance is based on the Labour Relations Act, the BCEA and the Codes of Good Practice. It is general guidance, not legal advice — for a dismissal or CCMA case, confirm with a labour-law practitioner.</p></div></div>
           <div class="why-point"><div class="why-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div><h3>Before you make a costly mistake</h3><p>CARA warns you before you take a step that could cost you at the CCMA.</p></div></div>
           <div class="why-point"><div class="why-icon"><svg viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3z"/><path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg></div><div><h3>Someone to ask, any hour</h3><p>CARA answers your actual situation — not a general article you still have to interpret.</p></div></div>
           <div class="why-point"><div class="why-icon"><svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div><div><h3>Affordable Subscriptions</h3><p>From R259/month — less than one hour of a labour consultant's time.</p></div></div>
@@ -938,7 +936,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
     <p class="section-desc" style="text-align:center;margin:0 auto 8px;max-width:760px"><strong>“An employee hands you a suspicious sick note.”</strong> Here is the whole thing, from that moment to a charge sheet ready for the hearing.</p>
     <p class="section-desc" style="text-align:center;margin:0 auto 24px;max-width:760px">
       Suspicious medical certificate on your desk? iNRECO walks you step-by-step through
-      checking the practitioner against the official HPCSA, PCNS and AHPCSA registers,
+      checking the practitioner yourself on the official HPCSA, PCNS and AHPCSA registers (it links you straight to each one),
       then tells you clearly whether the note is <strong>Verified</strong>,
       <strong>Inconclusive</strong> or a <strong>Discrepancy</strong>. If fraud is
       suspected, it drafts the disciplinary charge sheet and procedural fairness
@@ -980,7 +978,6 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
     <p class="section-label" style="text-align:center">Pricing</p>
     <h2 style="text-align:center">Start Free</h2>
     <p class="section-desc" style="text-align:center;margin:0 auto 8px">Every paid plan starts with a 7-day free trial — no charge during the trial, cancel anytime.</p>
-    <p style="text-align:center;font-size:.8rem;color:var(--muted)">Enterprise: pay 10 months, get 12 — save 17% annually.</p>
     <div class="inreco-getrow" style="margin-top:26px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:center">
       <button type="button" class="btn-primary" onclick="window.location.assign('/install')"><img src="/icon-192.png" alt="" width="20" height="20" style="border-radius:5px"> Install iNRECO on your device</button>
       <button type="button" class="btn-ghost" onclick="shareApp()">Share iNRECO with a friend</button>
@@ -994,7 +991,8 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
         <ul class="price-features">
           <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>50 AI questions/month</li>
           <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>All documents</li>
-          <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>CCMA deadline tracker</li>
+          <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Built-in topic guides &amp; checklists (unlimited)</li>
+          <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>CCMA deadline tracker with reminders</li>
           <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>CARA AI adviser</li>
         </ul>
         <button type="button" class="btn-price" onclick="window.location.href='/pricing'">Start 7-day free trial</button>
@@ -1009,11 +1007,12 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
         <p class="price-tier">For small HR teams</p><h3>Business</h3>
         <div class="price-amount">R599</div><p class="price-note">per month &middot; up to 5 users</p>
         <ul class="price-features">
-          <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Unlimited questions</li>
+          <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Unlimited AI questions (fair use)</li>
           <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Up to 5 registered users</li>
           <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>All documents</li>
           <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>CARA AI adviser</li>
-          <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>CCMA tracker</li>
+          <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Built-in topic guides &amp; checklists</li>
+          <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>CCMA deadline tracker with reminders</li>
         </ul>
         <button type="button" class="btn-price" onclick="window.location.href='/pricing'">Start 7-day free trial</button>
         <button type="button" class="btn-price" style="margin-top:8px;background:transparent;border:1px solid rgba(255,255,255,.25);color:#fff" onclick="window.location.href='/pricing'">Join now &amp; pay</button>
@@ -1039,7 +1038,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
           <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Everything in Professional</li>
           <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Up to 15 registered users</li>
           <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>CARA on hand for every site, any hour</li>
-          <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Annual option — pay 10 get 12</li>
+          <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Annual option — ask us</li>
           <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>WhatsApp support</li>
         </ul>
         <button type="button" class="btn-price" onclick="window.location.href='/pricing'">Start 7-day free trial</button>
@@ -1056,7 +1055,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
           <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
           Share on WhatsApp
         </a>
-        <button onclick="navigator.clipboard.writeText('https://inrecoapp.inreco.co.za');this.textContent='✓ Copied'" class="contact-chip" style="cursor:pointer">🔗 Copy Link</button>
+        <button onclick="navigator.clipboard.writeText('https://app.inreco.co.za/get');this.textContent='✓ Copied'" class="contact-chip" style="cursor:pointer">🔗 Copy Link</button>
       </div>
     </div>
 </section>
@@ -1080,7 +1079,7 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
     <h2 style="color:#fff;font-weight:800">Get expert labour guidance <span class="blue-text">right now</span>.</h2>
     <p style="color:#fff;font-weight:700">Ask CARA your first question free. No credit card required.</p>
     <div class="btn-row" style="justify-content:center">
-      <button type="button" class="btn-primary" onclick="showScreen('signup')">Open iNRECO <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
+      <button type="button" class="btn-primary" onclick="window.location.href='/get'">Ask CARA a question free <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
     </div>
     <div class="contact-row">
       <a href="https://wa.me/27844027029" class="contact-chip" target="_blank">
@@ -1095,8 +1094,8 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
   </div>
 </section>
   <div style="max-width:400px;margin:0 auto;padding:40px 20px;display:flex;flex-direction:column;gap:12px">
-    <button class="btn" onclick="showScreen('signup')">Get Started</button>
-    <button class="btn secondary" onclick="showScreen('login')">I have an account — Log In</button>
+    <button class="btn" onclick="window.location.href='/auth?mode=signup&plan=Solo&redirect=%2Fapp'">Get Started — 7 days free</button>
+    <button class="btn secondary" onclick="window.location.href='/auth?mode=login&redirect=%2Fapp'">I have an account — Log In</button>
   </div>
   <div style="text-align:center;font-size:11px;color:var(--muted);padding:16px">Powered by iNRECO</div>
 </div>
@@ -1255,10 +1254,10 @@ footer:not(.app-footer){border-top:1px solid var(--border);padding:40px;display:
     <h2>Subscribe to keep using iNRECO</h2>
     <div class="modal-sub">Start a 7-day free trial on any plan. No charge during the trial, cancel anytime.</div>
     <div class="plans">
-      <div class="plan"><h3>Solo</h3><div class="price">R259<small>/month</small></div><ul><li>CARA AI adviser</li><li>All documents</li><li>CCMA deadline tracker</li><li>1 user</li></ul><button onclick="selectPlan('Solo')">Start 7-day free trial</button><div class="pay-wallets" data-plan="Solo"></div></div>
-      <div class="plan featured"><h3>Business</h3><div class="price">R599<small>/month</small></div><ul><li>Unlimited questions</li><li>Up to 5 registered users</li><li>All documents</li><li>CARA AI adviser</li><li>CCMA tracker</li></ul><button onclick="selectPlan('Business')">Start 7-day free trial</button><div class="pay-wallets" data-plan="Business"></div></div>
+      <div class="plan"><h3>Solo</h3><div class="price">R259<small>/month</small></div><ul><li>CARA AI adviser — 50 AI questions/month</li><li>Built-in topic guides (unlimited)</li><li>All documents</li><li>CCMA deadline tracker with reminders</li><li>1 user</li></ul><button onclick="selectPlan('Solo')">Start 7-day free trial</button><div class="pay-wallets" data-plan="Solo"></div></div>
+      <div class="plan featured"><h3>Business</h3><div class="price">R599<small>/month</small></div><ul><li>Unlimited AI questions (fair use)</li><li>Up to 5 registered users</li><li>All documents</li><li>CARA AI adviser</li><li>Built-in topic guides</li><li>CCMA deadline tracker with reminders</li></ul><button onclick="selectPlan('Business')">Start 7-day free trial</button><div class="pay-wallets" data-plan="Business"></div></div>
       <div class="plan"><h3>Professional</h3><div class="price">R1,499<small>/month</small></div><ul><li>Everything in Business</li><li>Up to 10 registered users</li><li>CARA as your dedicated AI adviser</li><li>WhatsApp support</li></ul><button onclick="selectPlan('Professional')">Start 7-day free trial</button><div class="pay-wallets" data-plan="Professional"></div></div>
-      <div class="plan"><h3>Enterprise</h3><div class="price">R3,999<small>/month</small></div><ul><li>Everything in Professional</li><li>Up to 15 registered users</li><li>CARA as always-on IR adviser</li><li>Annual option — pay 10 get 12</li><li>WhatsApp support</li></ul><button onclick="selectPlan('Enterprise')">Start 7-day free trial</button></div>
+      <div class="plan"><h3>Enterprise</h3><div class="price">R3,999<small>/month</small></div><ul><li>Everything in Professional</li><li>Up to 15 registered users</li><li>CARA as always-on IR adviser</li><li>Annual option — ask us</li><li>WhatsApp support</li></ul><button onclick="selectPlan('Enterprise')">Start 7-day free trial</button><div class="pay-wallets" data-plan="Enterprise"></div></div>
     </div>
     <div style="margin-top:18px; padding-top:14px; border-top:1px solid var(--border); text-align:center;">
       <div style="font-size:13px; color:var(--muted); margin-bottom:8px;">Know someone who needs this? Share iNRECO →</div>
@@ -1298,18 +1297,14 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const SUPABASE_URL = 'https://riqswihuzclbyjemynyd.supabase.co';
 const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJpcXN3aWh1emNsYnlqZW15bnlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MzgyMTUsImV4cCI6MjA5NTMxNDIxNX0.4wPTPMJutT9m020OxPOu72GFzbxpOzr5_rHxIeVNsOg';
 
-const ENDPOINT = SUPABASE_URL + '/functions/v1/super-endpoint';
+// The old in-page chat used a "super-endpoint" edge function that no longer
+// exists (404). All chat and document generation now lives in the React app at
+// /app (CARA, via the cara-chat function with login + plan checks). Anything in
+// this legacy page that would have chatted now sends the visitor there instead.
+const ENDPOINT = null;
 const FREE_LIMIT = 0;
-// Dev override: these accounts bypass the free-tier limit so we can test paid-tier flows
-// without going through the PayFast sandbox. Remove before launch.
-const DEV_PAID_EMAILS = new Set([
-  'casperbadenhorst77@outlook.com',
-  'badenhorst.casper@gmail.com',
-]);
-function isDevPaid() {
-  return !!(currentUser && currentUser.email && DEV_PAID_EMAILS.has(currentUser.email.toLowerCase()));
-}
-const SYSTEM_PROMPT_BASE = "You are CARA, Compliance and Relations Adviser at iNRECO powered by iNRECO. Help SA employers with IR guidance. Always greet with 'Hello' — never use time-based greetings. Never include legal-advice disclaimers (the app footer already shows one). When you receive a 'Topic:' message with structured facts from a wizard, NEVER ask follow-up questions and NEVER repeat/summarise the facts. Go straight into advice. RESPONSE LENGTH RULES: For SIMPLE matters (warnings, AWOL notices, suspensions, grievances, poor performance, union letters, incapacity, disciplinary hearings) keep it brief and practical — a one-line risk flag, then numbered practical steps, no case law, no legal theory, no padding. For COMPLEX matters (CCMA referrals, retrenchments, automatically unfair dismissal) include relevant SA case law (e.g. Sidumo, NUM v De Beers, Fidelity Cash) and detailed legal context. The wizard message will say 'Complexity: simple' or 'Complexity: complex' — obey it. Address the employee by the name given in the wizard. Never ask for information already given in the wizard.";
+function isDevPaid() { return false; }
+const SYSTEM_PROMPT_BASE = '';
 
 const supabase = createClient(SUPABASE_URL, ANON_KEY);
 window.supabase = supabase;
@@ -1366,7 +1361,21 @@ function setBusy(btn, busy, busyText) {
 }
 window.setBusy = setBusy;
 
+// Only the marketing ("welcome") screen still lives here. The old sign-up,
+// log-in, onboarding and chat screens are replaced by the React app, which
+// starts the free week automatically and has the working CARA.
+const REACT_SCREENS = {
+  signup: '/auth?mode=signup&plan=Solo&redirect=%2Fapp',
+  login: '/auth?mode=login&redirect=%2Fapp',
+  onboarding: '/welcome',
+  app: '/app',
+};
 function showScreen(name) {
+  if (REACT_SCREENS[name]) {
+    if (name === 'signup') { try { localStorage.setItem('inreco.pendingInstallPrompt', '1'); } catch (_) {} }
+    window.location.assign(REACT_SCREENS[name]);
+    return;
+  }
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   $('screen-' + name).classList.add('active');
   if (name === 'signup') {
@@ -1582,18 +1591,7 @@ function updateTrialBadge() {
 
 // --- Chat ---
 const QUICK_ACTIONS = ["No-show/AWOL","Issue warning","Disciplinary hearing","CCMA referral","Grievance","Suspension","Retrenchment","Poor performance","Union/attorney","Incapacity"];
-const TOPIC_SYSTEM_PROMPTS = {
-  "No-show/AWOL": "You are CARA, an AI labour compliance assistant built by iNRECO. The user is dealing with an employee who has not reported for work without authorisation. Guide them step by step: establish how many days absent and whether contact was attempted. Advise on documenting all contact attempts. Explain the difference between unauthorised absence and desertion under item 4 of Schedule 8 of the LRA. Advise on issuing a written notice to report or explain. Explain when a disciplinary hearing becomes appropriate. Warn that dismissal without a hearing is procedurally unfair. Always recommend consulting a labour consultant for complex matters.",
-  "Issue warning": "You are CARA, an AI labour compliance assistant built by iNRECO. The user wants to issue a formal warning. Ask what the offence is and whether it is a first, second, or third occurrence. Explain verbal, written, and final written warnings under progressive discipline. Confirm warnings must be documented and signed. Advise on validity periods: 3–6 months verbal, 6–12 months written, 12 months final. Explain that expired warnings cannot aggravate sanction. Offer to draft warning wording. Reference Schedule 8 of the LRA.",
-  "Disciplinary hearing": "You are CARA, an AI labour compliance assistant built by iNRECO. Guide the user through a disciplinary hearing: issue written notice 48 hours in advance stating charges and the employee's right to representation; appoint an independent chairperson; allow the employee to state their case and cross-examine; apply the two-stage approach — guilt then sanction; communicate outcome in writing. Warn that procedural defects can make a substantively fair dismissal unfair. Offer to draft the notice, charge wording, or outcome letter. Reference Schedule 8 of the LRA.",
-  "CCMA referral": "You are CARA, an AI labour compliance assistant built by iNRECO. The user is dealing with a CCMA referral. If they received one: explain the section 191 process, the 30-day referral window, and the con-arb process. Advise them to check the LRA7.11 form and respond promptly. If they are lodging one: explain the 30-day deadline, condonation under the Melane factors, and how to complete the LRA7.11. Explain unfair dismissal under section 188 and unfair labour practice under section 186(2). Always recommend consulting a labour consultant for representation.",
-  "Grievance": "You are CARA, an AI labour compliance assistant built by iNRECO. The user is dealing with an employee grievance. Explain that section 3 of the BCEA requires a formal grievance procedure and that ignoring grievances can lead to unfair labour practice claims under section 186(2) of the LRA. Guide through the procedure: written grievance, line manager responds within 5 days, escalation if unresolved, CCMA referral as last resort. Warn that failure to respond evidences bad faith. Offer to draft an acknowledgement or response letter.",
-  "Suspension": "You are CARA, an AI labour compliance assistant built by iNRECO. Distinguish precautionary suspension on full pay pending investigation from punitive suspension without pay which requires a prior hearing. For precautionary suspension: advise issuing a letter stating it is not punitive, is on full pay, and is subject to review. Warn that indefinite suspension is an unfair labour practice. Reference item 4 of Schedule 8 of the LRA and section 186(2)(b). Offer to draft a suspension letter.",
-  "Retrenchment": "You are CARA, an AI labour compliance assistant built by iNRECO. Walk the user through section 189 of the LRA: issue a section 189(3) notice disclosing reasons, alternatives, selection criteria, severance calculation, and timeline; hold meaningful consultation; apply fair selection criteria; pay severance of one week per completed year of service under section 41 of the BCEA plus leave and notice pay. For 10 or more employees at employers with 50 or more staff, section 189A applies. Warn that bypassing consultation is procedurally unfair.",
-  "Poor performance": "You are CARA, an AI labour compliance assistant built by iNRECO. Explain that poor performance is governed by item 8 of Schedule 8 of the LRA and is not misconduct. The employer must set written measurable standards, ensure the employee knows them, provide support and time to improve, conduct a counselling session, issue a performance improvement plan with targets and review date, and only then hold a formal incapacity enquiry if no improvement. Warn that dismissing without this process is unfair. Offer to help draft a PIP or counselling record.",
-  "Union/attorney": "You are CARA, an AI labour compliance assistant built by iNRECO. Advise on union organisational rights under sections 12–16 of the LRA. Explain that an employee has the right to union representation at a disciplinary hearing. If the employer received a letter from an attorney, advise not to respond without legal advice. Explain the 10% threshold for stop-order facilities, 30% for organisational rights, and majority membership for collective bargaining. Warn against interference with organisational rights. Always recommend consulting a labour consultant before responding to formal union or legal correspondence.",
-  "Incapacity": "You are CARA, an AI labour compliance assistant built by iNRECO. The user is dealing with employee incapacity under item 10 of Schedule 8 of the LRA. Key questions: is incapacity temporary or permanent, how long will absence last, can the employer accommodate the employee. Steps: obtain a medical report with consent; explore alternative duties or reduced hours; hold a formal incapacity enquiry with representation; consider the nature of the job and availability of a replacement. Warn that dismissal is a last resort. Also check sick leave entitlements under section 22 of the BCEA and consider EEA reasonable accommodation obligations."
-};
+const TOPIC_SYSTEM_PROMPTS = {}; // legacy prompts removed: chat now lives in /app
 let currentTopicSystem = null;
 const QUICK_PROMPTS = {
   "No-show/AWOL":"An employee did not show up for work without notice. What steps should I take?",
@@ -2226,6 +2224,8 @@ function showRiskWarning(docName, risk, onProceed) {
 }
 
 async function generateDocument(docName, opts = {}) {
+  // Legacy chat is retired; documents are generated in the React app.
+  window.location.assign('/app'); return;
   if (!currentMatter) return;
   if (!opts.skipRiskCheck) {
     const risk = checkRisk(docName);
@@ -2456,6 +2456,9 @@ async function sendMessage(opts) {
   if (isSending) return;
   const text = input.value.trim();
   if (!text) return;
+  // Legacy chat is retired: keep the question and continue in the React app.
+  try { localStorage.setItem('inreco.guestDraft', text); } catch (_) {}
+  window.location.assign('/app'); return;
   const isWizardSubmission = !!(opts && opts.countAsQuestion) || text.startsWith('Topic:');
   if (isWizardSubmission && !isDevPaid() && usageCount >= FREE_LIMIT) { openUpgrade(); return; }
 

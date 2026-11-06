@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { FileText, FilePlus2, CreditCard, LifeBuoy } from "lucide-react";
 import { TEMPLATE_REGISTRY } from "@/lib/documents/templates";
 import { signInPath } from "@/lib/authRedirect";
+import CcmaDeadlinesCard from "@/components/CcmaDeadlinesCard";
 
 type Sub = { plan_name: string | null; status: string | null };
 type DocRow = {
@@ -127,6 +128,8 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         )}
+
+        <CcmaDeadlinesCard />
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <ActionCard

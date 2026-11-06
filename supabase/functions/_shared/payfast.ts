@@ -1,14 +1,15 @@
 import { crypto } from "https://deno.land/std@0.224.0/crypto/mod.ts";
 
-export type PlanName = "Solo" | "Business" | "Professional";
+export type PlanName = "Solo" | "Business" | "Professional" | "Enterprise";
 
 export const PLAN_PRICES: Record<PlanName, number> = {
   Solo: 259,
   Business: 599,
   Professional: 1499,
+  Enterprise: 3999,
 };
 
-export const PLAN_NAMES = new Set<PlanName>(["Solo", "Business", "Professional"]);
+export const PLAN_NAMES = new Set<PlanName>(["Solo", "Business", "Professional", "Enterprise"]);
 
 /** PayFast payment_method values we let the app pre-select. */
 export const ALLOWED_PAYMENT_METHODS = new Set(["ap", "gp", "mp"]);

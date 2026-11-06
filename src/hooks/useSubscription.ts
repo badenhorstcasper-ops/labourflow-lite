@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { computeEntitlement, type EntitlementReason } from "@/lib/entitlement";
 
-export type SubStatus = "trialing" | "active" | "cancelled" | "pending" | "none";
+export type SubStatus = "trialing" | "active" | "cancelled" | "pending" | "expired" | "none";
 
 export interface SubscriptionInfo {
   loading: boolean;
@@ -12,6 +13,8 @@ export interface SubscriptionInfo {
   paidUntil: string | null;
   daysLeft: number | null;
   isEntitled: boolean; // true when trialing or active
+  /** Why the account is (not) entitled — same rules the server uses. */
+  entitlementReason: EntitlementReason;
   refresh: () => Promise<void>;
 }
 
@@ -22,6 +25,7 @@ export function useSubscription(): SubscriptionInfo & { isAdmin: boolean } {
   const [planName, setPlanName] = useState<string | null>(null);
   const [trialEndsAt, setTrialEndsAt] = useState<string | null>(null);
   const [paidUntil, setPaidUntil] = useState<string | null>(null);
+  const [provisionalUntil, setProvisionalUntil] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
   async function load() {
@@ -34,6 +38,7 @@ export function useSubscription(): SubscriptionInfo & { isAdmin: boolean } {
       setPlanName(null);
       setTrialEndsAt(null);
       setPaidUntil(null);
+      setProvisionalUntil(null);
       setLoading(false);
       return;
     }
@@ -65,13 +70,14 @@ export function useSubscription(): SubscriptionInfo & { isAdmin: boolean } {
 
     const { data } = await supabase
       .from("subscriptions")
-      .select("plan_name, status, trial_ends_at, paid_until")
+      .select("plan_name, status, trial_ends_at, paid_until, provisional_until")
       .eq("user_id", ownerId)
       .order("updated_at", { ascending: false })
       .limit(1)
       .maybeSingle();
 
     setPaidUntil((data as { paid_until?: string | null } | null)?.paid_until ?? null);
+    setProvisionalUntil((data as { provisional_until?: string | null } | null)?.provisional_until ?? null);
 
     if (isAdmin) {
       // Admins always entitled. Reflect any real plan if present, else show "active".
@@ -109,19 +115,13 @@ export function useSubscription(): SubscriptionInfo & { isAdmin: boolean } {
         )
       : null;
 
-  // The month a customer already paid for keeps them in, even if a renewal
-  // message never arrived or a single debit bounced.
-  const paidUpNow = paidUntil ? new Date(paidUntil).getTime() > Date.now() : false;
-
-  const trialExpired =
-    status === "trialing" && trialEndsAt
-      ? new Date(trialEndsAt).getTime() < Date.now()
-      : false;
-  const isEntitled =
-    isAdmin ||
-    paidUpNow ||
-    (status === "active" && !paidUntil) ||
-    (status === "trialing" && !trialExpired);
+  // Same rules as the edge functions (supabase/functions/_shared/entitlement.ts):
+  // a paid month always counts, an expired provisional window does not.
+  const ent = computeEntitlement(
+    { status, trial_ends_at: trialEndsAt, paid_until: paidUntil, provisional_until: provisionalUntil },
+    { isAdmin },
+  );
+  const isEntitled = ent.entitled;
 
   return {
     loading,
@@ -132,6 +132,7 @@ export function useSubscription(): SubscriptionInfo & { isAdmin: boolean } {
     paidUntil,
     daysLeft,
     isEntitled,
+    entitlementReason: ent.reason,
     isAdmin,
     refresh: load,
   };
