@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_usage: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          owner_user_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          owner_user_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          owner_user_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       bug_reports: {
         Row: {
           created_at: string
@@ -57,6 +81,125 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ccma_deadline_reminders: {
+        Row: {
+          created_at: string
+          days_left: number
+          due_date: string
+          email_attempts: number
+          email_error: string | null
+          email_status: string
+          emailed_at: string | null
+          id: string
+          matter_id: string
+          owner_user_id: string
+          read_at: string | null
+          recipient_user_id: string
+          stage: number
+        }
+        Insert: {
+          created_at?: string
+          days_left: number
+          due_date: string
+          email_attempts?: number
+          email_error?: string | null
+          email_status?: string
+          emailed_at?: string | null
+          id?: string
+          matter_id: string
+          owner_user_id: string
+          read_at?: string | null
+          recipient_user_id: string
+          stage: number
+        }
+        Update: {
+          created_at?: string
+          days_left?: number
+          due_date?: string
+          email_attempts?: number
+          email_error?: string | null
+          email_status?: string
+          emailed_at?: string | null
+          id?: string
+          matter_id?: string
+          owner_user_id?: string
+          read_at?: string | null
+          recipient_user_id?: string
+          stage?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ccma_deadline_reminders_matter_id_fkey"
+            columns: ["matter_id"]
+            isOneToOne: false
+            referencedRelation: "ccma_matters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ccma_matters: {
+        Row: {
+          case_number: string | null
+          completed_at: string | null
+          created_at: string
+          created_by_user_id: string
+          custom_due_date: string | null
+          dispute_type: string
+          due_date: string
+          email_reminders: boolean
+          employee_name: string | null
+          id: string
+          notes: string | null
+          owner_user_id: string
+          reminder_days: number[]
+          reminder_sent_at: string | null
+          status: string
+          title: string
+          trigger_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          case_number?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by_user_id?: string
+          custom_due_date?: string | null
+          dispute_type: string
+          due_date: string
+          email_reminders?: boolean
+          employee_name?: string | null
+          id?: string
+          notes?: string | null
+          owner_user_id?: string
+          reminder_days?: number[]
+          reminder_sent_at?: string | null
+          status?: string
+          title: string
+          trigger_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          case_number?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by_user_id?: string
+          custom_due_date?: string | null
+          dispute_type?: string
+          due_date?: string
+          email_reminders?: boolean
+          employee_name?: string | null
+          id?: string
+          notes?: string | null
+          owner_user_id?: string
+          reminder_days?: number[]
+          reminder_sent_at?: string | null
+          status?: string
+          title?: string
+          trigger_date?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       chairperson_bookings: {
         Row: {
@@ -845,6 +988,7 @@ export type Database = {
           payfast_token: string | null
           pf_payment_id: string | null
           plan_name: string
+          provisional_granted_at: string | null
           raw_itn: Json | null
           referral_code: string | null
           referral_credit_zar: number
@@ -863,6 +1007,7 @@ export type Database = {
           payfast_token?: string | null
           pf_payment_id?: string | null
           plan_name: string
+          provisional_granted_at?: string | null
           raw_itn?: Json | null
           referral_code?: string | null
           referral_credit_zar?: number
@@ -881,6 +1026,7 @@ export type Database = {
           payfast_token?: string | null
           pf_payment_id?: string | null
           plan_name?: string
+          provisional_granted_at?: string | null
           raw_itn?: Json | null
           referral_code?: string | null
           referral_credit_zar?: number
@@ -1593,6 +1739,14 @@ export type Database = {
         }[]
       }
       accept_team_invite: { Args: { _token: string }; Returns: Json }
+      ccma_compute_due_date: {
+        Args: { p_custom: string; p_trigger: string; p_type: string }
+        Returns: string
+      }
+      ccma_reminder_stage: {
+        Args: { p_days_left: number; p_schedule: number[] }
+        Returns: number
+      }
       commission_payout_date: { Args: { _month: string }; Returns: string }
       current_account_owner: { Args: never; Returns: string }
       delete_email: {
@@ -1604,6 +1758,8 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      expire_stale_trials: { Args: never; Returns: number }
+      flag_ccma_deadline_reminders: { Args: never; Returns: number }
       generate_referral_code: { Args: never; Returns: string }
       get_or_create_referral_code: { Args: never; Returns: string }
       get_salesperson_sensitive: {
