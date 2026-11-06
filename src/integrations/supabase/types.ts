@@ -980,16 +980,19 @@ export type Database = {
         Row: {
           amount: number
           billing_date: string | null
+          billing_interval: string
           created_at: string
           email: string
           id: string
           m_payment_id: string
+          offer_kind: string | null
           pay_mode: string
           payfast_token: string | null
           pf_payment_id: string | null
           plan_name: string
           provisional_granted_at: string | null
           raw_itn: Json | null
+          recurring_amount: number | null
           referral_code: string | null
           referral_credit_zar: number
           status: string
@@ -999,16 +1002,19 @@ export type Database = {
         Insert: {
           amount: number
           billing_date?: string | null
+          billing_interval?: string
           created_at?: string
           email: string
           id?: string
           m_payment_id: string
+          offer_kind?: string | null
           pay_mode?: string
           payfast_token?: string | null
           pf_payment_id?: string | null
           plan_name: string
           provisional_granted_at?: string | null
           raw_itn?: Json | null
+          recurring_amount?: number | null
           referral_code?: string | null
           referral_credit_zar?: number
           status?: string
@@ -1018,16 +1024,19 @@ export type Database = {
         Update: {
           amount?: number
           billing_date?: string | null
+          billing_interval?: string
           created_at?: string
           email?: string
           id?: string
           m_payment_id?: string
+          offer_kind?: string | null
           pay_mode?: string
           payfast_token?: string | null
           pf_payment_id?: string | null
           plan_name?: string
           provisional_granted_at?: string | null
           raw_itn?: Json | null
+          recurring_amount?: number | null
           referral_code?: string | null
           referral_credit_zar?: number
           status?: string

@@ -20,6 +20,8 @@ type Props = {
   /** Wallets and scan codes always charge today — the free trial keeps the card flow. */
   disabled?: boolean;
   onError?: (message: string) => void;
+  interval?: "monthly" | "yearly";
+  applyOffer?: boolean;
 };
 
 function AppleLogo() {
@@ -47,6 +49,8 @@ const WALLET_CLASS =
 export default function PayfastPayOptions({
   planName,
   priceLabel,
+  interval = "monthly",
+  applyOffer = false,
   email,
   referralCode,
   disabled,
@@ -90,6 +94,8 @@ export default function PayfastPayOptions({
           mode: "now",
           referralCode,
           paymentMethod: method,
+          interval,
+          applyOffer,
         });
         rememberPendingCheckout(email, planName, data.mPaymentId);
         submitPreparedCheckout(data.actionUrl!, data.fields!);
@@ -98,7 +104,7 @@ export default function PayfastPayOptions({
         setBusy(null);
       }
     },
-    [email, planName, referralCode, onError],
+    [email, planName, referralCode, onError, interval, applyOffer],
   );
 
   const makeScanCode = useCallback(async () => {
@@ -108,7 +114,7 @@ export default function PayfastPayOptions({
     }
     setBusy("scan");
     try {
-      const data = await createCheckout({ planName, email, mode: "now", referralCode });
+      const data = await createCheckout({ planName, email, mode: "now", referralCode, interval, applyOffer });
       const link = payLinkFor(data.mPaymentId!);
       const image = await QRCode.toDataURL(link, { width: 320, margin: 1 });
       if (!mounted.current) return;

@@ -49,9 +49,13 @@ export async function createCheckout(params: {
   mode: "trial" | "now";
   referralCode?: string | null;
   paymentMethod?: WalletMethod | null;
+  interval?: "monthly" | "yearly";
+  applyOffer?: boolean;
 }): Promise<CheckoutResponse> {
   const { data, error } = await supabase.functions.invoke<CheckoutResponse>("payfast-checkout", {
     body: {
+      interval: params.interval ?? "monthly",
+      applyOffer: params.applyOffer === true,
       planName: params.planName,
       email: params.email,
       mode: params.mode,

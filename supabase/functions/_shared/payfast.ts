@@ -105,6 +105,8 @@ export function buildCheckoutFields(params: {
   itemName: string;
   referralCode?: string | null;
   paymentMethod?: string | null;
+  /** "yearly" bills once a year (PayFast frequency 6); default monthly (3). */
+  interval?: "monthly" | "yearly";
 }): Record<string, string> {
   const fields: Record<string, string> = {
     merchant_id: params.merchantId,
@@ -125,7 +127,7 @@ export function buildCheckoutFields(params: {
   fields.subscription_type = "1";
   fields.billing_date = params.billingDate;
   fields.recurring_amount = params.recurringAmount.toFixed(2);
-  fields.frequency = "3";
+  fields.frequency = params.interval === "yearly" ? "6" : "3";
   fields.cycles = "0";
   return fields;
 }

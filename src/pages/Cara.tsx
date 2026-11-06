@@ -1,3 +1,4 @@
+import UpgradeNudge from "@/components/UpgradeNudge";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FilePlus2 } from "lucide-react";
@@ -334,6 +335,9 @@ export default function CaraPage() {
                   />
                 ))}
                 {busy && <div className="text-sm italic text-muted-foreground">CARA is thinking…</div>}
+                {!busy && messages.filter((m) => m.role === "assistant").length >= 2 && (
+                  <UpgradeNudge moment="cara" />
+                )}
               </div>
             )}
           </div>

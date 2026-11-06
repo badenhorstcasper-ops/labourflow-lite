@@ -30,6 +30,8 @@ type PayfastTransaction = {
   billing_date: string | null;
   referral_code: string | null;
   referral_credit_zar: number | string | null;
+  recurring_amount?: number | string | null;
+  billing_interval?: string | null;
 };
 
 /** Credit a referrer earns once their friend actually starts paying. */
@@ -330,7 +332,7 @@ Deno.serve(async (req) => {
 
     const { data: txData } = await supabase
       .from("payfast_transactions")
-      .select("id, user_id, email, plan_name, amount, billing_date, referral_code, referral_credit_zar")
+      .select("id, user_id, email, plan_name, amount, billing_date, referral_code, referral_credit_zar, recurring_amount, billing_interval")
       .eq("m_payment_id", mPaymentId)
       .maybeSingle();
 
@@ -413,8 +415,14 @@ Deno.serve(async (req) => {
     }
 
     const expectedAmount = Number(tx.amount);
+    // Later debits on the same arrangement charge the full recurring amount,
+    // which differs from the first payment when an offer or credit was used.
+    const recurringAmount = tx.recurring_amount != null ? Number(tx.recurring_amount) : null;
     const paidToday = amountGross !== null && Math.abs(amountGross) < 0.01;
-    if (!paidToday && (amountGross === null || Math.abs(amountGross - expectedAmount) > 0.01)) {
+    const matchesFirst = amountGross !== null && Math.abs(amountGross - expectedAmount) <= 0.01;
+    const matchesRecurring = amountGross !== null && recurringAmount !== null &&
+      Math.abs(amountGross - recurringAmount) <= 0.01;
+    if (!paidToday && !matchesFirst && !matchesRecurring) {
       await logAttempt(supabase, {
         ...txLog,
         outcome: "rejected",
@@ -437,7 +445,8 @@ Deno.serve(async (req) => {
 
     const sub = await findSubscription(supabase, tx, payfastToken);
     const interval: "monthly" | "yearly" =
-      (sub?.billing_interval as "monthly" | "yearly") ?? "monthly";
+      tx.billing_interval === "yearly" ? "yearly"
+        : ((sub?.billing_interval as "monthly" | "yearly") ?? "monthly");
 
     // Never let a cheaper or once-off purchase demote a live, paid-up plan.
     const existingLive =
@@ -453,6 +462,7 @@ Deno.serve(async (req) => {
       user_id: tx.user_id ?? sub?.user_id ?? null,
       email: tx.email,
       plan_name: keepExistingPlan ? sub!.plan_name : tx.plan_name,
+      ...(keepExistingPlan ? {} : { billing_interval: tx.billing_interval === "yearly" ? "yearly" : "monthly" }),
       status: paidToday ? "trialing" : "active",
       trial_ends_at: paidToday ? trialEndsAt : null,
       pf_payment_id: pfPaymentId,

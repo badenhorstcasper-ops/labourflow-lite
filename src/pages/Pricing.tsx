@@ -19,6 +19,10 @@ import InstallAppButton from "@/components/InstallAppButton";
 import BackHomeBar from "@/components/BackHomeBar";
 import PayfastPayOptions from "@/components/PayfastPayOptions";
 import { rememberTrialPlan, startFreeTrial as startTrial } from "@/lib/trial";
+import { annualPrice, offerFirstMonthPrice } from "@/lib/offers";
+import { useTrialOffer, formatOfferEnd } from "@/hooks/useTrialOffer";
+
+const rand = (n: number) => `R${n.toLocaleString("en-ZA").replace(/\s/g, ",")}`;
 
 const TRIAL_DAYS = 7;
 
@@ -105,7 +109,7 @@ const PLANS: Plan[] = [
       "Everything in Professional",
       "Up to 15 registered users",
       "CARA as always-on IR adviser",
-      "Annual option (pay 10 months, get 12) — arranged with our team",
+      "Yearly option — save 20%",
       "WhatsApp support",
     ],
     cta: "Start 7-day free trial",
@@ -178,6 +182,9 @@ const Pricing = () => {
   const reason = searchParams.get("reason");
   const reasonMessage = reason ? REASON_MESSAGES[reason] : null;
   const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [interval, setBillingInterval] = useState<"monthly" | "yearly">("monthly");
+  const offer = useTrialOffer();
+  const offerActive = offer.eligible && interval === "monthly";
 
   // Funnel: which lock screen people hit, and how often.
   useEffect(() => {
@@ -223,6 +230,8 @@ const Pricing = () => {
           email: checkoutEmail,
           mode,
           referralCode: referralCode || undefined,
+          interval,
+          applyOffer: offerActive,
         },
       });
       if (error) throw new Error(await functionErrorMessage(error));
@@ -324,7 +333,7 @@ const Pricing = () => {
             </div>
             <div className="rounded-lg border bg-card p-4">
               <p className="font-semibold">Paid monthly</p>
-              <p className="mt-1 text-muted-foreground">From R259/month via PayFast. Cancel any time from your account.</p>
+              <p className="mt-1 text-muted-foreground">From R259/month via PayFast, or pay yearly and save 20%. Cancel any time from your account.</p>
             </div>
           </section>
 
@@ -349,6 +358,33 @@ const Pricing = () => {
           )}
 
   
+          {offer.eligible && (
+            <div className="mx-auto mb-6 max-w-2xl rounded-lg border border-primary/40 bg-primary/10 px-4 py-4 text-center">
+              <p className="text-base font-semibold text-foreground">
+                {offer.kind === "win_back" ? "Welcome back — 20% off your first month" : "Trial offer: 20% off your first month"}
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Pay monthly and your first month is 20% cheaper, then normal price after. Offer ends {formatOfferEnd(offer.endsAt)}.
+              </p>
+            </div>
+          )}
+
+          <div className="mx-auto mb-8 flex max-w-xs rounded-full border bg-card p-1" role="group" aria-label="Billing period">
+            {(["monthly", "yearly"] as const).map((v) => (
+              <button
+                key={v}
+                type="button"
+                aria-pressed={interval === v}
+                onClick={() => setBillingInterval(v)}
+                className={`min-h-11 flex-1 rounded-full px-4 text-sm font-semibold transition ${
+                  interval === v ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+                }`}
+              >
+                {v === "monthly" ? "Monthly" : "Yearly · save 20%"}
+              </button>
+            ))}
+          </div>
+
           {checkoutError && (
             <div className="mx-auto mb-6 max-w-2xl rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
               {checkoutError}
@@ -357,6 +393,9 @@ const Pricing = () => {
   
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {PLANS.map((plan) => {
+              const yearly = annualPrice(plan.name) ?? plan.amount * 12;
+              const offerPrice = offerFirstMonthPrice(plan.name) ?? plan.amount;
+              const payLabel = interval === "yearly" ? rand(yearly) : offerActive ? rand(offerPrice) : plan.priceLabel;
               return (
                 <Card
                   key={plan.name}
@@ -375,8 +414,27 @@ const Pricing = () => {
                   </CardHeader>
                   <CardContent className="flex flex-1 flex-col justify-between gap-6">
                     <div>
-                      <p className="text-3xl font-bold">{plan.priceLabel}</p>
-                      <p className="mt-1 text-sm text-muted-foreground">{plan.priceSuffix}</p>
+                      {interval === "yearly" ? (
+                        <>
+                          <p className="text-3xl font-bold">{rand(yearly)}</p>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            per year · works out to {rand(Math.round(yearly / 12))}/month
+                          </p>
+                          <p className="mt-1 text-xs text-muted-foreground line-through">{rand(plan.amount * 12)} if paid monthly</p>
+                        </>
+                      ) : offerActive ? (
+                        <>
+                          <p className="text-3xl font-bold">
+                            {rand(offerPrice)} <span className="text-base font-medium text-muted-foreground line-through">{plan.priceLabel}</span>
+                          </p>
+                          <p className="mt-1 text-sm text-muted-foreground">first month, then {plan.priceLabel}/month</p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-3xl font-bold">{plan.priceLabel}</p>
+                          <p className="mt-1 text-sm text-muted-foreground">{plan.priceSuffix}</p>
+                        </>
+                      )}
                       {plan.trial && (
                         <p className="mt-2 inline-block rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
                           7-day free trial · cancel anytime
@@ -422,15 +480,21 @@ const Pricing = () => {
                         >
                           {busyPlan === `${plan.name}:now`
                             ? "Opening PayFast…"
-                            : `Join now & pay ${plan.priceLabel}`}
+                            : `Join now & pay ${payLabel}`}
                         </Button>
                         <p className="text-center text-[11px] text-muted-foreground">
                           Free trial: 7 days of the full plan, no card and no charge. Join now:
-                          billed {plan.priceLabel} today, then monthly.
+                          {interval === "yearly"
+                            ? ` billed ${payLabel} today, then yearly.`
+                            : offerActive
+                              ? ` billed ${payLabel} today, then ${plan.priceLabel} monthly.`
+                              : ` billed ${plan.priceLabel} today, then monthly.`}
                         </p>
                         <PayfastPayOptions
                           planName={plan.name}
-                          priceLabel={plan.priceLabel}
+                          priceLabel={payLabel}
+                          interval={interval}
+                          applyOffer={offerActive}
                           email={checkoutEmail}
                           referralCode={referralCode}
                           disabled={!canSubmit || busyPlan !== null}

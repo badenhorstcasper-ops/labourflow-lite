@@ -11,6 +11,7 @@ import {
   safeOrigin,
   signFields,
 } from "../_shared/payfast.ts";
+import { annualPrice, decideTrialOffer, offerFirstMonthPrice } from "../_shared/offers.ts";
 
 const TRIAL_DAYS = 7;
 /** Someone who arrives through a friend's invite link gets double the trial. */
@@ -117,10 +118,34 @@ Deno.serve(async (req) => {
   }
 
   const origin = safeOrigin(req);
-  const fullAmount = PLAN_PRICES[planName as PlanName];
   // "now" = pay today and start billing immediately. "trial" = free days first.
   const payNow = typeof body.mode === "string" && body.mode.toLowerCase() === "now";
+  const interval: "monthly" | "yearly" = body.interval === "yearly" && payNow ? "yearly" : "monthly";
+  const fullAmount = interval === "yearly"
+    ? annualPrice(planName)!
+    : PLAN_PRICES[planName as PlanName];
   const admin = createClient(supabaseUrl, serviceKey);
+
+  // 20% off the first month for people finishing (or who finished) a free trial.
+  // The server decides eligibility — the app only asks.
+  let offerKind: string | null = null;
+  let firstPaymentBase = fullAmount;
+  if (authedUser.id && payNow && interval === "monthly" && body.applyOffer === true) {
+    const [{ data: sub }, { data: paid }] = await Promise.all([
+      admin.from("subscriptions").select("trial_ends_at").eq("user_id", authedUser.id)
+        .order("updated_at", { ascending: false }).limit(1).maybeSingle(),
+      admin.from("payfast_transactions").select("id").eq("user_id", authedUser.id)
+        .eq("status", "complete").gt("amount", 0).limit(1),
+    ]);
+    const decision = decideTrialOffer({
+      trialEndsAt: (sub?.trial_ends_at as string | null) ?? null,
+      hasPaidBefore: (paid ?? []).length > 0,
+    });
+    if (decision.eligible) {
+      offerKind = decision.kind;
+      firstPaymentBase = offerFirstMonthPrice(planName)!;
+    }
+  }
 
   // Someone who joined through a friend's invite link gets 14 free days.
   let trialDays = TRIAL_DAYS;
@@ -144,7 +169,7 @@ Deno.serve(async (req) => {
       .eq("user_id", authedUser.id)
       .eq("status", "granted")
       .order("created_at", { ascending: true });
-    const maxUsable = Math.max(0, fullAmount - MIN_CHARGE_ZAR);
+    const maxUsable = Math.max(0, firstPaymentBase - MIN_CHARGE_ZAR);
     for (const c of credits ?? []) {
       if (creditApplied >= maxUsable) break;
       const value = Number(c.amount_zar) || 0;
@@ -154,7 +179,7 @@ Deno.serve(async (req) => {
     }
   }
 
-  const amount = Math.max(0, fullAmount - creditApplied);
+  const amount = Math.max(0, firstPaymentBase - creditApplied);
   const billingDate = payNow ? new Date().toISOString().slice(0, 10) : trialBillingDate(trialDays);
   const mPaymentId = globalThis.crypto.randomUUID();
   const notifyUrl = `${supabaseUrl}/functions/v1/payfast-webhook`;
@@ -169,6 +194,9 @@ Deno.serve(async (req) => {
     referral_code: referralCode,
     referral_credit_zar: creditApplied,
     pay_mode: payNow ? "now" : "trial",
+    billing_interval: interval,
+    recurring_amount: fullAmount,
+    offer_kind: offerKind,
   });
 
   if (txError) {
@@ -195,9 +223,10 @@ Deno.serve(async (req) => {
     amountToday: payNow ? amount : 0,
     recurringAmount: fullAmount,
     billingDate,
-    itemName: checkoutItemName(planName, payNow, trialDays),
+    itemName: checkoutItemName(planName, payNow, trialDays) + (interval === "yearly" ? " (annual)" : ""),
     referralCode,
     paymentMethod,
+    interval,
   });
 
   const fields = await signFields(baseFields, passphrase);

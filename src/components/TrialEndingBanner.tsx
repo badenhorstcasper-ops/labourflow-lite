@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useTrialOffer } from "@/hooks/useTrialOffer";
 
 /**
  * A gentle nudge in the last days of the free trial so nobody is surprised
@@ -8,6 +9,7 @@ import { useSubscription } from "@/hooks/useSubscription";
  */
 export default function TrialEndingBanner() {
   const { status, daysLeft, planName } = useSubscription();
+  const offer = useTrialOffer();
   if (status !== "trialing" || daysLeft === null || daysLeft > 3) return null;
 
   return (
@@ -21,6 +23,11 @@ export default function TrialEndingBanner() {
         When the trial ends, CARA, documents and sick-note checks lock until you pick a plan.
         {planName ? ` You are on the ${planName} plan.` : ""}
       </p>
+      {offer.eligible && (
+        <p className="mt-1 font-medium text-foreground">
+          Subscribe now and get 20% off your first month.
+        </p>
+      )}
       <Button asChild size="sm" className="mt-3">
         <Link to="/pricing">Choose a plan now</Link>
       </Button>

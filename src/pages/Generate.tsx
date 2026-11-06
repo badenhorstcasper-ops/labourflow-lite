@@ -1,3 +1,4 @@
+import UpgradeNudge from "@/components/UpgradeNudge";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -201,6 +202,7 @@ export default function GeneratePage() {
                 </div>
               </CardContent>
             </Card>
+            <UpgradeNudge moment="document" />
             {tpl?.key === "notice_hearing" && (
               <ChairpersonOffer documentId={result.id} employeeName={values.employee} />
             )}
