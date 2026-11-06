@@ -90,11 +90,19 @@ Deno.serve(async (req) => {
   upstream.append("file", file, `recording.${ext}`);
   upstream.append("model", "openai/gpt-4o-mini-transcribe");
 
-  const resp = await fetch("https://ai.gateway.lovable.dev/v1/audio/transcriptions", {
-    method: "POST",
-    headers: { "Lovable-API-Key": key },
-    body: upstream,
-  });
+  let resp: Response;
+  try {
+    resp = await fetch("https://ai.gateway.lovable.dev/v1/audio/transcriptions", {
+      method: "POST",
+      headers: { "Lovable-API-Key": key },
+      body: upstream,
+    });
+  } catch (e) {
+    return new Response(JSON.stringify({ error: "transcription_unreachable", detail: String(e) }), {
+      status: 502,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   if (!resp.ok) {
     const detail = await resp.text().catch(() => "");
@@ -107,6 +115,13 @@ Deno.serve(async (req) => {
 
   const data = await resp.json().catch(() => null) as { text?: string } | null;
   const text = (data?.text ?? "").trim();
+
+  if (!text) {
+    return new Response(JSON.stringify({ error: "empty_transcription" }), {
+      status: 502,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   return new Response(JSON.stringify({ text }), {
     status: 200,

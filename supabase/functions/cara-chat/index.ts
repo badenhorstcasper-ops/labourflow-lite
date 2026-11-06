@@ -81,18 +81,26 @@ Deno.serve(async (req) => {
     system += `\n\nAnswer the user's specific question using this guidance. Stay consistent with it.`;
   }
 
-  const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Lovable-API-Key": key,
-    },
-    body: JSON.stringify({
-      model: "google/gemini-3-flash-preview",
-      messages: [{ role: "system", content: system }, ...messages],
-      max_tokens: 700,
-    }),
-  });
+  let resp: Response;
+  try {
+    resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Lovable-API-Key": key,
+      },
+      body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
+        messages: [{ role: "system", content: system }, ...messages],
+        max_tokens: 700,
+      }),
+    });
+  } catch (e) {
+    return new Response(JSON.stringify({ error: "ai_unreachable", detail: String(e) }), {
+      status: 502,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   if (!resp.ok) {
     const errText = await resp.text();
