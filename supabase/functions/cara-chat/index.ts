@@ -10,6 +10,8 @@
 //  - 402 from the gateway (Lovable AI balance empty) -> friendly 503 "ai_unavailable"
 //  - prompt no longer cites ungrounded case names and always carries a disclaimer
 
+import { answerLegal2026, LEGAL_2026_PROMPT } from "../_shared/legal2026.ts";
+import { industryContext, sectorConfirmation } from "../_shared/industry/match.ts";
 import { needsRestaurantPack, RESTAURANT_PACK } from "../_shared/industry/index.ts";
 import { guardAiCall, jsonResponse, corsFor, recordAiUsage, upstreamFailure, MESSAGES } from "../_shared/aiGuard.ts";
 
@@ -47,14 +49,8 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return jsonResponse(req, { error: "method_not_allowed" }, 405);
 
   // 1) Who is asking, and may they spend AI? (cheap checks before parsing)
-  const guard = await guardAiCall(req, "chat");
+  let guard = await guardAiCall(req, "chat", true);
   if (!guard.ok) return guard.response;
-
-  const key = Deno.env.get("LOVABLE_API_KEY");
-  if (!key) {
-    console.error("cara-chat: LOVABLE_API_KEY missing");
-    return jsonResponse(req, { error: "ai_unavailable", message: MESSAGES.ai_unavailable }, 503);
-  }
 
   let body: { messages?: Msg[]; grounding?: Grounding } = {};
   try {
@@ -73,7 +69,7 @@ Deno.serve(async (req) => {
 
   // Build grounded system prompt (client-supplied grounding is size-capped and
   // treated as in-app guidance, not as an instruction channel).
-  let system = SYSTEM_BASE;
+  let system = SYSTEM_BASE + "\n\n" + LEGAL_2026_PROMPT;
   const g = body.grounding ?? {};
   const templateKeys = (Array.isArray(g.templateKeys) ? g.templateKeys : [])
     .filter((k) => typeof k === "string" && /^[a-z0-9_]{1,60}$/i.test(k))
@@ -99,6 +95,18 @@ Deno.serve(async (req) => {
     industry = (cp?.industry as string | null) ?? null;
   } catch { /* profile is optional */ }
   const lastQuestion = messages.slice(-3).filter((m) => m.role === "user").map((m) => m.content).join(" ");
+  system += `\n\n${industryContext(industry)}`;
+  const currentQuestion = messages[messages.length - 1].content;
+  const builtIn = answerLegal2026(currentQuestion);
+  const sector = builtIn ? undefined : sectorConfirmation(industry, currentQuestion);
+  if (builtIn || sector) {
+    return jsonResponse(req, { text: (builtIn?.text ?? sector) + "\n\n_General guidance only, not legal advice. Confirm with a labour-law practitioner._", source: "knowledge", suggestedTemplate: null });
+  }
+  // Quotas and the API key are checked only when built-in knowledge cannot answer.
+  guard = await guardAiCall(req, "chat");
+  if (!guard.ok) return guard.response;
+  const key = Deno.env.get("LOVABLE_API_KEY");
+  if (!key) return jsonResponse(req, { error: "ai_unavailable", message: MESSAGES.ai_unavailable }, 503);
   if (needsRestaurantPack(industry, lastQuestion)) {
     system += `\n\nToday's date: ${new Date().toISOString().slice(0, 10)}.\n\n${RESTAURANT_PACK}`;
   }

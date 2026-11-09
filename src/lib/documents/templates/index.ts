@@ -186,7 +186,7 @@ const contract: TemplateDefinition = {
       ]},
       { kind: "p", text: "3.1  During the probationary period, the Employer will assess the Employee's suitability for the position in terms of performance, conduct, and compatibility with the working environment." },
       { kind: "p", text: "3.2  The Employee will receive feedback before the end of the probationary period. Where performance concerns exist, reasonable time and assistance will be provided before any decision is made." },
-      { kind: "p", text: "3.3  The probationary period may be extended by mutual written agreement. The protections afforded by the Code of Good Practice: Dismissal (Schedule 8 of the LRA) apply during this period." },
+      { kind: "p", text: "3.3  The probationary period may be extended by mutual written agreement. The protections afforded by the Code of Good Practice: Dismissal (Notice 3470, Gazette 53294, September 2025) apply during this period." },
 
       { kind: "section", text: "Section 4 — Working hours" },
       { kind: "fields", rows: [
@@ -254,7 +254,7 @@ const contract: TemplateDefinition = {
 
       { kind: "section", text: "Section 8 — Discipline and grievances" },
       { kind: "p", text: "8.1  The Employer has a Disciplinary Code and Grievance Procedure which forms part of this contract. The Employee acknowledges receipt of this Code and agrees to be bound by it." },
-      { kind: "p", text: "8.2  Disciplinary action will be taken in accordance with the principles of fairness and natural justice, and with reference to Schedule 8 (Code of Good Practice: Dismissal) of the Labour Relations Act 66 of 1995." },
+      { kind: "p", text: "8.2  Disciplinary action will be taken in accordance with the principles of fairness and natural justice, and with reference to Code of Good Practice: Dismissal (Notice 3470, Gazette 53294, September 2025)." },
       { kind: "p", text: "8.3  Summary dismissal (without notice) may occur in cases of gross misconduct, including but not limited to: theft, fraud, assault, gross insubordination, or serious breaches of safety or confidentiality." },
       { kind: "p", text: "8.4  The Employee has the right to be accompanied by a fellow employee or trade union representative at any disciplinary hearing." },
 

@@ -39,7 +39,7 @@ export function buildAlternativeCharge(v: ChargeInputs): string {
 export const CHARGE_DISCLAIMER =
   "These are suggested charge formulations only. The final wording, and whether to charge in the " +
   "alternative, must be finalised with a qualified labour law practitioner and tailored to the " +
-  "specific facts, in line with Schedule 8 of the LRA (Code of Good Practice: Dismissal) and the " +
+  "specific facts, in line with Code of Good Practice: Dismissal (Notice 3470, Gazette 53294, September 2025) and the " +
   "employer's own disciplinary code.";
 
 export const PROCEDURAL_CHECKLIST: string[] = [

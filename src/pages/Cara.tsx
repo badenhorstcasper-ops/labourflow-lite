@@ -1,5 +1,4 @@
 import UpgradeNudge from "@/components/UpgradeNudge";
-import { needsRestaurantPack } from "@/lib/industryMatch";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FilePlus2 } from "lucide-react";
@@ -54,6 +53,7 @@ class AiCallError extends Error {
 export default function CaraPage() {
   const navigate = useNavigate();
   const [companyName, setCompanyName] = useState("");
+  const [industry, setIndustry] = useState<string | null>(null);
   const [profileMissing, setProfileMissing] = useState(false);
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState("");
@@ -87,7 +87,7 @@ export default function CaraPage() {
       const owner = ownerData as unknown as string;
       const { data } = await supabase
         .from("company_profiles")
-        .select("company_name")
+        .select("company_name, industry")
         .eq("owner_user_id", owner)
         .maybeSingle();
       const name = (data as { company_name?: string } | null)?.company_name?.trim() || "";
@@ -97,6 +97,7 @@ export default function CaraPage() {
         return;
       }
       setCompanyName(name);
+      setIndustry((data as { industry?: string | null } | null)?.industry ?? null);
       setProfileMissing(!name);
       setReady(true);
     })();
@@ -198,11 +199,7 @@ export default function CaraPage() {
     setInput("");
     setBusy(true);
 
-    // Restaurant / fast-food questions always go to the adviser, which knows the
-    // bargaining council agreement; the built-in guides only know general law.
-    const decision = needsRestaurantPack(null, clean)
-      ? ({ source: "ai" } as const)
-      : routeMessage(clean);
+    const decision = routeMessage(clean, industry);
 
     if (decision.source === "knowledge") {
       setMessages((m) => [

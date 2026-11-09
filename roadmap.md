@@ -1,3 +1,6 @@
 - [x] Replace app and shared-link branding with the supplied logo.
 - [x] Add logo or CARA choice before installation with the same app identity.
 - [x] Verify branding, icon selection and installation links in the browser.
+- [x] Update 2026 legal knowledge, CCMA rules and dismissal references; flag conflicting BCEA figure for confirmation.
+- [x] Expand industries and enforce profile-first, built-in-first answers.
+- [x] Test legal rules, verify CARA and update the online adviser without publishing.

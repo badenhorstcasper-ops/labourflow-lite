@@ -3,6 +3,8 @@
 // function. Built-in always wins so we don't spend AI credits unnecessarily.
 
 import { TEMPLATE_REGISTRY } from "@/lib/documents/templates";
+import { answerLegal2026 } from "./legal2026";
+import { industryContext, sectorConfirmation } from "@/lib/industryMatch";
 import { findTopic, type KnowledgeTopic } from "./knowledge";
 
 export type CaraAnswer =
@@ -69,13 +71,20 @@ const QUESTION_INDICATORS = [
   "what happens", "is it legal", "am i allowed", "what does", "why",
 ];
 
-export function routeMessage(text: string): CaraAnswer {
+export function routeMessage(text: string, industry?: string | null): CaraAnswer {
+  const legal = answerLegal2026(text);
+  const sector = legal ? undefined : sectorConfirmation(industry, text);
+  if (legal || sector) {
+    const topic: KnowledgeTopic = { key: legal?.topicKey ?? "sector_confirmation", label: "Legal guidance", prompt: text, summary: legal?.text ?? sector ?? "Confirmation is required.", steps: [], keywords: [] };
+    return { source: "knowledge", topic, text: topic.summary, templateKeys: [], followUps: [] };
+  }
   const lower = text.trim().toLowerCase();
 
   // 1. Document intent wins outright ("draft a warning for John") — user is asking us to MAKE something.
   const templateKey = matchTemplate(text);
   if (templateKey) {
-    const def = TEMPLATE_REGISTRY.find((t) => t.key === templateKey)!;
+    const def = TEMPLATE_REGISTRY.find((t) => t.key === templateKey);
+    if (!def) return { source: "ai" };
     return {
       source: "template",
       templateKey,
@@ -93,7 +102,7 @@ export function routeMessage(text: string): CaraAnswer {
     return {
       source: "knowledge",
       topic,
-      text: renderTopic(topic) + (isQuestion ? "\n\n_Need more detail on your exact situation? Tap “Ask CARA for more detail” below._" : ""),
+      text: renderTopic(topic) + (industry && industry !== "other" ? `\n\n_${industryContext(industry)} General guidance above must be checked against applicable sector terms._` : "") + (isQuestion ? "\n\n_Need more detail on your exact situation? Tap “Ask CARA for more detail” below._" : ""),
       templateKeys: topic.relatedTemplates ?? [],
       followUps: topic.followUps ?? [],
     };

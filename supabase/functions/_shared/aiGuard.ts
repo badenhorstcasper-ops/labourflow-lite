@@ -73,7 +73,7 @@ export type GuardOk = {
 };
 export type GuardFail = { ok: false; response: Response };
 
-export async function guardAiCall(req: Request, kind: AiKind): Promise<GuardOk | GuardFail> {
+export async function guardAiCall(req: Request, kind: AiKind, builtInOnly = false): Promise<GuardOk | GuardFail> {
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -120,6 +120,11 @@ export async function guardAiCall(req: Request, kind: AiKind): Promise<GuardOk |
   ]);
 
   const entitlement = computeEntitlement(sub, { isAdmin: !!isAdmin });
+
+  if (builtInOnly) {
+    if (!entitlement.entitled) return { ok: false, response: jsonResponse(req, { error: "not_entitled", message: "Your free week has ended or your plan is inactive. Please choose a plan to continue." }, 402) };
+    return { ok: true, userId, ownerId, admin, remainingThisMonth: null };
+  }
 
   const now = Date.now();
   const hourAgo = new Date(now - 3600 * 1000).toISOString();
