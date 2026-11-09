@@ -1,3 +1,4 @@
+import { IndustrySelect } from "@/components/IndustrySelect";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,6 +29,7 @@ type Profile = {
   accent_color: string;
   signatory_name: string | null;
   signatory_title: string | null;
+  industry: string | null;
 };
 
 const empty: Omit<Profile, "owner_user_id"> = {
@@ -47,6 +49,7 @@ const empty: Omit<Profile, "owner_user_id"> = {
   accent_color: "#2563eb",
   signatory_name: "",
   signatory_title: "",
+  industry: "",
 };
 
 export default function CompanyProfilePage() {
@@ -155,7 +158,7 @@ export default function CompanyProfilePage() {
       return;
     }
     setSaving(true);
-    const payload = { ...form, owner_user_id: ownerId };
+    const payload = { ...form, industry: form.industry || null, owner_user_id: ownerId };
     const { error } = await supabase
       .from("company_profiles")
       .upsert(payload, { onConflict: "owner_user_id" });
@@ -242,6 +245,7 @@ export default function CompanyProfilePage() {
             <Field label="Trading name" value={form.trading_name || ""} onChange={(v) => set("trading_name", v)} />
             <Field label="Registration number" value={form.registration_number || ""} onChange={(v) => set("registration_number", v)} />
             <Field label="VAT number" value={form.vat_number || ""} onChange={(v) => set("vat_number", v)} />
+            <IndustrySelect value={form.industry || ""} onChange={(v) => set("industry", v)} />
           </CardContent>
         </Card>
 
@@ -331,3 +335,4 @@ function Field({ label, value, onChange }: { label: string; value: string; onCha
     </div>
   );
 }
+

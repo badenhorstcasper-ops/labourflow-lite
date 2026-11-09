@@ -1,4 +1,5 @@
 import UpgradeNudge from "@/components/UpgradeNudge";
+import { needsRestaurantPack } from "@/lib/industryMatch";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FilePlus2 } from "lucide-react";
@@ -197,7 +198,11 @@ export default function CaraPage() {
     setInput("");
     setBusy(true);
 
-    const decision = routeMessage(clean);
+    // Restaurant / fast-food questions always go to the adviser, which knows the
+    // bargaining council agreement; the built-in guides only know general law.
+    const decision = needsRestaurantPack(null, clean)
+      ? ({ source: "ai" } as const)
+      : routeMessage(clean);
 
     if (decision.source === "knowledge") {
       setMessages((m) => [
@@ -415,6 +420,15 @@ const TOPIC_GROUPS = [
   { key: "gov", label: "Government tools & links", helper: "UIF, Compensation Fund, Employment Equity and official services", keys: GOV_KEYS },
 ] as const;
 
+const RESTAURANT_PROMPTS = [
+  { label: "What must I pay a waiter?", prompt: "Under the restaurant bargaining council agreement, what is the minimum hourly wage I must pay a waiter right now?" },
+  { label: "Does the restaurant agreement apply to me?", prompt: "Does the Fast Food & Restaurant bargaining council agreement apply to my restaurant business, and how do I know?" },
+  { label: "Sunday and public holiday pay for kitchen staff", prompt: "How must I pay my restaurant kitchen staff for working on a Sunday and on a public holiday?" },
+  { label: "December bonus for restaurant staff", prompt: "Do I have to pay my restaurant staff an annual December bonus under the bargaining council agreement?" },
+  { label: "Casual and part-time restaurant workers", prompt: "What are the rules for casual and part-time workers in a restaurant under the bargaining council agreement?" },
+  { label: "Night work and transport after 21:30", prompt: "What must I pay restaurant staff who work at night or finish after 21:30?" },
+];
+
 function TopicBrowser({ busy, onPick }: { busy: boolean; onPick: (prompt: string) => void }) {
   const [expanded, setExpanded] = useState(false);
   const [openGroup, setOpenGroup] = useState<string | null>(null);
@@ -468,6 +482,21 @@ function TopicBrowser({ busy, onPick }: { busy: boolean; onPick: (prompt: string
             </div>
           ) : (
             <div className="divide-y overflow-hidden rounded-lg border">
+              <div>
+                <Button variant="ghost" onClick={() => setOpenGroup(openGroup === "restaurant" ? null : "restaurant")} aria-expanded={openGroup === "restaurant"} className="h-auto min-h-14 w-full justify-between rounded-none px-4 py-3 text-left whitespace-normal">
+                  <span><span className="block font-semibold">Restaurants & fast food</span><span className="mt-0.5 block text-xs font-normal text-muted-foreground">Bargaining council wages, hours, bonus and leave</span></span>
+                  <ChevronDown className={`h-5 w-5 shrink-0 transition-transform ${openGroup === "restaurant" ? "rotate-180" : ""}`} />
+                </Button>
+                {openGroup === "restaurant" && (
+                  <div className="border-t bg-background/50 px-2 py-1">
+                    {RESTAURANT_PROMPTS.map((p) => (
+                      <Button key={p.label} variant="ghost" disabled={busy} onClick={() => { onPick(p.prompt); setExpanded(false); setOpenGroup(null); }} className="h-auto min-h-14 w-full justify-between rounded-md px-3 py-3 text-left text-sm font-medium whitespace-normal">
+                        {p.label}<ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      </Button>
+                    ))}
+                  </div>
+                )}
+              </div>
               {TOPIC_GROUPS.map((group) => {
                 const isOpen = openGroup === group.key;
                 const topics = TOPICS.filter((topic) => group.keys.includes(topic.key as never));

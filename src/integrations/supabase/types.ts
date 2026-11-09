@@ -407,6 +407,7 @@ export type Database = {
           created_at: string
           doc_counter: number
           id: string
+          industry: string | null
           logo_url: string | null
           owner_user_id: string
           postal_code: string | null
@@ -430,6 +431,7 @@ export type Database = {
           created_at?: string
           doc_counter?: number
           id?: string
+          industry?: string | null
           logo_url?: string | null
           owner_user_id: string
           postal_code?: string | null
@@ -453,6 +455,7 @@ export type Database = {
           created_at?: string
           doc_counter?: number
           id?: string
+          industry?: string | null
           logo_url?: string | null
           owner_user_id?: string
           postal_code?: string | null

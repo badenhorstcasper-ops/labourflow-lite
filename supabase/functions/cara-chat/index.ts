@@ -10,6 +10,7 @@
 //  - 402 from the gateway (Lovable AI balance empty) -> friendly 503 "ai_unavailable"
 //  - prompt no longer cites ungrounded case names and always carries a disclaimer
 
+import { needsRestaurantPack, RESTAURANT_PACK } from "../_shared/industry/index.ts";
 import { guardAiCall, jsonResponse, corsFor, recordAiUsage, upstreamFailure, MESSAGES } from "../_shared/aiGuard.ts";
 
 const SYSTEM_BASE = `You are CARA, the Compliance and Relations Adviser inside the iNRECO app.
@@ -88,6 +89,18 @@ Deno.serve(async (req) => {
       system += `\nSteps:\n` + steps.map((st, i) => `${i + 1}. ${st}`).join("\n");
     }
     system += `\n\nAnswer the user's specific question using this guidance. Stay consistent with it.`;
+  }
+
+  // Industry knowledge: restaurant bargaining council agreement when relevant.
+  let industry: string | null = null;
+  try {
+    const { data: cp } = await guard.admin
+      .from("company_profiles").select("industry").eq("owner_user_id", guard.ownerId).maybeSingle();
+    industry = (cp?.industry as string | null) ?? null;
+  } catch { /* profile is optional */ }
+  const lastQuestion = messages.slice(-3).filter((m) => m.role === "user").map((m) => m.content).join(" ");
+  if (needsRestaurantPack(industry, lastQuestion)) {
+    system += `\n\nToday's date: ${new Date().toISOString().slice(0, 10)}.\n\n${RESTAURANT_PACK}`;
   }
 
   let resp: Response;

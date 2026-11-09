@@ -1,3 +1,4 @@
+import { IndustrySelect } from "@/components/IndustrySelect";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,7 +16,7 @@ export default function Onboarding() {
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ company_name: "", contact_phone: "", contact_email: "", city: "" });
+  const [form, setForm] = useState({ company_name: "", contact_phone: "", contact_email: "", city: "", industry: "" });
   const next = readRedirectTarget() || "/app";
 
   useEffect(() => {
@@ -37,7 +38,7 @@ export default function Onboarding() {
     if (!form.company_name.trim()) { toast.error("Please enter your company name, or tap Skip for now."); return; }
     setSaving(true);
     const { error } = await supabase.from("company_profiles").upsert(
-      { owner_user_id: userId, company_name: form.company_name.trim(), contact_phone: form.contact_phone || null, contact_email: form.contact_email || null, city: form.city || null },
+      { owner_user_id: userId, company_name: form.company_name.trim(), contact_phone: form.contact_phone || null, contact_email: form.contact_email || null, city: form.city || null, industry: form.industry || null },
       { onConflict: "owner_user_id" },
     );
     setSaving(false);
@@ -63,6 +64,7 @@ export default function Onboarding() {
           <div className="space-y-2"><Label htmlFor="cp">Phone number</Label><Input id="cp" type="tel" className="h-14 text-base" value={form.contact_phone} onChange={set("contact_phone")} /></div>
           <div className="space-y-2"><Label htmlFor="ce">Email</Label><Input id="ce" type="email" className="h-14 text-base" value={form.contact_email} onChange={set("contact_email")} /></div>
           <div className="space-y-2"><Label htmlFor="cc">Town or city</Label><Input id="cc" className="h-14 text-base" value={form.city} onChange={set("city")} /></div>
+          <IndustrySelect value={form.industry} onChange={(v) => setForm((f) => ({ ...f, industry: v }))} />
           <p className="text-sm text-muted-foreground">You can add your logo and address later under More → Company profile.</p>
         </div>
 
