@@ -8,8 +8,8 @@ describe("2026 legal facts", () => {
   it("uses the R30.23 wage from 1 March and Gazette 54075", () => {
     expect(LEGAL_2026.minimumWage).toMatchObject({ amount: 30.23, effective: "2026-03-01", gazette: "54075" });
   });
-  it("flags the requested BCEA threshold discrepancy rather than certifying it", () => {
-    expect(LEGAL_2026.bceaThreshold).toMatchObject({ requestedAmount: 269900.90, amount: 269600.90, effective: "2026-05-01", confirmationRequired: true });
+  it("uses the gazetted 2026 BCEA threshold (GN 7384, Gazette 54544)", () => {
+    expect(LEGAL_2026.bceaThreshold).toMatchObject({ amount: 269600.90, effective: "2026-05-01", gazette: "54544", notice: "7384", confirmationRequired: false });
   });
   it("uses the R668000 COIDA ceiling from 1 March", () => {
     expect(LEGAL_2026.coidaLimit).toMatchObject({ amount: 668000, effective: "2026-03-01" });
