@@ -4,3 +4,5 @@
 - [x] Update 2026 legal knowledge, CCMA rules and dismissal references; flag conflicting BCEA figure for confirmation.
 - [x] Expand industries and enforce profile-first, built-in-first answers.
 - [x] Test legal rules, verify CARA and update the online adviser without publishing.
+- [x] Restore specific CCMA questions and detailed follow-ups without repeating the rules summary.
+- [x] Restore restaurant wage advice and salary-deduction guidance; verify both findings without publishing.

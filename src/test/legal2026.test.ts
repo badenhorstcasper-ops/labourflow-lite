@@ -35,6 +35,32 @@ describe("2026 legal facts", () => {
 });
 
 describe("built-in-first, industry-first advice", () => {
+  it("restores the CCMA referral guide and its follow-ups", () => {
+    const answer = routeMessage("An employee has referred us to the CCMA. What do I do?");
+    expect(answer.source).toBe("knowledge");
+    if (answer.source !== "knowledge") throw new Error("Expected the referral guide");
+    expect(answer.topic.key).toBe("ccma");
+    expect(answer.followUps).toContain("Can I be represented by an attorney at the CCMA?");
+  });
+  it.each([
+    "Can I be represented by an attorney at the CCMA?",
+    "What's the difference between conciliation and arbitration?",
+    "How do I apply the Code of Good Practice: Dismissal to probation?",
+    "Can I deduct money if pay falls below the minimum wage?",
+  ])("does not replace a specific question with a legal summary: %s", (question) => {
+    expect(answerLegal2026(question)).toBeUndefined();
+  });
+  it("retains the built-in October 2026 rules lookup", () => {
+    expect(answerLegal2026("What changed in the October 2026 CCMA rules?")?.topicKey).toBe("ccma_rules_2026");
+  });
+  it("sends explicit requests for more detail to the adviser", () => {
+    expect(answerLegal2026("What is the national minimum wage?", true)).toBeUndefined();
+    expect(answerLegal2026("What changed in the October 2026 CCMA rules?", true)).toBeUndefined();
+  });
+  it("does not replace a sector minimum-wage question with the national floor", () => {
+    expect(answerLegal2026("What is the minimum wage for a restaurant waiter?")).toBeUndefined();
+    expect(routeMessage("What is the minimum wage for a restaurant waiter?", "restaurant").source).toBe("ai");
+  });
   it("has all ten industry keys, retaining existing selections", () => {
     expect(INDUSTRIES.map((i) => i.value)).toEqual(["restaurant", "retail", "security", "cleaning", "domestic", "hospitality", "agriculture", "wholesale", "transport", "other"]);
   });

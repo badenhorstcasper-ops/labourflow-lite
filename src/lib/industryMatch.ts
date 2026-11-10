@@ -18,8 +18,14 @@ export function industryContext(industry: string | null | undefined): string {
   return `Selected company industry: ${selected.label}. Check this profile first. Confirm sector/council coverage, location, job grade and effective period. Only the restaurant agreement is currently loaded as a full sector pack; other sector rates and levies require confirmation. Hospitality is not automatically restaurant-council coverage; supermarkets are excluded from that restaurant pack.`;
 }
 
+/** Rate-table requests only; salary deductions and other pay disputes are not rate lookups. */
+export function isSectorRateQuestion(question: string): boolean {
+  if (/deduct|recover|fine|withhold|unpaid|dispute|late pay|equal pay|discriminat/i.test(question)) return false;
+  return /(?:wage|salary|pay|sector|council).{0,30}rates?|rates?.{0,30}(?:wage|salary|pay|sector|council)|minimum (?:hourly )?(?:wage|salary|pay)|levy|levies|what (?:must|should|do) i pay|how much.{0,30}(?:pay|earn)/i.test(question);
+}
+
 export function sectorConfirmation(industry: string | null | undefined, question: string): string | undefined {
-  if (!/wage|salary|pay rate|levy|levies|sector.*rate|council.*rate/i.test(question)) return undefined;
+  if (!isSectorRateQuestion(question) || needsRestaurantPack(industry, question)) return undefined;
   const selected = INDUSTRIES.find((item) => item.value === industry);
   if (!selected || selected.value === "other") return undefined;
   return `Your company profile selects **${selected.label}**. Confirmation is required for the applicable sector wage or levy: first establish the business activity, location, job grade and effective period. The general National Minimum Wage is R30.23 per ordinary hour from 1 March 2026 (Gazette 54075); applicable higher sector rates must also be honoured. ${selected.value === "restaurant" ? "The restaurant agreement is available for a detailed check, but its geographic and business exclusions must be confirmed before quoting a rate." : "A verified wage/levy table for this sector is not yet loaded, so I will not invent one."}`;

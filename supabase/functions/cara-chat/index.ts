@@ -52,7 +52,7 @@ Deno.serve(async (req) => {
   let guard = await guardAiCall(req, "chat", true);
   if (!guard.ok) return guard.response;
 
-  let body: { messages?: Msg[]; grounding?: Grounding } = {};
+  let body: { messages?: Msg[]; grounding?: Grounding; detailed?: boolean } = {};
   try {
     body = await req.json();
   } catch {
@@ -97,8 +97,8 @@ Deno.serve(async (req) => {
   const lastQuestion = messages.slice(-3).filter((m) => m.role === "user").map((m) => m.content).join(" ");
   system += `\n\n${industryContext(industry)}`;
   const currentQuestion = messages[messages.length - 1].content;
-  const builtIn = answerLegal2026(currentQuestion);
-  const sector = builtIn ? undefined : sectorConfirmation(industry, currentQuestion);
+  const builtIn = answerLegal2026(currentQuestion, body.detailed === true);
+  const sector = builtIn || body.detailed === true ? undefined : sectorConfirmation(industry, currentQuestion);
   if (builtIn || sector) {
     return jsonResponse(req, { text: (builtIn?.text ?? sector) + "\n\n_General guidance only, not legal advice. Confirm with a labour-law practitioner._", source: "knowledge", suggestedTemplate: null });
   }

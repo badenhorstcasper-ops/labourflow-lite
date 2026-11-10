@@ -122,7 +122,7 @@ export default function CaraPage() {
     return `Hello, ${who}. I'm CARA, your Compliance and Relations Adviser. Ask me anything about South African labour compliance for your business.`;
   }, [companyName]);
 
-  async function callAi(history: ChatMsg[], groundingTopicKey?: string) {
+  async function callAi(history: ChatMsg[], groundingTopicKey?: string, detailed = false) {
     const topic = groundingTopicKey ? getTopicByKey(groundingTopicKey) : undefined;
     const grounding = topic
       ? {
@@ -138,6 +138,7 @@ export default function CaraPage() {
     const payload = {
       messages: history.map((m) => ({ role: m.role, content: m.text })),
       grounding,
+      detailed,
     };
     const { data, error } = await supabase.functions.invoke("cara-chat", { body: payload });
     if (error) {
@@ -164,7 +165,10 @@ export default function CaraPage() {
     if (busy) return;
     setBusy(true);
     try {
-      const { text, suggestedTemplate } = await callAi(messages, groundingTopicKey);
+      const { text, suggestedTemplate } = await callAi([
+        ...messages,
+        { id: crypto.randomUUID(), role: "user", text: "Please give more detail on my last question, using my situation and the guidance above." },
+      ], groundingTopicKey, true);
       const templateKeys = suggestedTemplate
         ? [suggestedTemplate]
         : getTopicByKey(groundingTopicKey)?.relatedTemplates ?? [];

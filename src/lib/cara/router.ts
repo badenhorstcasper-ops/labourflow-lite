@@ -4,7 +4,7 @@
 
 import { TEMPLATE_REGISTRY } from "@/lib/documents/templates";
 import { answerLegal2026 } from "./legal2026";
-import { industryContext, sectorConfirmation } from "@/lib/industryMatch";
+import { industryContext, sectorConfirmation, isSectorRateQuestion, needsRestaurantPack } from "@/lib/industryMatch";
 import { findTopic, type KnowledgeTopic } from "./knowledge";
 
 export type CaraAnswer =
@@ -78,6 +78,8 @@ export function routeMessage(text: string, industry?: string | null): CaraAnswer
     const topic: KnowledgeTopic = { key: legal?.topicKey ?? "sector_confirmation", label: "Legal guidance", prompt: text, summary: legal?.text ?? sector ?? "Confirmation is required.", steps: [], keywords: [] };
     return { source: "knowledge", topic, text: topic.summary, templateKeys: [], followUps: [] };
   }
+  // Loaded sector rates must reach the adviser with the actual agreement.
+  if (needsRestaurantPack(industry, text) && isSectorRateQuestion(text)) return { source: "ai" };
   const lower = text.trim().toLowerCase();
 
   // 1. Document intent wins outright ("draft a warning for John") — user is asking us to MAKE something.

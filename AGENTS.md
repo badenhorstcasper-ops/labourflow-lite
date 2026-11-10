@@ -7,3 +7,4 @@
 
 - Curated 2026 legal facts and deterministic answers are mirrored between `_shared/legal2026.ts` and `src/lib/cara/legal2026.ts`; tests enforce parity so local and online advice agree.
 - CARA checks the owner profile industry and built-in legal answers before model calls; built-in server responses require entitlement but not AI quota/key, so zero-credit guidance never unlocks expired accounts.
+- Deterministic CARA replies match factual lookups, not broad topic words; loaded sector rate requests reach the agreement-grounded adviser and explicit detail requests bypass stock replies while retaining entitlement/quota checks, so situation-specific advice remains reachable.
