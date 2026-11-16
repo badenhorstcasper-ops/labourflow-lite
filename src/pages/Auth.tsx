@@ -17,6 +17,17 @@ import { readRedirectTarget } from "@/lib/authRedirect";
 
 type Mode = "signup" | "login";
 
+/** Where the confirmation email link sends people back to. */
+function confirmRedirect() {
+  return `${window.location.origin}/auth?confirmed=1`;
+}
+
+/** True for an account created in the last 3 days (first confirmed sign-in). */
+function isNewAccount(user?: { created_at?: string } | null) {
+  const t = user?.created_at ? Date.parse(user.created_at) : NaN;
+  return Number.isFinite(t) && Date.now() - t < 3 * 24 * 60 * 60 * 1000;
+}
+
 const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -39,6 +50,8 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [busy, setBusy] = useState(false);
+  // Set after sign-up: the address waiting for its confirmation email.
+  const [awaitingConfirm, setAwaitingConfirm] = useState<string | null>(null);
 
   async function linkPendingSubscription() {
     try {
@@ -88,11 +101,22 @@ const Auth = () => {
     if (pending) setEmail(pending);
 
     // If already signed in, link any trial started before signup, then open the app.
+    // Arriving back from the confirmation email link (?confirmed=1): the new,
+    // now-confirmed account gets its free week, then continues where it was going.
+    const fromConfirm = new URLSearchParams(window.location.search).get("confirmed") === "1";
     supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) return;
+      if (!data.session) {
+        if (fromConfirm) {
+          setMode("login");
+          toast({ title: "Email confirmed", description: "Thanks! Sign in below to start your free week." });
+        }
+        return;
+      }
       (async () => {
         const linked = await linkPendingSubscription();
-        const trialStarted = await startTrialIfRequested();
+        const trialStarted = await startTrialIfRequested(
+          fromConfirm ? { always: !linked } : {},
+        );
         navigate(trialStarted ? "/app" : nextPathAfterAuth(linked), { replace: true });
       })();
     });
@@ -111,25 +135,32 @@ const Auth = () => {
     setBusy(true);
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: `${window.location.origin}/` },
+          options: { emailRedirectTo: confirmRedirect() },
         });
         if (error) throw error;
-        // Auto-confirm is on, so sign them in immediately.
-        const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
-        if (signInErr) throw signInErr;
         void trackStep("/auth", "signed_up");
-        const linked = await linkPendingSubscription();
-        await startTrialIfRequested({ always: !linked });
-        // Go back to where they were (e.g. /get with their question) or /app.
-        navigate(nextPathAfterAuth(linked), { replace: true });
+        // Email confirmation is required: no sign-in and no trial until they
+        // click the link in their inbox. The trial starts on first confirmed sign-in.
+        if (data.session) {
+          // Safety net if confirmation is ever switched off again.
+          const linked = await linkPendingSubscription();
+          await startTrialIfRequested({ always: !linked });
+          navigate(nextPathAfterAuth(linked), { replace: true });
+          return;
+        }
+        setAwaitingConfirm(email);
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         const linked = await linkPendingSubscription();
-        const trialStarted = await startTrialIfRequested();
+        // A brand-new confirmed account signing in for the first time gets its
+        // free week (the server still allows only one trial per person/email).
+        const trialStarted = await startTrialIfRequested(
+          isNewAccount(data.user) ? { always: !linked } : {},
+        );
         navigate(trialStarted ? "/app" : nextPathAfterAuth(linked), { replace: true });
       }
     } catch (err) {
@@ -141,6 +172,9 @@ const Auth = () => {
           "That password has appeared in a known data leak. Please pick a longer one — three random words works well.";
       } else if (/already registered|already been registered/i.test(raw)) {
         friendly = "There is already an account with this email. Try signing in instead.";
+      } else if (/email not confirmed/i.test(raw)) {
+        friendly = "Please confirm your email first — check your inbox (and spam) for the link from iNRECO.";
+        setAwaitingConfirm(email);
       } else if (/invalid login credentials/i.test(raw)) {
         friendly = "That email and password don't match. Check them, or use 'Forgot your password?'.";
       }
@@ -150,6 +184,29 @@ const Auth = () => {
         variant: "destructive",
       });
 
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleResend() {
+    if (!awaitingConfirm) return;
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: awaitingConfirm,
+        options: { emailRedirectTo: confirmRedirect() },
+      });
+      if (error) throw error;
+      toast({ title: "Email sent again", description: `We've sent a fresh confirmation link to ${awaitingConfirm}.` });
+    } catch (err) {
+      const raw = err instanceof Error ? err.message : "Unknown error";
+      toast({
+        title: "Could not resend",
+        description: /rate|seconds/i.test(raw) ? "Please wait a minute before asking for another email." : raw,
+        variant: "destructive",
+      });
     } finally {
       setBusy(false);
     }
@@ -229,6 +286,28 @@ const Auth = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {awaitingConfirm ? (
+              <div className="space-y-4">
+                <div className="rounded-lg border bg-muted p-4 text-sm text-foreground">
+                  <p className="font-semibold">Check your email to confirm your account</p>
+                  <p className="mt-2 text-muted-foreground">
+                    We've sent a confirmation link to <span className="font-medium text-foreground">{awaitingConfirm}</span>.
+                    Tap the link to activate your account and start your 7-day free trial. If it's not in your inbox
+                    within a few minutes, please check your spam or promotions folder.
+                  </p>
+                </div>
+                <Button className="w-full" onClick={handleResend} disabled={busy}>
+                  {busy ? "Please wait…" : "Resend confirmation email"}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => { setAwaitingConfirm(null); setMode("login"); }}
+                >
+                  I've confirmed — sign in
+                </Button>
+              </div>
+            ) : (<>
             <form onSubmit={handleSubmit} className="space-y-3">
               <div>
                 <Label htmlFor="email">Email</Label>
@@ -329,6 +408,7 @@ const Auth = () => {
               </Link>
             </p>
             <InstallCta variant="card" label="Add iNRECO to my home screen" />
+            </>)}
           </CardContent>
         </Card>
       </div>

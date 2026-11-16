@@ -3,6 +3,7 @@
 
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { isTestOrInternalEmail } from "../_shared/testAccounts.ts";
 
 function json(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -42,7 +43,7 @@ Deno.serve(async (req) => {
     .select("id, email, plan_name, status, is_demo, created_at")
     .eq("status", "active");
 
-  const paidSubs = (subs ?? []).filter((s) => !s.is_demo);
+  const paidSubs = (subs ?? []).filter((s) => !s.is_demo && !isTestOrInternalEmail(s.email as string));
   const tierCounts = { Solo: 0, Business: 0, Professional: 0, Enterprise: 0 } as Record<string, number>;
   for (const s of paidSubs) {
     const p = (s.plan_name as string) || "Solo";
@@ -75,11 +76,10 @@ Deno.serve(async (req) => {
   };
 
   // Signups (auth.users) in recent windows — exclude owner/test/demo accounts
-  const OWNER_EMAILS = new Set(["casperbadenhorst77@outlook.com", "badenhorst.casper@gmail.com"]);
   const demoEmails = new Set((subs ?? []).filter((s) => s.is_demo).map((s) => ((s.email as string) || "").toLowerCase()));
   const isTestAccount = (email?: string | null) => {
     const e = (email ?? "").toLowerCase();
-    return OWNER_EMAILS.has(e) || demoEmails.has(e) || e.endsWith("@inrecotest.co.za");
+    return isTestOrInternalEmail(e) || demoEmails.has(e);
   };
   const { data: usersData } = await admin.auth.admin.listUsers({ page: 1, perPage: 500 });
   const users = (usersData?.users ?? []).filter((u) => !isTestAccount(u.email));

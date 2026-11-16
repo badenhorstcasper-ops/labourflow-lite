@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { isTestOrInternalEmail } from "../_shared/testAccounts.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -59,11 +60,7 @@ Deno.serve(async (req) => {
     ]);
 
     // Recent signups via admin.auth + week/month counts (real users only — no owner/test)
-    const OWNER_EMAILS_SET = new Set(["casperbadenhorst77@outlook.com", "badenhorst.casper@gmail.com"]);
-    const isTestAccount = (email?: string | null) => {
-      const normalized = (email ?? "").toLowerCase();
-      return OWNER_EMAILS_SET.has(normalized) || normalized.endsWith("@inrecotest.co.za");
-    };
+    const isTestAccount = (email?: string | null) => isTestOrInternalEmail(email);
     const { data: recentUsersData } = await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
     const allUsers = (recentUsersData?.users ?? [])
       .filter((u: any) => !isTestAccount(u.email));

@@ -5,7 +5,7 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const DAY = 24 * 60 * 60 * 1000;
-const EXCLUDED = [/@inrecotest\.co\.za$/i];
+import { isTestOrInternalEmail } from "../_shared/testAccounts.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
 
   let sent = 0;
   for (const s of subs ?? []) {
-    if (!s.email || EXCLUDED.some((r) => r.test(s.email))) continue;
+    if (!s.email || isTestOrInternalEmail(s.email)) continue;
     if (s.user_id) {
       const { data: isAdmin } = await admin.rpc("has_role", { _user_id: s.user_id, _role: "admin" });
       if (isAdmin) continue;
