@@ -117,6 +117,12 @@ Deno.serve(async (req) => {
     lastUnconfirmedGrantAt: (lastGrant?.provisional_granted_at as string | null) ?? null,
     now: now.getTime(),
   });
+  // Never grant access for a payment PayFast has not confirmed: a started
+  // checkout is not proof of payment. The webhook / daily reconcile activates
+  // the plan as soon as PayFast confirms it.
+  if (!confirmed) {
+    return json({ granted: false, reason: "awaiting_confirmation", waitingForPayfast: true });
+  }
   if (!decision.grant) {
     // Not an error for the buyer: PayFast's confirmation will still activate
     // the plan the moment it arrives.

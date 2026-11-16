@@ -1,4 +1,5 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { isServiceCaller } from "../_shared/serverAuth.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 function json(body: Record<string, unknown>, status = 200) {
@@ -34,9 +35,7 @@ Deno.serve(async (req) => {
   // Admins can call from browser; cron calls with a shared CRON_SECRET header
   // OR with { scheduled: true } (cron pump; response contains no PII).
   const authHeader = req.headers.get("Authorization") || "";
-  const cronSecretHeader = req.headers.get("x-cron-secret") || "";
-  const cronSecret = Deno.env.get("CRON_SECRET") || "";
-  const isCron = (cronSecret && cronSecretHeader === cronSecret) || body.scheduled === true;
+  const isCron = await isServiceCaller(req);
   if (!isCron) {
     if (!authHeader.startsWith("Bearer ")) return json({ error: "Not signed in" }, 401);
     const asUser = createClient(url, anon, { global: { headers: { Authorization: authHeader } } });
@@ -48,7 +47,7 @@ Deno.serve(async (req) => {
   }
 
 
-  const scheduledPing = body.scheduled === true;
+  const scheduledPing = isCron && body.scheduled === true;
 
   const month = firstOfMonth(typeof body.month === "string" ? body.month : null);
   const monthStart = new Date(`${month}T00:00:00Z`);

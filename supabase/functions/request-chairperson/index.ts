@@ -111,10 +111,13 @@ Deno.serve(async (req) => {
   if (documentId) {
     const { data: doc } = await admin
       .from("generated_documents")
-      .select("share_token")
+      .select("share_token, owner_user_id")
       .eq("id", documentId)
       .maybeSingle();
-    if (doc?.share_token) {
+    if (!doc || doc.owner_user_id !== accountOwnerId) {
+      return bad(403, "document_not_allowed");
+    }
+    if (doc.share_token) {
       const origin = req.headers.get("origin") || "https://app.inreco.co.za";
       shareUrl = `${origin}/d/${doc.share_token}`;
     }
@@ -138,24 +141,12 @@ Deno.serve(async (req) => {
     .single();
 
   if (insErr) {
-    console.error("chairperson booking insert failed", insErr);
+    console.error("chairperson booking insert failed", insErr?.code);
     return bad(500, "server_error");
   }
 
-  // Log so iNRECO can find requests in function logs even if email isn't wired.
-  console.log("chairperson_booking_request", {
-    target: TARGET_EMAIL,
-    booking_id: inserted.id,
-    user_id: user.id,
-    employer_name: employerName,
-    contact_email: contactEmail,
-    contact_phone: contactPhone,
-    employee_name: employeeName,
-    preferred_platform: preferredPlatform,
-    preferred_slots: parsedSlots,
-    share_url: shareUrl,
-    notes,
-  });
+  // Log only non-personal identifiers; details live in chairperson_bookings.
+  console.log("chairperson_booking_request", { booking_id: inserted.id, has_document: !!documentId });
 
   return new Response(JSON.stringify({ ok: true, booking_id: inserted.id }), {
     status: 200,

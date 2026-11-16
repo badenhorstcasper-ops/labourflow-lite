@@ -22,6 +22,13 @@
       "when": 1794226487391,
       "tag": "0002_company_industry",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794847665294,
+      "tag": "0003_lock_role_checks",
+      "breakpoints": true
     }
   ]
 }

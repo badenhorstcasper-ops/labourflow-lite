@@ -3,6 +3,7 @@
 // off. Their referral code stays alive — the next subscriber reactivates them.
 
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { isServiceCaller } from "../_shared/serverAuth.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 function json(body: Record<string, unknown>, status = 200) {
@@ -17,14 +18,10 @@ Deno.serve(async (req) => {
 
   const url = Deno.env.get("SUPABASE_URL");
   const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  const cronSecret = Deno.env.get("CRON_SECRET");
   if (!url || !key) return json({ error: "Server not ready" }, 500);
 
   // Optional shared secret so only the cron job (or an admin) can trigger it.
-  const provided = req.headers.get("x-cron-secret");
-  if (cronSecret && provided !== cronSecret) {
-    return json({ error: "Forbidden" }, 403);
-  }
+  if (!(await isServiceCaller(req))) return json({ error: "Forbidden" }, 403);
 
   const admin = createClient(url, key);
   const now = new Date();

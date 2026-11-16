@@ -7,6 +7,7 @@
 //    skipped by send-transactional-email itself.
 // Safe to call more than once a day. Guidance only — not legal advice.
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { isServiceCaller } from "../_shared/serverAuth.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import {
   DEADLINE_RULES,
@@ -37,12 +38,7 @@ Deno.serve(async (req) => {
   // Same optional shared-secret pattern as revoke-inactive-partners. When the
   // CRON_SECRET edge secret is set, the caller must send it (pg_cron reads it
   // from vault 'CRON_SECRET') or use the service-role key.
-  const cronSecret = Deno.env.get("CRON_SECRET");
-  if (cronSecret) {
-    const provided = req.headers.get("x-cron-secret");
-    const bearer = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
-    if (provided !== cronSecret && bearer !== serviceKey) return json({ error: "Forbidden" }, 403);
-  }
+  if (!(await isServiceCaller(req))) return json({ error: "Forbidden" }, 403);
 
   const admin = createClient(url, serviceKey);
 

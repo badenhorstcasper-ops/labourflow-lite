@@ -11,6 +11,7 @@
 // arrangement is no longer running. Silence is never treated as "stopped".
 
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { isServiceCaller } from "../_shared/serverAuth.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import {
   addPeriod,
@@ -122,10 +123,7 @@ Deno.serve(async (req) => {
   }
 
   // Cron runs unattended with the shared key; everything else must be an owner.
-  const cronKey = req.headers.get("x-cron-secret");
-  const isCron =
-    !!cronKey && cronKey === Deno.env.get("CRON_SECRET") ||
-    req.headers.get("Lovable-Context") === "cron";
+  const isCron = await isServiceCaller(req);
 
   let isAdmin = false;
   if (!isCron) {

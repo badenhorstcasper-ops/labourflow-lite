@@ -93,17 +93,8 @@ Deno.serve(async (req) => {
       console.error("lookup existing salesperson failed", exErr);
       return json({ error: "An application already exists for this email. Please contact info@inreco.co.za." }, 409);
     }
-    if (existing.status && existing.status !== "pending_approval") {
-      return json({ error: "An application already exists for this email. Please contact info@inreco.co.za." }, 409);
-    }
-    await admin.from("salespersons").update({
-      full_name,
-      phone,
-      id_number,
-      banking_details: banking,
-    }).eq("id", existing.id);
-    sp = { id: existing.id } as { id: string };
-    error = null;
+    // Never overwrite an existing application from an unauthenticated request.
+    return json({ error: "We already have an application for this email. Please contact info@inreco.co.za to update it." }, 409);
   }
 
   if (error || !sp) {

@@ -6,11 +6,14 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 
 const DAY = 24 * 60 * 60 * 1000;
 import { isTestOrInternalEmail } from "../_shared/testAccounts.ts";
+import { isServiceCaller } from "../_shared/serverAuth.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   const json = (b: unknown, s = 200) =>
     new Response(JSON.stringify(b), { status: s, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+  if (!(await isServiceCaller(req))) return json({ error: "Forbidden" }, 403);
 
   const url = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;

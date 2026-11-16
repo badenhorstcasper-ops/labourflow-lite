@@ -15,7 +15,6 @@ export const PLAN_NAMES = new Set<PlanName>(["Solo", "Business", "Professional",
 export const ALLOWED_PAYMENT_METHODS = new Set(["ap", "gp", "mp"]);
 
 const LIVE_MERCHANT_ID = "12090292";
-const LIVE_MERCHANT_KEY = "3xbkln8wrhwqj";
 const SANDBOX_MERCHANT_ID = "10000100";
 const SANDBOX_MERCHANT_KEY = "46f0cd694581a";
 
@@ -59,7 +58,7 @@ export function payfastCredentials() {
     : SANDBOX_MERCHANT_ID;
   const envKey = (Deno.env.get("PAYFAST_MERCHANT_KEY") || "").trim();
   const merchantKey = mode === "live"
-    ? (envKey.length === 13 ? envKey : LIVE_MERCHANT_KEY)
+    ? envKey
     : SANDBOX_MERCHANT_KEY;
   const passphrase = (Deno.env.get("PAYFAST_PASSPHRASE_V2") || Deno.env.get("PAYFAST_PASSPHRASE") || "").trim();
   const actionUrl = mode === "live"
