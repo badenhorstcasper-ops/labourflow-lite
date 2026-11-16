@@ -5,7 +5,7 @@ import AppShell from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { FileText, FilePlus2, CreditCard, LifeBuoy } from "lucide-react";
+import { FileText, FilePlus2, CreditCard, LifeBuoy, ClipboardCheck, Gift } from "lucide-react";
 import { TEMPLATE_REGISTRY } from "@/lib/documents/templates";
 import { signInPath } from "@/lib/authRedirect";
 import CcmaDeadlinesCard from "@/components/CcmaDeadlinesCard";
@@ -146,6 +146,20 @@ export default function Dashboard() {
             description="Download, share or revoke documents you've generated."
             href="/account-app/documents"
             cta="View documents"
+          />
+          <ActionCard
+            icon={<ClipboardCheck className="h-5 w-5" />}
+            title="Verify Sick Note"
+            description="Check a medical certificate and record your findings."
+            href="/account-app/verify-certificate"
+            cta="Check a certificate"
+          />
+          <ActionCard
+            icon={<Gift className="h-5 w-5" />}
+            title="Refer & Earn"
+            description="Share your referral link and view your rewards."
+            href="/account-app/refer"
+            cta="View referrals"
           />
           <ActionCard
             icon={<CreditCard className="h-5 w-5" />}

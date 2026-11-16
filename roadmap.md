@@ -6,3 +6,5 @@
 - [x] Test legal rules, verify CARA and update the online adviser without publishing.
 - [x] Restore specific CCMA questions and detailed follow-ups without repeating the rules summary.
 - [x] Restore restaurant wage advice and salary-deduction guidance; verify both findings without publishing.
+- [x] Keep dismissed installation banners hidden, add Home tool shortcuts and document empty-state action, and add CARA starter questions; deadlines already have a first-deadline action.
+- [x] Verify remembered dismissal with tests and signed-in Home shortcuts/CARA conversation on a phone-sized screen without publishing.

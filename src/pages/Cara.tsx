@@ -327,7 +327,7 @@ export default function CaraPage() {
 
           <div ref={scrollRef} className="min-h-[240px] max-h-[48vh] overflow-y-auto px-4 py-4">
             {messages.length === 0 ? (
-              <EmptyState greeting={greeting} onExample={tryExample} />
+              <EmptyState greeting={greeting} onExample={tryExample} onPick={(prompt) => send(prompt)} />
             ) : (
               <div className="space-y-4">
                 {messages.map((m) => (
@@ -527,7 +527,7 @@ function TopicBrowser({ busy, onPick }: { busy: boolean; onPick: (prompt: string
   );
 }
 
-function EmptyState({ greeting, onExample }: { greeting: string; onExample: () => void }) {
+function EmptyState({ greeting, onExample, onPick }: { greeting: string; onExample: () => void; onPick: (prompt: string) => void }) {
   return (
     <div className="mx-auto flex max-w-lg flex-col gap-3 py-2 text-left">
       <p className="text-base font-medium leading-relaxed">{greeting}</p>
@@ -537,6 +537,17 @@ function EmptyState({ greeting, onExample }: { greeting: string; onExample: () =
       <Button variant="outline" size="sm" onClick={onExample} className="mt-1 w-full justify-start sm:w-auto">
         <Lightbulb className="h-4 w-4" /> Show me an example
       </Button>
+      <div className="grid gap-2">
+        {["awol", "warning", "hearing"].map((key) => {
+          const topic = getTopicByKey(key);
+          if (!topic) return null;
+          return (
+            <Button key={key} variant="outline" onClick={() => onPick(topic.prompt)} className="h-auto min-h-14 w-full justify-between gap-2 whitespace-normal text-left">
+              {topic.label}<ChevronRight className="h-4 w-4 shrink-0 text-teal" aria-hidden="true" />
+            </Button>
+          );
+        })}
+      </div>
     </div>
   );
 }

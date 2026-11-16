@@ -33,7 +33,13 @@ export default function InstallCta({
       return false;
     }
   });
-  const [dismissed, setDismissed] = useState(false);
+  const [dismissed, setDismissed] = useState(() => {
+    try {
+      return variant === "banner" && localStorage.getItem("inreco.installBannerDismissed") === "1";
+    } catch {
+      return false;
+    }
+  });
   const [showSteps, setShowSteps] = useState(false);
 
   useEffect(() => {
@@ -83,13 +89,17 @@ export default function InstallCta({
               Opens full screen like a normal app — no app store needed.
             </p>
           </div>
-          <button
+          <Button
             type="button"
-            onClick={() => setDismissed(true)}
-            className="text-xs text-muted-foreground underline"
+            variant="ghost"
+            onClick={() => {
+              setDismissed(true);
+              try { localStorage.setItem("inreco.installBannerDismissed", "1"); } catch { /* Still dismiss for this visit. */ }
+            }}
+            className="shrink-0 text-sm text-muted-foreground"
           >
             Later
-          </button>
+          </Button>
         </div>
         <div className="mt-3">{button}</div>
         {showSteps && <p className="mt-2 text-xs text-muted-foreground">{steps}</p>}

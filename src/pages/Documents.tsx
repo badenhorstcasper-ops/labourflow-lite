@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { FilePlus2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import AppShell from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -151,7 +153,10 @@ export default function DocumentsPage() {
 
         {rows.length === 0 ? (
           <Card><CardContent className="p-6 text-center text-muted-foreground">
-            No documents yet. Generate one from anywhere in the app.
+            <p>No documents yet.</p>
+            <Button asChild className="mt-4 w-full sm:w-auto">
+              <Link to="/account-app/generate"><FilePlus2 className="mr-2 h-5 w-5" />Create your first document</Link>
+            </Button>
           </CardContent></Card>
         ) : (
           <div className="space-y-3">
